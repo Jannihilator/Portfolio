@@ -1,4 +1,4 @@
-@import "https://fonts.googleapis.com/css?family=Montserrat:400,700";
+@import "https://fonts.googleapis.com/css?family=Montserrat:400,500,700";
 
 :root {
     --bs-blue: #0d6efd;
@@ -12472,7 +12472,7 @@ h1,
 p,
 a {
     font-family: Montserrat, sans-serif;
-    font-size: 1.6rem
+    font-size: 1.5rem
 }
 
 a,
@@ -12533,10 +12533,11 @@ a:hover {
     z-index: 1;
     padding: .8rem 1.6rem;
     font-weight: 700;
+    font-size: 1.6rem;
     line-height: 1;
     transition: all .6s cubic-bezier(.19, 1, .22, 1);
     display: inline-block;
-    position: relative
+    position: relative;
 }
 
 .cta-btn:after {
@@ -12549,6 +12550,10 @@ a:hover {
     position: absolute;
     bottom: 0;
     left: 0
+}
+
+.cta-btn:hover {
+    cursor: pointer;
 }
 
 .cta-btn--hero {
@@ -12773,7 +12778,9 @@ section {
 }
 
 #about .about-wrapper__info-text {
-    text-align: left
+    text-align: left;
+    font-weight: 500;
+    
 }
 
 @media (max-width:56.25em) {
@@ -12794,7 +12801,7 @@ section {
     padding: 0 .3rem;
     font-style: italic;
     line-height: 1.6;
-    display: inline-block
+    display: inline-block;
 }
 
 @media (max-width:37.5em) {
