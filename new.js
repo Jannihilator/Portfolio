@@ -2,8 +2,9 @@ var cue = 1;
 // document.querySelector("#hero").style.top = window.innerHeight * 5;
 window.addEventListener('scroll',function(e){
     const scrolled = window.scrollY;
-    // console.log(scrolled);
-    if(scrolled==0){
+    console.log(scrolled);
+    console.log(window.innerHeight);
+    if(scrolled<window.innerHeight*2){
         if(cue==2){
             cue--;
             const boxes = Array.from(document.querySelector("#word1").children);
@@ -14,7 +15,7 @@ window.addEventListener('scroll',function(e){
             });
         }
     }
-    if(scrolled>0 && scrolled<window.innerHeight*0.5){
+    if(scrolled>window.innerHeight*2.0 && scrolled<window.innerHeight*2.5){
         if(cue==1){
             cue++;
             const boxes = Array.from(document.querySelector("#word1").children);
@@ -32,7 +33,7 @@ window.addEventListener('scroll',function(e){
                 box.classList.add("hide");
             });
         }
-    }if(scrolled>window.innerHeight*0.5 && scrolled<window.innerHeight*1){
+    }if(scrolled>window.innerHeight*2.5 && scrolled<window.innerHeight*3){
         if(cue==2){
             cue++;
             const boxes = Array.from(document.querySelector("#word2").children);
@@ -50,7 +51,7 @@ window.addEventListener('scroll',function(e){
                 box.classList.add("hide");
             });
         }
-    }if(scrolled>window.innerHeight*1.0 && scrolled<window.innerHeight*1.5){
+    }if(scrolled>window.innerHeight*3.0 && scrolled<window.innerHeight*3.5){
         if(cue==3){
             cue++;
             const boxes = Array.from(document.querySelector("#word3").children);
@@ -68,7 +69,7 @@ window.addEventListener('scroll',function(e){
                 box.classList.add("hide");
             });
         }
-    }if(scrolled>window.innerHeight*1.5 && scrolled<window.innerHeight*2.0){
+    }if(scrolled>window.innerHeight*3.5 && scrolled<window.innerHeight*4.0){
         if(cue==4){
             cue++;
             const boxes = Array.from(document.querySelector("#word4").children);
@@ -86,7 +87,7 @@ window.addEventListener('scroll',function(e){
                 box.classList.add("hide");
             });
         }
-    }if(scrolled>window.innerHeight*2.0 && scrolled<window.innerHeight*2.5){
+    }if(scrolled>window.innerHeight*4.0 && scrolled<window.innerHeight*4.5){
         if(cue==5){
             cue++;
             const boxes = Array.from(document.querySelector("#word5").children);
@@ -104,7 +105,7 @@ window.addEventListener('scroll',function(e){
                 box.classList.add("hide");
             });
         }
-    }if(scrolled>window.innerHeight*2.5 && cue==6){
+    }if(scrolled>window.innerHeight*4.5 && cue==6){
         cue++;
         const boxes = Array.from(document.querySelector("#word6").children);
         boxes.forEach((box, index)=> {
