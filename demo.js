@@ -5,6 +5,7 @@ var is_nosight_demo = false;
 var is_duelzone_demo = false;
 var is_gallery_demo = false;
 var is_control_demo = false;
+var is_qduel_demo = false;
 function show_hand_demo(){
     if(!is_hand_demo){
         document.getElementById("hand-demo").style.display = "block";
@@ -48,6 +49,17 @@ function show_nosight_demo(){
         document.getElementById("nosight-photo").style.display = "block";
     }
     is_nosight_demo=!is_nosight_demo;
+}
+function show_qduel_demo(){
+    if(!is_qduel_demo){
+        document.getElementById("qduel-demo").style.display = "block";
+        document.getElementById("qduel-photo").style.display = "none";
+    }
+    else{
+        document.getElementById("qduel-demo").style.display = "none";
+        document.getElementById("qduel-photo").style.display = "block";
+    }
+    is_qduel_demo=!is_qduel_demo;
 }
 function show_duelzone_demo(){
     if(!is_duelzone_demo){
