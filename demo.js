@@ -6,6 +6,8 @@ var is_duelzone_demo = false;
 var is_gallery_demo = false;
 var is_control_demo = false;
 var is_qduel_demo = false;
+var is_cat_demo = false;
+var is_bar_demo = false;
 function show_hand_demo(){
     if(!is_hand_demo){
         document.getElementById("hand-demo").style.display = "block";
@@ -60,6 +62,28 @@ function show_qduel_demo(){
         document.getElementById("qduel-photo").style.display = "block";
     }
     is_qduel_demo=!is_qduel_demo;
+}
+function show_cat_demo(){
+    if(!is_cat_demo){
+        document.getElementById("cat-demo").style.display = "block";
+        document.getElementById("cat-photo").style.display = "none";
+    }
+    else{
+        document.getElementById("cat-demo").style.display = "none";
+        document.getElementById("cat-photo").style.display = "block";
+    }
+    is_cat_demo=!is_cat_demo;
+}
+function show_bar_demo(){
+    if(!is_bar_demo){
+        document.getElementById("bar-demo").style.display = "block";
+        document.getElementById("bar-photo").style.display = "none";
+    }
+    else{
+        document.getElementById("bar-demo").style.display = "none";
+        document.getElementById("bar-photo").style.display = "block";
+    }
+    is_bar_demo=!is_bar_demo;
 }
 function show_duelzone_demo(){
     if(!is_duelzone_demo){
