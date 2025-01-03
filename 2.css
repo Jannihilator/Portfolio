@@ -12511,7 +12511,7 @@ a:hover {
 
 @supports (-webkit-background-clip: text) or (background-clip: text) {
     .text-color-main {
-        background-image: linear-gradient(135deg, #f7ba2c 0%, #f68080 100%);
+        background-image: linear-gradient(135deg, #f7903c 0%, #f68080 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         color: #0000
