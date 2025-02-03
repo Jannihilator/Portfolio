@@ -1,0 +1,750 @@
+<!--
+  Hello!
+  -
+  Simplefolio is a clean and responsive portfolio template for Developers!
+  Created by Jacobo Martinez.
+  -
+  Github Repo: https://github.com/cobiwave/simplefolio/
+  Readme: https://github.com/cobiwave/simplefolio/README.md
+  -
+  For business & inquires, contact me -> jacobojavier98@gmail.com
+-->
+<!DOCTYPE html>
+<html lang="en" class="sr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="google-site-verification" content="KFswfLwTJmn2Q90dwhVP8A99OQN_dwYHeQoxmpG5gVI" />
+  <link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
+  <!-- Todo: put here your site title -->
+  <title>Yen-Chun Huang | Game Dev</title>
+  <!-- Todo: add some coding keywords below - e.g: (javascript, yourusername, etc) -->
+  <meta name="keywords" content="jannihilator, Yen-Chun, unity, unreal, game design, game development" />
+  <!-- Todo: improve your SEO by adding a small description of you -->
+  <meta name="description" content="Yen-Chun Huang | Game Dev" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link rel="stylesheet" href="styles.scss" />
+  <link rel="stylesheet" href="1.css" />
+  <link rel="stylesheet" href="2.css" />
+  <link rel="stylesheet" href="test.css">
+  <script defer src="https://unpkg.com/scrollreveal@4.0.0/dist/scrollreveal.min.js"></script>
+  <script src="new.js"></script>
+
+  <!-- Todo: remove the below script once you finish your portfolio -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+</head>
+
+<!-- Todo: read the following HTML Todos to create your stunning portfolio website -->
+
+<body>
+
+
+
+  <!-- **** Hero Section **** -->
+  <section id="hero" class="jumbotron">
+    <div id="splash-img"></div>
+    <div class="container" style="z-index: 1;">
+      <h1 id="glow-title" class="hero-title load-hidden">
+        Hi, my name is <span class="text-color-main">Yen-Chun Huang</span>
+        <br />
+        I'm the Game Dev to be discovered.
+      </h1>
+      <p id="glow-title" class="hero-cta load-hidden">
+        <a rel="noreferrer" class="cta-btn cta-btn--hero" href="#about">Know more</a>
+      </p>
+    </div>
+  </section>
+  <!-- /END Hero Section -->
+
+  <!-- **** About Section **** -->
+  <section id="about">
+    <div class="container">
+      <h2 class="section-title load-hidden">About me</h2>
+      <div class="row about-wrapper">
+        <div class="col-md-6 col-sm-12">
+          <div class="about-wrapper__image load-hidden">
+            <img alt="Profile Image" class="img-fluid rounded shadow-lg" height="auto" width="300px"
+              src="assets/profile-bw.png" alt="Profile Image" />
+          </div>
+        </div>
+        <div class="col-md-6 col-sm-12">
+          <div class="about-wrapper__info load-hidden">
+            <p class="about-wrapper__info-text">
+              I love creating things that people enjoy. Especially those that are unique and exceed expectations.
+              My goal is to become a game designer who explores interesting mechanics and interactions.
+            </p>
+            <p class="about-wrapper__info-text">
+              As a board game geek, I like playing Terraforming Mars and Architects of the West Kingdom.
+              On the digital side, I am a long time Supercell fan, and enjoy action roguelikes such as Brotato, Noita, as well as card
+              games like Slay the Spire.
+            </p>
+            <span class="d-flex mt-3">
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--resume" href="assets/CV.pdf">
+                View Resume
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- /END About Section -->
+  <div id="game-bg">
+    <div id="game-board" class="game-start">
+      <div class="game-row" id="word1">
+        <div class="game-box yellow">c</div>
+        <div class="game-box grey">u</div>
+        <div class="game-box grey">r</div>
+        <div class="game-box grey">i</div>
+        <div class="game-box grey">o</div>
+        <div class="game-box green">u</div>
+        <div class="game-box grey">s</div>
+      </div>
+      <div class="game-row" id="word2">
+        <div class="game-box grey">d</div>
+        <div class="game-box green">e</div>
+        <div class="game-box grey">v</div>
+        <div class="game-box grey">e</div>
+        <div class="game-box grey">l</div>
+        <div class="game-box grey">o</div>
+        <div class="game-box grey">p</div>
+      </div>
+      <div class="game-row" id="word3">
+        <div class="game-box grey">i</div>
+        <div class="game-box grey">m</div>
+        <div class="game-box grey">a</div>
+        <div class="game-box grey">g</div>
+        <div class="game-box grey">i</div>
+        <div class="game-box yellow">n</div>
+        <div class="game-box yellow">e</div>
+      </div>
+      <div class="game-row" id="word4">
+        <div class="game-box grey">p</div>
+        <div class="game-box grey">a</div>
+        <div class="game-box grey">s</div>
+        <div class="game-box grey">s</div>
+        <div class="game-box grey">i</div>
+        <div class="game-box grey">o</div>
+        <div class="game-box green">n</div>
+      </div>
+      <div class="game-row" id="word5">
+        <div class="game-box grey">d</div>
+        <div class="game-box yellow">y</div>
+        <div class="game-box green">n</div>
+        <div class="game-box grey">a</div>
+        <div class="game-box grey">m</div>
+        <div class="game-box grey">i</div>
+        <div class="game-box yellow">c</div>
+      </div>
+      <div class="game-row" id="word6">
+        <div class="game-box green">y</div>
+        <div class="game-box green">e</div>
+        <div class="game-box green">n</div>
+        <div class="game-box green">c</div>
+        <div class="game-box green">h</div>
+        <div class="game-box green">u</div>
+        <div class="game-box green">n</div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- **** Projects Section **** -->
+  <section id="projects">
+    <div class="container">
+      <div class="project-wrapper">
+        <h2 class="section-title dark-blue-text">Projects</h2>
+        <!-- Notice: each .row is a project -->
+        <div class="row" id="bar">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Barrr VR</h3>
+              <div>
+                <p class="mb-4">
+                  In this VR project, I collaborated with artists and sound designers to create a game focused on throwing
+                  and dodging.
+                  I developed custom throwing physics to allow for a natural wind-up, addressing the device’s hand
+                  tracking limitations,
+                  but we ultimately switched to controllers as different players had varying throwing styles.
+                  This project gave me valuable technical knowledge in VR development.
+                  <br>
+                  - Made with Unity and Oculus Quest 3
+                </p>
+              </div>
+
+              <!-- <a
+            rel="noreferrer"
+            target="_blank"
+            class="cta-btn text-color-main"
+            href="https://github.com/Jannihilator/No-Sight-All-Might"
+          >
+            Code
+          </a> -->
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero" onclick="show_bar_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="bar-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1u-qRbpnzGRsChvOJRoRvUrrPOzW0WTQQ/preview" allow="autoplay"></iframe>
+
+            <div id="bar-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/bar.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+        <!-- Notice: each .row is a project -->
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Meow Spa</h3>
+              <div>
+                <p class="mb-4">
+                  In a two-week class project, I collaborated with artists and sound designers to create
+                  a two-player cooperative game where one player controls a conveyor and the other performs
+                  the correct procedure on a cat, using a variety of buttons as the interface.
+                  Implemented the procedure queue and the leader board using effective data structures,
+                  incorporating feedback from playtests to make iterative changes for improvement.
+                  <br>
+                  - Made with Unity and Xbox Adaptive Controller
+                </p>
+              </div>
+
+              <!-- <a
+            rel="noreferrer"
+            target="_blank"
+            class="cta-btn text-color-main"
+            href="https://github.com/Jannihilator/No-Sight-All-Might"
+          >
+            Code
+          </a> -->
+          
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero" onclick="show_cat_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="cat-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/16-5YnES7wqSCw0w040qRKFJTl4kBJlqy/preview" allow="autoplay"></iframe>
+
+            <div id="cat-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/cat.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Q*duel</h3>
+              <div>
+                <p class="mb-4">
+                  Inspired by the arcade game Q*bert, this game turns the classic into a local two player area control
+                  challange. Color the cube to your color to win, and watch out for the environment! Sound design
+                  featuring my voice.
+                  <br>
+                  - Made with Unity
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero" href="https://yenchun.itch.io/qduel">
+                See Live
+              </a>
+              <!-- <a
+                  rel="noreferrer"
+                  target="_blank"
+                  class="cta-btn text-color-main"
+                  href="https://github.com/Jannihilator/Q-Duel"
+                >
+                  Code
+                </a> -->
+              <!-- <a
+                  class="cta-btn text-color-main"
+                  onclick="show_qduel_demo()"
+                >
+                  Demo
+                </a> -->
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="qduel-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;" src=""
+              allow="autoplay"></iframe>
+
+            <div id="qduel-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/qduel.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+
+
+        <!-- Notice: each .row is a project -->
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">No Sight, All Might</h3>
+              <div>
+                <p class="mb-4">
+                  A game submitted to 1-bit jam. In this game, the player controls the ball while dodging the sticks.
+                  The catch is that the player can only attack enemies when they cannot see them.
+                  Therefore players have to anticipate enemy movement and track them down in the dark.
+                  It has a satisfying feedback if the player manage to hit combos, they will gain a perk of their
+                  choice.
+                  Bosses are designed to have different ability and weakness for the player to explore.
+                  <br>
+                  - Made with Unity
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero"
+                href="https://yenchun.itch.io/no-sight-all-might">
+                See Live
+              </a>
+              <!-- <a rel="noreferrer" target="_blank" class="cta-btn text-color-main"
+                href="https://github.com/Jannihilator/No-Sight-All-Might">
+                Code
+              </a> -->
+              <a class="cta-btn text-color-main" onclick="show_nosight_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="nosight-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1SI4O09LPh3B0G-oSY4q6ob_FQzoVkGyl/preview" allow="autoplay"></iframe>
+
+            <div id="nosight-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/nosight.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+
+        <!-- Notice: each .row is a project -->
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Reefenge</h3>
+              <div>
+                <p class="mb-4">
+                  A game submitted to GMTK game jam 2023 "Roles-Reverse". In this bullet hell like game, the player
+                  controls the enemy ships insttead of the "Player".
+                  The goal is to elminate the "Player" ship as soon as possible. You have the option of deploying troops
+                  of various architype, strategizing and manging resource is key.
+                  I came up with the game idea and collaborated with an artist who worked on the art.
+                  <br>
+                  - Made with Unity
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero" href="https://yenchun.itch.io/reefenge">
+                See Live
+              </a>
+              <!-- <a rel="noreferrer" target="_blank" class="cta-btn text-color-main"
+                href="https://github.com/Jannihilator/Reefenge">
+                Code
+              </a> -->
+              <a class="cta-btn text-color-main" onclick="show_reefenge_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="reefenge-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1Es3U4yhxt6impXnHMnXmCiZcgXiwFRyO/preview" allow="autoplay"></iframe>
+            <div id="reefenge-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/reefenge.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+
+        <!-- Notice: each .row is a project -->
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">3D Virtual Gallery</h3>
+              <div>
+                <p class="mb-4">
+                  An online gallery showcasing past student works of Prof. Ei Jane Janet Lin.
+                  Explored various possibility of how art can be presented in a digital way.
+                  Implemented interesting mechanism where visitors can interact with art or the gallery itself,
+                  such as painting on the wall, taking the travelator, etc.
+                  Collaborated with the professor and another student artist to plot out the floor plan and "build" the
+                  gallery.
+                  <br>
+                  - Made with Three.js
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero"
+                href="https://jannihilator.github.io/Virtual-Gallery/">
+                See Live
+              </a>
+              <a rel="noreferrer" target="_blank" class="cta-btn text-color-main"
+                href="https://github.com/Jannihilator/Virtual-Gallery">
+                Code
+              </a>
+              <a class="cta-btn text-color-main" onclick="show_gallery_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="gallery-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1VmaGXVE7c82ZA8KSUYO9l4r9jqV6ZxNV/preview" allow="autoplay"></iframe>
+            <div id="gallery-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank" title="Demo video"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/gallery2.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <div class="row" id="meatball">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Meat Ball Rider:<br>a VR Experience</h3>
+              <div>
+                <p class="mb-4">
+                  Our team put the online meme "Hsinchu student ride meatball to school" into practice.
+                  In this VR experience, you bounce on a fitness ball to control the meatball avatar in the game.
+                  Lean your body to navigate through the course while collecting ingredients for the silly storyline.
+                  We experiment with haptic turk which is human based feedback to enhance immersion.
+                  <br>
+                  - Made with Unity XR Interaction Toolkit
+                </p>
+              </div>
+              <!-- <a
+                  rel="noreferrer"
+                  target="_blank"
+                  class="cta-btn cta-btn--hero"
+                  href="#!"
+                >
+                  See Live
+                </a> -->
+              <a class="cta-btn cta-btn--hero" onclick="show_meatball_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <!-- <iframe id="meatball-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;" src="https://www.youtube-nocookie.com/embed/GePOK0Q4-zA?si=avnzor2cM7D6UTdI&amp;controls=0;rel=0;" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> -->
+            <iframe id="meatball-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1AAKCra10saHh4GqCqTmx5n9J6UtzShb0/preview" allow="autoplay"></iframe>
+            <div id="meatball-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/meatball.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row" id="hand">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Hand Motion Recognition</h3>
+              <div>
+                <p class="mb-4">
+                  A hand motion recognition tool using MediaPipe's solution. It not only recognizes static gestures but
+                  also movements.
+                  Users will be able to browse through web pages by scrolling with their hand mid air, potentially
+                  reduce human contact during epidemic times.
+                  My partner and I went on and transform it into a game of shooting faces.
+                  <br>
+                  - Made with Python
+                </p>
+              </div>
+
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero"
+                href="https://github.com/Jannihilator/Hand-Motion-Recognition">
+                Code
+              </a>
+              <a class="cta-btn text-color-main" onclick="show_hand_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="hand-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1WYP1o24g-h2uRECVJx0-WsvQZa_qck2g/preview" allow="autoplay"></iframe>
+            <!-- <iframe id="hand-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;" src="https://www.youtube-nocookie.com/embed/Moj7NveCnSA?si=z3UQiR8htI3g42Ao&amp;controls=0;rel=0;" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> -->
+
+            <div class="project-wrapper__image load-hidden" id="hand-photo">
+              <div>
+                <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                  class="thumbnail rounded js-tilt">
+                  <img alt="Project Image" class="img-fluid" src="assets/hand.png" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" id="duelzone">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Duel zone</h3>
+              <div>
+                <p class="mb-4">
+                  Duel zone is a two player card and area control game. In this game, players manage their action cards
+                  to play them in the most efficient sequence.
+                  There are multiple victory path, one can either claim the most territory, develop techs or simply
+                  knock the opponent out.
+                  It is designed thematically for players to have a role playing experience in the deserted environment.
+                  The game is all about strategizing and getting inside your opponent's head, thinking of what their
+                  next move is going to be.
+
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero" href="assets/duelzone.pdf">
+                Design Doc
+              </a>
+              <!-- <a class="cta-btn text-color-main" onclick="show_duelzone_demo()">
+                Demo
+              </a> -->
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="duelzone-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1OYVivfpKceoBQ3_Fxo6eIATGLmjQKxC1/preview" allow="autoplay"></iframe>
+            <div id="duelzone-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/duelzone.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">7 Wonders:<br>Taiwan Game Boards</h3>
+              <div>
+                <p class="mb-4">
+                  As a 7 Wonders' fan, I decided to make my own wonder boards in no time.
+                  Since Taiwan has an abundant collection of natural and civil wonders, it became an obvious choice for
+                  me to present my own country.
+                  The boards introduced new mechanics that fit the location quite well.
+                  For instance, the Taipei 101 board gives you an advantage if your wonder stages are built taller than
+                  the others;
+                  The South Link Railroad scores points for red/yellow/blue cards, which are the colors for different
+                  train models we have in Taiwan.
+                </p>
+              </div>
+              <a class="cta-btn cta-btn--hero" onclick="">
+                Demo
+              </a>
+              <!-- <a
+                  rel="noreferrer"
+                  target="_blank"
+                  class="cta-btn text-color-main"
+                  href="#!"
+                >
+                  Demo
+                </a> -->
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <div class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/seven2.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Contro!!ed</h3>
+              <div>
+                <p class="mb-4">
+                  I have always been interested in how traffic works and how to optimize the timing for large flows.
+                  In order to see what exactly is happening I simulated cars on a grid road system, where the idle time
+                  of each driver (emotions) are reflected by different colors.
+                  Here we are able to switch any of the lights and add however many cars we want. One interesting
+                  feature is to insert a crop circle and observe the flock of cars heading in one direction.
+                  <br>
+                  - Made with p5.js library
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero"
+                href="https://editor.p5js.org/currynee.eed08/full/a2ngAqveu">
+                See Live
+              </a>
+              <a class="cta-btn text-color-main" onclick="show_control_demo()">
+                Demo
+              </a>
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <iframe id="control-demo" style="width: 100%; aspect-ratio: 16 / 9; display: none;"
+              src="https://drive.google.com/file/d/1fMfkS9pxV7Lk2lk-0sxW3Pyo8UfNOj5V/preview" allow="autoplay"></iframe>
+            <div id="control-photo" class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/control.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-4 col-sm-12">
+            <div class="project-wrapper__text load-hidden">
+              <h3 class="project-wrapper__text-title">Generative VLSI</h3>
+              <div>
+                <p class="mb-4">
+                  When I was studying VLSI chip design, I came across some layout blueprint which I found very abstract
+                  and beautiful.
+                  I decided to make a generative art work to have various iteration of similar prints.
+                  This can be something interesting to those who like abstract paintings.
+                  More importantly, for me and the other engineers might just open our eyes and appreciate art for the
+                  first time.
+                  <br>
+                  - Made with Processing, a Java library
+                </p>
+              </div>
+              <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--hero"
+                href="https://www.behance.net/gallery/134785167/Generative-VLSI">
+                See Live
+              </a>
+              <!-- <a
+                  rel="noreferrer"
+                  target="_blank"
+                  class="cta-btn text-color-main"
+                  href="#!"
+                >
+                  Demo
+                </a> -->
+            </div>
+          </div>
+          <div class="col-lg-8 col-sm-12">
+            <div class="project-wrapper__image load-hidden">
+              <!-- <a rel="noreferrer" href="#!" target="_blank"> -->
+              <div data-tilt data-tilt-max="4" data-tilt-glare="true" data-tilt-max-glare="0.5"
+                class="thumbnail rounded js-tilt">
+                <img alt="Project Image" class="img-fluid" src="assets/vlsi.png" />
+              </div>
+              <!-- </a> -->
+            </div>
+          </div>
+        </div>
+        <!-- /END Project -->
+      </div>
+    </div>
+  </section>
+  <!-- /END Projects Section -->
+
+  <!-- **** Contact Section **** -->
+  <section id="contact">
+    <div class="container">
+      <h2 class="section-title">Contact</h2>
+      <div class="contact-wrapper load-hidden">
+        <p class="contact-wrapper__text">yenchun.huang11@gmail.com</p>
+        <a rel="noreferrer" target="_blank" class="cta-btn cta-btn--resume" href="mailto:yenchun.huang11@gmail.com">send
+          mail</a>
+      </div>
+    </div>
+  </section>
+  <!-- /END Contact Section -->
+
+  <!-- **** Footer Section **** -->
+  <footer class="footer navbar-static-bottom">
+    <div class="container">
+      <a rel="noreferrer" href="#top" class="back-to-top">
+        <i class="fa fa-angle-up fa-2x" aria-hidden="true"></i>
+      </a>
+      <div class="social-links">
+        <a rel="noreferrer" href="https://yenchun.itch.io/" target="_blank">
+          <i class="fa-brands fa-itch-io fa-inverse"></i>
+        </a>
+        <a rel="noreferrer" href="https://www.linkedin.com/in/yen-chun-huang" target="_blank">
+          <i class="fa-brands fa-linkedin fa-inverse"></i>
+        </a>
+        <a rel="noreferrer" href="https://github.com/Jannihilator" target="_blank">
+          <i class="fa-brands fa-github fa-inverse"></i>
+        </a>
+      </div>
+
+      <hr />
+
+      <!-- Notice: if you want to give me some credit, it will be huge for me! if not, put your data on it -->
+      <p class="footer__text">
+        Template developed by
+        <a rel="noreferrer" href="https://github.com/cobiwave" target="_blank">Jacobo Martínez</a>
+        <br> Page designed by
+        <a rel="noreferrer" href="https://github.com/jannihilator" target="_blank">Yen-Chun Huang</a>
+      </p>
+
+      <!-- TO DO: remove this entire paragraph once you finish your portfolio -->
+      <!-- <p class="mt-3 pt-3">
+          <a
+            rel="noreferrer"
+            class="github-button"
+            href="https://github.com/cobiwave/simplefolio/fork"
+            data-icon="octicon-repo-forked"
+            data-size="large"
+            data-show-count="true"
+            aria-label="Fork ntkme/github-buttons on GitHub"
+            >Fork</a
+          >
+          <a
+            rel="noreferrer" 
+            class="github-button"
+            href="https://github.com/cobiwave/simplefolio"
+            data-icon="octicon-star"
+            data-size="large"
+            data-show-count="true"
+            aria-label="Star cobiwave/simplefolio on GitHub"
+            >Star</a
+          >
+        </p> -->
+    </div>
+  </footer>
+  <!-- /END Footer Section -->
+  <script src="demo.js"></script>
+  <script defer type="module" src="test.js"></script>
+</body>
+
+</html>
