@@ -153,6 +153,11 @@
   pointer-events: none;
 }
 
+.projects p{
+  text-align: center;
+  margin-bottom: 1em;
+}
+
 .modal {
   position: fixed;
   top: 50%;
