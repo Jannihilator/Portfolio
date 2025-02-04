@@ -1,6 +1,5 @@
 var cue = 1;
 var scrollScale = window.innerHeight * 0.1
-toggleTheme();
 // document.querySelector("#hero").style.top = scrollScale * 5;
 window.addEventListener('scroll',function(e){
     const scrolled = window.scrollY;
