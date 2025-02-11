@@ -297,6 +297,10 @@ main {
   box-shadow: var(--shadow);
   transition: transform 0.2s linear;
 }
+.big-project{
+  max-width: 1100px;
+  margin: 2em 0;
+}
 
 .project:hover {
   transform: translateY(-7px);
@@ -306,7 +310,10 @@ main {
   margin-top: 1em;
   /* text-align: left; */
 }
-
+.project__description_big {
+  max-width: 80%;
+  margin: 1em auto;
+}
 .project__stack {
   display: flex;
   flex-wrap: wrap;

@@ -148,6 +148,12 @@
   aspect-ratio: 16 / 9;
   object-fit:cover;
 }
+.project-img-big {
+  max-width: 45%;
+  pointer-events: none;
+  aspect-ratio: 16 / 9;
+  object-fit:cover;
+}
 
 .project__description {
   pointer-events: none;
