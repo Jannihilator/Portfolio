@@ -36,6 +36,9 @@
           <a class="link link--nav" href="#game-jams">Jams</a>
         </li>
         <li class="nav__list-item">
+          <a class="link link--nav" href="#past-projects">Past</a>
+        </li>
+        <li class="nav__list-item">
           <a class="link link--nav" href="#prototypes">Prototypes</a>
         </li>
         <li class="nav__list-item">
@@ -146,6 +149,15 @@
 
     <section class="modal hidden">
       <div class="video-container">
+        <!-- <iframe src="https://www.youtube.com/embed/3zKq5qpqOWc?si=X3EkyGuCOm5zUCpV" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        XHaler
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
         <iframe src="https://www.youtube.com/embed/3zKq5qpqOWc?si=X3EkyGuCOm5zUCpV" allow="autoplay"></iframe>
       </div>
       <p>
@@ -230,14 +242,33 @@
       </p>
       <button class="btn-close btn-modal">⨉</button>
     </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1VmaGXVE7c82ZA8KSUYO9l4r9jqV6ZxNV/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        3D Virtual Gallery
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section><section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1WYP1o24g-h2uRECVJx0-WsvQZa_qck2g/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Hand Motion Recognition
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
     <!-- Projects -->
     <section id="recent-projects" class="section projects">
       <h2 class="section__title">Recent &nbsp;Projects</h2>
-      <p>-click to expand-</p>
+      <p>-click on project to expand-</p>
 
       <div class="project big-project">
         <h3 class="project-title">XHaler</h3>
-        <p>-on going-</p>
+        <p>(on going)</p>
         <br>
         <div class="">
           <img class="project-img-big" src="./assets/xhaler-archer.png" alt="">
@@ -256,7 +287,7 @@
         <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
           <i aria-hidden="true" class="fab fa-github"></i>
         </a> -->
-        <a href="https://projects.etc.cmu.edu/xhaler/sample-page/" aria-label="live preview" class="link link--icon">
+        <a href="https://projects.etc.cmu.edu/xhaler/about-us/" aria-label="live preview" class="link link--icon">
           <i aria-hidden="true" class="fas fa-external-link-alt"></i>
         </a>
       </div>
@@ -398,7 +429,7 @@
     <!-- Projects -->
     <section id="game-jams" class="section projects">
       <h2 class="section__title">Game &nbsp;Jams</h2>
-      <p>-click to expand-</p>
+      <p>-click on project to expand-</p>
       <div class="projects__grid">
         <div class="project btn-open">
           <h3>Mento-Issue</h3>
@@ -471,9 +502,85 @@
         </div>
       </div>
     </section>
+    <section id="past-projects" class="section projects">
+      <h2 class="section__title">Past &nbsp;Projects</h2>
+      <p>-click on project to expand-</p>
+      <div class="projects__grid">
+        <div class="project btn-open">
+          <h3>3D Virtual Gallery</h3>
+          <br>
+          <img class="project-img" src="./assets/gallery.png" alt="">
+          <p class="project__description">
+            An online gallery showcasing past student works of Prof. Ei Jane Janet Lin.
+            Explored various possibility of how art can be presented in a digital way.
+            Implemented interesting mechanism where visitors can interact with art or the gallery itself,
+            such as painting on the wall, taking the travelator, etc.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">JavaScript</li>
+            <li class="project__stack-item">3D</li>
+            <li class="project__stack-item">HTML/CSS</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://jannihilator.github.io/Virtual-Gallery/" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+        <div class="project btn-open">
+          <h3>Hand Motion Recognition</h3>
+          <br>
+          <img class="project-img" src="./assets/hand.png" alt="">
+          <p class="project__description">
+            A hand motion recognition tool using MediaPipe's solution. It not only recognizes static gestures but
+            also movements. Users will be able to browse through web pages by scrolling with their hand mid air,
+            reducing human contact during epidemic times. Later transformed into a game of shooting faces.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Python</li>
+            <li class="project__stack-item">MediaPipe</li>
+            <li class="project__stack-item">Raspberry Pi</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://yenchun.itch.io/no-sight-all-might" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+
+        <div class="project btn-open">
+          <h3>Duel zone</h3>
+          <br>
+          <img class="project-img" src="./assets/duelzone.png" alt="">
+          <p class="project__description">
+            Duel zone is a two player card and area control game. Players manage their action cards
+            to play them in the most efficient sequence.
+            Win by either claim the most territory, develop techs or simply
+            knock the opponent out.
+            The game is about strategizing and anticipating moves of your opponent.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Board Game</li>
+            <li class="project__stack-item">Paper Prototype</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="./assets/duelzone.pdf" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </section>
     <section id="prototypes" class="section projects">
       <h2 class="section__title">Prototypes</h2>
-      <p>-click to expand-</p>
+      <p>-click on project to expand-</p>
       <div class="projects__grid">
         <div class="project btn-open">
           <h3>Pencil Shoot</h3>
@@ -561,7 +668,7 @@
     <!-- Contact -->
     <section class="section contact center" id="contact">
       <h2 class="section__title">Contact</h2>
-      <a href="mailto:rjshekhar.official@gmail.com">
+      <a href="mailto:yenchun.haung11@gmail.com">
         <span class="btn btn--outline">Email me</span>
       </a>
     </section>
