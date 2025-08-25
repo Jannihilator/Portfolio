@@ -8,11 +8,17 @@ projects.forEach((project, index) =>{
 })
 // close modal function
 const closeModal = function () {
-    modals.forEach(modal => {
-        modal.classList.add("hidden");
+  modals.forEach(modal => {
+    modal.classList.add("hidden");
+
+    // Pause/reset all iframes inside this modal
+    const iframes = modal.querySelectorAll("iframe");
+    iframes.forEach(iframe => {
+      iframe.src = iframe.src; // reset src to stop video
     });
-    
-    overlay.classList.add("hidden");
+  });
+
+  overlay.classList.add("hidden");
 };
 
 // close the modal when the close button and overlay is clicked
