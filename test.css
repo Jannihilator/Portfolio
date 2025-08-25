@@ -196,6 +196,11 @@
   /* margin: 0.2rem; */
 }
 
+.modal a {
+  color: blueviolet;
+  text-decoration: underline;
+}
+
 .video-container {
   width: 100%; /* Adjust width */
   max-width: 1080px; /* Prevents it from being too large */

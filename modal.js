@@ -36,12 +36,17 @@ document.addEventListener("keydown", function (e) {
 
 // open modal function
 const openModal = function (index) {
-    modals[index].classList.remove("hidden");
-    overlay.classList.remove("hidden");
+  if (!modals[index]) return;
+  modals[index].classList.remove("hidden");
+  overlay.classList.remove("hidden");
 };
+
 // open modal event
 openModalBtns.forEach(openModalBtn => {
-    openModalBtn.addEventListener("click", function(evt){
-        openModal(evt.target.getAttribute("index"))
-    })
+  openModalBtn.addEventListener("click", function (evt) {
+    const idx = evt.currentTarget.getAttribute("index"); 
+    if (idx == null || !modals[idx]) return; 
+    openModal(Number(idx));
+  });
 });
+
