@@ -243,3 +243,7 @@
 .project-title {
   pointer-events: none;
 }
+
+body {
+    cursor: none;
+}

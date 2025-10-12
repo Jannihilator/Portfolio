@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Smooch+Sans:wght@100..900&display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap"
+    rel="stylesheet">
+  <script src="https://kit.fontawesome.com/fa62c117c7.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="test.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <title>Yen-Chun Huang</title>
+</head>
+
+<body class="dark" id="top">
+  <header class="header center">
+    <h3>
+      <!-- <a href="https://rjshkhr.github.io/cleanfolio-minimal" class="link"
+          >RS.</a> -->
+    </h3>
+
+    <nav class="nav center">
+      <ul class="nav__list center">
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#recent-projects">Projects</a>
+        </li>
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#game-jams">Jams</a>
+        </li>
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#past-projects">Past</a>
+        </li>
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#prototypes">Prototypes</a>
+        </li>
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#skills">Skills</a>
+        </li>
+        <li class="nav__list-item">
+          <a class="link link--nav" href="#contact">Contact</a>
+        </li>
+      </ul>
+
+      <button type="button" aria-label="toggle theme" class="btn btn--icon" id="theme-toggle">
+        <i aria-hidden="true" id="btn-theme" class="fas fa-sun"></i>
+      </button>
+
+      <button type="button" aria-label="toggle navigation" class="btn btn--icon nav__hamburger">
+        <i aria-hidden="true" class="fas fa-bars"></i>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="overlay hidden"></div>
+    <!-- About -->
+    <div class="about center">
+      <h1>Hi, I am <span class="about__name">Yen-Chun Huang.</span></h1>
+      <h2 class="about__role">A Game Developer.</h2>
+      <p class="about__desc">
+        I love creating things that people enjoy. Especially those that are unique and exceed expectations.
+        My goal is to become a game designer who explores interesting mechanics and interactions.<br><br>
+        As a board game geek, I like playing Terraforming Mars and Architects of the West Kingdom.
+        On the digital side, I am a long time Supercell fan, and enjoy action roguelikes such as Brotato, Noita, and
+        card games like Slay the Spire.
+      </p>
+
+      <div class="about__contact center">
+        <a href="./assets/CV.pdf" target="_blank" rel="noopener noreferrer">
+          <span class="btn btn--outline">Resume</span>
+        </a>
+
+        <!-- <a href="https://github.com/rjshkhr" aria-label="github" class="link link--icon">
+          <i aria-hidden="true" class="fab fa-github"></i>
+        </a>
+
+        <a href="https://linkedin.com/in/rjshkhr" aria-label="linkedin" class="link link--icon">
+          <i aria-hidden="true" class="fab fa-linkedin"></i>
+        </a> -->
+      </div>
+    </div>
+    <div id="game-bg">
+      <div id="game-board" class="game-start">
+        <div class="game-row" id="word1">
+          <div class="game-box yellow">c</div>
+          <div class="game-box grey">u</div>
+          <div class="game-box grey">r</div>
+          <div class="game-box grey">i</div>
+          <div class="game-box grey">o</div>
+          <div class="game-box green">u</div>
+          <div class="game-box grey">s</div>
+        </div>
+        <div class="game-row" id="word2">
+          <div class="game-box grey">d</div>
+          <div class="game-box green">e</div>
+          <div class="game-box grey">v</div>
+          <div class="game-box grey">e</div>
+          <div class="game-box grey">l</div>
+          <div class="game-box grey">o</div>
+          <div class="game-box grey">p</div>
+        </div>
+        <div class="game-row" id="word3">
+          <div class="game-box grey">i</div>
+          <div class="game-box grey">m</div>
+          <div class="game-box grey">a</div>
+          <div class="game-box grey">g</div>
+          <div class="game-box grey">i</div>
+          <div class="game-box yellow">n</div>
+          <div class="game-box yellow">e</div>
+        </div>
+        <div class="game-row" id="word4">
+          <div class="game-box grey">p</div>
+          <div class="game-box grey">a</div>
+          <div class="game-box grey">s</div>
+          <div class="game-box grey">s</div>
+          <div class="game-box grey">i</div>
+          <div class="game-box grey">o</div>
+          <div class="game-box green">n</div>
+        </div>
+        <div class="game-row" id="word5">
+          <div class="game-box grey">d</div>
+          <div class="game-box yellow">y</div>
+          <div class="game-box green">n</div>
+          <div class="game-box grey">a</div>
+          <div class="game-box grey">m</div>
+          <div class="game-box grey">i</div>
+          <div class="game-box yellow">c</div>
+        </div>
+        <div class="game-row" id="word6">
+          <div class="game-box green">y</div>
+          <div class="game-box green">e</div>
+          <div class="game-box green">n</div>
+          <div class="game-box green">c</div>
+          <div class="game-box green">h</div>
+          <div class="game-box green">u</div>
+          <div class="game-box green">n</div>
+        </div>
+      </div>
+    </div>
+    <!-- Modals -->
+
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://www.youtube.com/embed/fUHDFnX35RE?si=fEktM0qxvHswPbne" allow="autoplay"></iframe>
+      </div>
+      <p>
+        XHaler
+      </p>
+      <a href="https://projects.etc.cmu.edu/xhaler/about-us/">https://projects.etc.cmu.edu/xhaler/about-us/</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://www.youtube.com/embed/3zKq5qpqOWc?si=X3EkyGuCOm5zUCpV" allow="autoplay"></iframe>
+      </div>
+      <p>
+        XReveal
+      </p>
+      <a href="https://devpost.com/software/xreveal-1bl4nr">https://devpost.com/software/xreveal-1bl4nr</a>
+
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/180ETl7H-uREpvFuKvvtqr6q_F-UW0wGZ/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        GPT Battle
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1FJYkTiRtiy5pZPC0bid_faIG67U2nox1/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Keep Your Head Up
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+
+        <iframe src="https://drive.google.com/file/d/1u-qRbpnzGRsChvOJRoRvUrrPOzW0WTQQ/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Bar VR
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1Kq54EDSm5exo5r31GHUDo-qaoCR2mZXG/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Meow Spa
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <!-- <iframe src="" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        Q*duel
+      </p>
+      <a href="https://yenchun.itch.io/qduel">https://yenchun.itch.io/qduel</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+      </div>
+      <p>
+        Voice in the Void
+      </p>
+      <a href="https://yenchun.itch.io/voice-in-the-void">https://yenchun.itch.io/voice-in-the-void</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <!-- <iframe src="" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        Moustache Twins
+      </p>
+      <a href="https://loyiwu.itch.io/moustache-twins">https://loyiwu.itch.io/moustache-twins</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <!-- <iframe src="" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        Mento-Issue
+      </p>
+      <a href="https://yenchun.itch.io/mento-issue">https://yenchun.itch.io/mento-issue</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <!-- <iframe src="" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        No Sight All Might
+      </p>
+      <a href="https://yenchun.itch.io/no-sight-all-might">https://yenchun.itch.io/no-sight-all-might</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <!-- <iframe src="" allow="autoplay"></iframe> -->
+      </div>
+      <p>
+        Reefenge
+      </p>
+      <a href="https://yenchun.itch.io/reefenge">https://yenchun.itch.io/reefenge</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1VmaGXVE7c82ZA8KSUYO9l4r9jqV6ZxNV/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        3D Virtual Gallery
+      </p>
+      <a href="https://jannihilator.github.io/Virtual-Gallery/">https://jannihilator.github.io/Virtual-Gallery/</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+        <iframe src="https://drive.google.com/file/d/1WYP1o24g-h2uRECVJx0-WsvQZa_qck2g/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Hand Motion Recognition
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+
+      </div>
+      <p>
+        Duel zone
+      </p>
+      <a href="./assets/duelzone.pdf">duelzone.pdf</a>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+      </div>
+      <p>
+        Pencil Shoot
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+
+      </div>
+      <p>
+        Slash-Moji
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
+
+      </div>
+      <p>
+        Ghost Hunt
+      </p>
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <!-- Projects -->
+    <section id="recent-projects" class="section projects">
+      <h2 class="section__title">Recent &nbsp;Projects</h2>
+      <p>-click on project to expand-</p>
+
+      <div class="project big-project btn-open">
+        <h3 class="project-title">XHaler</h3>
+        <!-- <p>(on going)</p> -->
+        <br>
+        <img class="project-img-big" src="./assets/xhaler-archer.png" alt="">
+        <img class="project-img-big" src="./assets/xhaler-dive.png" alt="">
+        <p class="project__description_big">
+          Xhaler is a student-driven project exploring the use of breathing as a game input. By developing prototypes
+          that map different breathing patterns to in-game actions, we aim to enhance immersion in virtual reality.
+        </p>
+        <ul class="project__stack">
+          <li class="project__stack-item">VR</li>
+          <li class="project__stack-item">Python</li>
+          <li class="project__stack-item">Arduino</li>
+        </ul>
+
+        <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+          <i aria-hidden="true" class="fab fa-github"></i>
+        </a> -->
+        <a href="https://projects.etc.cmu.edu/xhaler/about-us/" aria-label="live preview" class="link link--icon"
+          target="_blank" rel="noopener noreferrer">
+          <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+        </a>
+      </div>
+      <div class="projects__grid">
+        <div class="project btn-open">
+          <h3 class="project-title">XReveal</h3>
+          <br>
+          <img class="project-img" src="./assets/xr.png" alt="">
+          <p class="project__description">
+            XReveal brings ideas to life by generating 3D assets through voice commands. Powered by AI, it
+            enables anyone (regardless of design or artistic skills) to visually share their thoughts.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">VR</li>
+            <li class="project__stack-item">OpenAI API </li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://devpost.com/software/xreveal-1bl4nr" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+
+
+        <div class="project btn-open">
+          <h3 class="project-title">GPT Battle</h3>
+          <br>
+          <img class="project-img" src="./assets/gpt.png" alt="">
+          <p class="project__description">
+            A 2v2 wizard spell battle where spells are created by shouting them out loud.
+            The microphone transcribes the voice, and ChatGPT interprets it through carefully designed rules to offer a
+            corresponding spell.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Shader</li>
+            <li class="project__stack-item">VFX Graph</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+
+
+        <div class="project btn-open">
+          <h3 class="project-title">Keep Your Head Up</h3>
+          <br>
+          <img class="project-img" src="./assets/snowman.png" alt="">
+          <p class="project__description">
+            Using two 3D Rudders as input, where both players put there feet on the rudders. One player controling the
+            head's movement while the other is tilting the entire map. Chaotic fun between players and the environment.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">3D Rudder</li>
+            <!-- <li class="project__stack-item">React</li> -->
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+        <div class="project btn-open">
+          <h3 class="project-title">Bar VR</h3>
+          <br>
+          <img class="project-img" src="./assets/bar.png" alt="">
+          <p class="project__description">
+            A VR bar fighting experience where player engages in a card game followed by throwing and dodging glass
+            bottles. Customized hand grabbing and throwing to bypass hardware limitations.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">VR</li>
+            <li class="project__stack-item">Hand Gesture</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+        <div class="project btn-open">
+          <h3 class="project-title">Meow Spa</h3>
+          <br>
+          <img class="project-img" src="./assets/cat.png" alt="">
+          <p class="project__description">
+            A two player game using buttons to control the conveyor belt and the machines. The game is desinged to
+            challange
+            coordination between players by putting the correct washing procedure on cats.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Adaptive Controllers</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+        <div class="project btn-open">
+          <h3 class="project-title">Q*duel</h3>
+          <br>
+          <img class="project-img" src="./assets/qduel.png" alt="">
+          <p class="project__description">
+            Inspired by the arcade game Q*bert, this game turns the classic into a local two player area control
+            challange. Color the cube to your color to win, and watch out for the environment!
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Enemy AI</li>
+            <li class="project__stack-item">Vocal SFX</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://yenchun.itch.io/qduel" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+    <!-- Projects -->
+    <section id="game-jams" class="section projects">
+      <h2 class="section__title">Game &nbsp;Jams</h2>
+      <p>-click on project to expand-</p>
+      <div class="projects__grid">
+        <div class="project btn-open">
+          <h3>Voice in the Void</h3>
+          <br>
+          <img class="project-img" src="./assets/void.png" alt="">
+          <p class="project__description">
+            A thatgamecompany × COREBLAZER GAME JAM 2025 submission for the theme "Gererousity," created in two days.
+            It's a chat-based game where players show generosity to aliens whose encrypted messages
+            gradually become clearer, eventually receiving gifts that decorate their home planets as symbols of
+            connection.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Open AI api</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://yenchun.itch.io/voice-in-the-void" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+
+        </div>
+        <div class="project btn-open">
+          <h3>Moustache Twins</h3>
+          <br>
+          <img class="project-img" src="./assets/twin.png" alt="">
+          <p class="project__description">
+            A Garena Game Jam 2025 submission for the theme "Super Hero," created in two days. It's a cooperative arcade
+            game that challange the player to coordinate with each other while dodging cheetos and saving people.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Online Leaderboard</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://loyiwu.itch.io/moustache-twins" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+        <div class="project btn-open">
+          <h3>Mento-Issue</h3>
+          <br>
+          <img class="project-img" src="./assets/mento.png" alt="">
+          <p class="project__description">
+            A Global Game Jam 2025 submission for the theme "Bubble," created in two days. It's a puzzle platformer with
+            10 levels, where players use Mentos and soda bottles to strategically elevate themselves. The game won the
+            Pittsburgh site non-traditional award for its creative approach.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Level Design</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://yenchun.itch.io/mento-issue" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+        <div class="project btn-open">
+          <h3>No Sight All Might</h3>
+          <br>
+          <img class="project-img" src="./assets/nosight.png" alt="">
+          <p class="project__description">
+            A 1-bit Jam 2024 submission for the theme "Light and Dark." Players control a ball while dodging enemies.
+            The twist is that
+            players can only attack enemies when they’re out of sight, requiring them to anticipate movements and track
+            them in the dark.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Skill System</li>
+            <li class="project__stack-item">Boss Fight</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://yenchun.itch.io/no-sight-all-might" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+        <div class="project btn-open">
+          <h3>Reefenge</h3>
+          <br>
+          <img class="project-img" src="./assets/reefenge.png" alt="">
+          <p class="project__description">
+            A game for GMTK Game Jam 2023 titled "Roles-Reverse." In this bullet hell game, players control
+            the enemy ships instead of the player, with the goal of eliminating the player's ship as quickly as
+            possible. Resource management and strategic troop deployment are key.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <!-- <li class="project__stack-item">TypeScript</li>
+            <li class="project__stack-item">React</li> -->
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://yenchun.itch.io/reefenge" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section id="past-projects" class="section projects">
+      <h2 class="section__title">Past &nbsp;Projects</h2>
+      <p>-click on project to expand-</p>
+      <div class="projects__grid">
+        <div class="project btn-open">
+          <h3>3D Virtual Gallery</h3>
+          <br>
+          <img class="project-img" src="./assets/gallery.png" alt="">
+          <p class="project__description">
+            An online gallery showcasing past student works of Prof. Ei Jane Janet Lin.
+            Explored various possibility of how art can be presented in a digital way.
+            Implemented interesting mechanism where visitors can interact with art or the gallery itself,
+            such as painting on the wall, taking the travelator, etc.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">JavaScript</li>
+            <li class="project__stack-item">3D</li>
+            <li class="project__stack-item">HTML/CSS</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="https://jannihilator.github.io/Virtual-Gallery/" aria-label="live preview" class="link link--icon"
+            target="_blank" rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+
+        <div class="project btn-open">
+          <h3>Hand Motion Recognition</h3>
+          <br>
+          <img class="project-img" src="./assets/hand.png" alt="">
+          <p class="project__description">
+            A hand motion recognition tool using MediaPipe's solution. It not only recognizes static gestures but
+            also movements. Users will be able to browse through web pages by scrolling with their hand mid air,
+            reducing human contact during epidemic times. Later transformed into a game of shooting faces.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Python</li>
+            <li class="project__stack-item">MediaPipe</li>
+            <li class="project__stack-item">Raspberry Pi</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://yenchun.itch.io/no-sight-all-might" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+
+        <div class="project btn-open">
+          <h3>Duel zone</h3>
+          <br>
+          <img class="project-img" src="./assets/duelzone.png" alt="">
+          <p class="project__description">
+            Duel zone is a two player card and area control game. Players manage their action cards
+            to play them in the most efficient sequence.
+            Win by either claim the most territory, develop techs or simply
+            knock the opponent out.
+            The game is about strategizing and anticipating moves of your opponent.
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Board Game</li>
+            <li class="project__stack-item">Paper Prototype</li>
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <a href="./assets/duelzone.pdf" aria-label="live preview" class="link link--icon" target="_blank"
+            rel="noopener noreferrer">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+    <section id="prototypes" class="section projects">
+      <h2 class="section__title">Prototypes</h2>
+      <p>-click on project to expand-</p>
+      <div class="projects__grid">
+        <div class="project btn-open">
+          <h3>Pencil Shoot</h3>
+          <br>
+          <img class="project-img" src="./assets/pencil.png" alt="">
+          <p class="project__description">
+
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Tile Map</li>
+            <!-- <li class="project__stack-item">Boss Fight</li> -->
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+        <div class="project btn-open">
+          <h3>Slash-Moji</h3>
+          <br>
+          <img class="project-img" src="./assets/dash.png" alt="">
+          <p class="project__description">
+
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">2D Destruction</li>
+            <!-- <li class="project__stack-item">Online Leaderboard</li> -->
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+        <div class="project btn-open">
+          <h3>Ghost Hunt</h3>
+          <br>
+          <img class="project-img" src="./assets/ghost.png" alt="">
+          <p class="project__description">
+
+          </p>
+          <ul class="project__stack">
+            <li class="project__stack-item">Unity</li>
+            <li class="project__stack-item">Networking</li>
+            <!-- <li class="project__stack-item">React</li> -->
+          </ul>
+
+          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
+            <i aria-hidden="true" class="fab fa-github"></i>
+          </a> -->
+          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
+            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+          </a> -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills -->
+    <section class="section skills" id="skills">
+      <h2 class="section__title">Skills</h2>
+      <ul class="skills__list">
+        <li class="skills__list-item btn btn--plain">Unity</li>
+        <li class="skills__list-item btn btn--plain">Unreal</li>
+        <li class="skills__list-item btn btn--plain">VR/XR</li>
+        <li class="skills__list-item btn btn--plain">C/C++</li>
+        <li class="skills__list-item btn btn--plain">C#</li>
+        <li class="skills__list-item btn btn--plain">Python</li>
+        <li class="skills__list-item btn btn--plain">JavaScript</li>
+        <li class="skills__list-item btn btn--plain">OOP</li>
+        <li class="skills__list-item btn btn--plain">Networking</li>
+        <li class="skills__list-item btn btn--plain">HTML/CSS</li>
+        <li class="skills__list-item btn btn--plain">Git</li>
+        <li class="skills__list-item btn btn--plain">Perforce</li>
+        <li class="skills__list-item btn btn--plain">Photoshop</li>
+        <li class="skills__list-item btn btn--plain">Particles</li>
+        <li class="skills__list-item btn btn--plain">VFX Graph</li>
+        <li class="skills__list-item btn btn--plain">Shader</li>
+      </ul>
+    </section>
+
+    <!-- Contact -->
+    <section class="section contact center" id="contact">
+      <h2 class="section__title">Contact</h2>
+      <a href="mailto:yenchun.haung11@gmail.com">
+        <span class="btn btn--outline">Email me</span>
+      </a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <!-- <a
+        href="https://github.com/rjshkhr/cleanfolio-minimal"
+        class="link footer__link"
+      >
+        Created By Raj Shekhar
+      </a> -->
+    <div class="social-links">
+      <a rel="noreferrer" href="https://yenchun.itch.io/" target="_blank">
+        <i class="fa-brands fa-itch-io project__stack-item"></i>
+      </a>
+      <a rel="noreferrer" href="https://www.linkedin.com/in/yen-chun-huang" target="_blank">
+        <i class="fa-brands fa-linkedin project__stack-item"></i>
+      </a>
+      <a rel="noreferrer" href="https://github.com/Jannihilator" target="_blank">
+        <i class="fa-brands fa-github project__stack-item"></i>
+      </a>
+    </div>
+  </footer>
+
+
+  <div class="scroll-container">
+    <div class="scroll-top">
+      <a aria-label="Scroll up" href="#top">
+        <i aria-hidden="true" class="fas fa-arrow-up"></i>
+      </a>
+    </div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+<script src="./cursor.js"></script>
+<script src="new.js"></script>
+<script src="modal.js"></script>
+
+</html>

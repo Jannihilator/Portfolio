@@ -1,834 +1,440 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Smooch+Sans:wght@100..900&display=swap"
-    rel="stylesheet">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Roboto:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap"
-    rel="stylesheet">
-  <script src="https://kit.fontawesome.com/fa62c117c7.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="test.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yen-Chun Huang</title>
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      cursor: none;
+      background-color: #0a0a0a;
+    }
+
+    .node.visited {
+      background-color: #facc15 !important;
+      border-color: #facc15 !important;
+      color: #111827 !important;
+      transform: scale(1.05);
+    }
+
+    #last-node {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      line-height: 1.2;
+      padding: 0.5rem;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
 </head>
 
-<body class="dark" id="top">
-  <header class="header center">
-    <h3>
-      <!-- <a href="https://rjshkhr.github.io/cleanfolio-minimal" class="link"
-          >RS.</a> -->
-    </h3>
+<body class="text-white overflow-hidden">
 
-    <nav class="nav center">
-      <ul class="nav__list center">
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#recent-projects">Projects</a>
-        </li>
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#game-jams">Jams</a>
-        </li>
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#past-projects">Past</a>
-        </li>
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#prototypes">Prototypes</a>
-        </li>
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#skills">Skills</a>
-        </li>
-        <li class="nav__list-item">
-          <a class="link link--nav" href="#contact">Contact</a>
-        </li>
-      </ul>
+  <canvas id="visual-canvas" class="fixed top-0 left-0 w-full h-full z-0"></canvas>
 
-      <button type="button" aria-label="toggle theme" class="btn btn--icon" id="theme-toggle">
-        <i aria-hidden="true" id="btn-theme" class="fas fa-sun"></i>
-      </button>
+  <div id="game-container" class="relative w-full h-screen z-10">
+    <div class="node" data-keyword="Evolve">Evolve</div>
+    <div class="node" data-keyword="Prototype">Prototype</div>
+    <div class="node" data-keyword="Code">Code</div>
+    <div class="node" data-keyword="Design">Design</div>
 
-      <button type="button" aria-label="toggle navigation" class="btn btn--icon nav__hamburger">
-        <i aria-hidden="true" class="fas fa-bars"></i>
-      </button>
-    </nav>
-  </header>
-
-  <main>
-    <div class="overlay hidden"></div>
-    <!-- About -->
-    <div class="about center">
-      <h1>Hi, I am <span class="about__name">Yen-Chun Huang.</span></h1>
-      <h2 class="about__role">A Game Developer.</h2>
-      <p class="about__desc">
-        I love creating things that people enjoy. Especially those that are unique and exceed expectations.
-        My goal is to become a game designer who explores interesting mechanics and interactions.<br><br>
-        As a board game geek, I like playing Terraforming Mars and Architects of the West Kingdom.
-        On the digital side, I am a long time Supercell fan, and enjoy action roguelikes such as Brotato, Noita, and
-        card games like Slay the Spire.
-      </p>
-
-      <div class="about__contact center">
-        <a href="./assets/CV.pdf" target="_blank" rel="noopener noreferrer">
-          <span class="btn btn--outline">Resume</span>
-        </a>
-
-        <!-- <a href="https://github.com/rjshkhr" aria-label="github" class="link link--icon">
-          <i aria-hidden="true" class="fab fa-github"></i>
-        </a>
-
-        <a href="https://linkedin.com/in/rjshkhr" aria-label="linkedin" class="link link--icon">
-          <i aria-hidden="true" class="fab fa-linkedin"></i>
-        </a> -->
-      </div>
-    </div>
-    <div id="game-bg">
-      <div id="game-board" class="game-start">
-        <div class="game-row" id="word1">
-          <div class="game-box yellow">c</div>
-          <div class="game-box grey">u</div>
-          <div class="game-box grey">r</div>
-          <div class="game-box grey">i</div>
-          <div class="game-box grey">o</div>
-          <div class="game-box green">u</div>
-          <div class="game-box grey">s</div>
-        </div>
-        <div class="game-row" id="word2">
-          <div class="game-box grey">d</div>
-          <div class="game-box green">e</div>
-          <div class="game-box grey">v</div>
-          <div class="game-box grey">e</div>
-          <div class="game-box grey">l</div>
-          <div class="game-box grey">o</div>
-          <div class="game-box grey">p</div>
-        </div>
-        <div class="game-row" id="word3">
-          <div class="game-box grey">i</div>
-          <div class="game-box grey">m</div>
-          <div class="game-box grey">a</div>
-          <div class="game-box grey">g</div>
-          <div class="game-box grey">i</div>
-          <div class="game-box yellow">n</div>
-          <div class="game-box yellow">e</div>
-        </div>
-        <div class="game-row" id="word4">
-          <div class="game-box grey">p</div>
-          <div class="game-box grey">a</div>
-          <div class="game-box grey">s</div>
-          <div class="game-box grey">s</div>
-          <div class="game-box grey">i</div>
-          <div class="game-box grey">o</div>
-          <div class="game-box green">n</div>
-        </div>
-        <div class="game-row" id="word5">
-          <div class="game-box grey">d</div>
-          <div class="game-box yellow">y</div>
-          <div class="game-box green">n</div>
-          <div class="game-box grey">a</div>
-          <div class="game-box grey">m</div>
-          <div class="game-box grey">i</div>
-          <div class="game-box yellow">c</div>
-        </div>
-        <div class="game-row" id="word6">
-          <div class="game-box green">y</div>
-          <div class="game-box green">e</div>
-          <div class="game-box green">n</div>
-          <div class="game-box green">c</div>
-          <div class="game-box green">h</div>
-          <div class="game-box green">u</div>
-          <div class="game-box green">n</div>
-        </div>
-      </div>
-    </div>
-    <!-- Modals -->
-
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://www.youtube.com/embed/fUHDFnX35RE?si=fEktM0qxvHswPbne" allow="autoplay"></iframe>
-      </div>
-      <p>
-        XHaler
-      </p>
-      <a href="https://projects.etc.cmu.edu/xhaler/about-us/">https://projects.etc.cmu.edu/xhaler/about-us/</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://www.youtube.com/embed/3zKq5qpqOWc?si=X3EkyGuCOm5zUCpV" allow="autoplay"></iframe>
-      </div>
-      <p>
-        XReveal
-      </p>
-      <a href="https://devpost.com/software/xreveal-1bl4nr">https://devpost.com/software/xreveal-1bl4nr</a>
-
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://drive.google.com/file/d/180ETl7H-uREpvFuKvvtqr6q_F-UW0wGZ/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        GPT Battle
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://drive.google.com/file/d/1FJYkTiRtiy5pZPC0bid_faIG67U2nox1/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        Keep Your Head Up
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-
-        <iframe src="https://drive.google.com/file/d/1u-qRbpnzGRsChvOJRoRvUrrPOzW0WTQQ/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        Bar VR
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://drive.google.com/file/d/1Kq54EDSm5exo5r31GHUDo-qaoCR2mZXG/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        Meow Spa
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <!-- <iframe src="" allow="autoplay"></iframe> -->
-      </div>
-      <p>
-        Q*duel
-      </p>
-      <a href="https://yenchun.itch.io/qduel">https://yenchun.itch.io/qduel</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-      </div>
-      <p>
-        Voice in the Void
-      </p>
-      <a href="https://yenchun.itch.io/voice-in-the-void">https://yenchun.itch.io/voice-in-the-void</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <!-- <iframe src="" allow="autoplay"></iframe> -->
-      </div>
-      <p>
-        Moustache Twins
-      </p>
-      <a href="https://loyiwu.itch.io/moustache-twins">https://loyiwu.itch.io/moustache-twins</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <!-- <iframe src="" allow="autoplay"></iframe> -->
-      </div>
-      <p>
-        Mento-Issue
-      </p>
-      <a href="https://yenchun.itch.io/mento-issue">https://yenchun.itch.io/mento-issue</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <!-- <iframe src="" allow="autoplay"></iframe> -->
-      </div>
-      <p>
-        No Sight All Might
-      </p>
-      <a href="https://yenchun.itch.io/no-sight-all-might">https://yenchun.itch.io/no-sight-all-might</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <!-- <iframe src="" allow="autoplay"></iframe> -->
-      </div>
-      <p>
-        Reefenge
-      </p>
-      <a href="https://yenchun.itch.io/reefenge">https://yenchun.itch.io/reefenge</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://drive.google.com/file/d/1VmaGXVE7c82ZA8KSUYO9l4r9jqV6ZxNV/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        3D Virtual Gallery
-      </p>
-      <a href="https://jannihilator.github.io/Virtual-Gallery/">https://jannihilator.github.io/Virtual-Gallery/</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-        <iframe src="https://drive.google.com/file/d/1WYP1o24g-h2uRECVJx0-WsvQZa_qck2g/preview"
-          allow="autoplay"></iframe>
-      </div>
-      <p>
-        Hand Motion Recognition
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-
-      </div>
-      <p>
-        Duel zone
-      </p>
-      <a href="./assets/duelzone.pdf">duelzone.pdf</a>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-      </div>
-      <p>
-        Pencil Shoot
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-
-      </div>
-      <p>
-        Slash-Moji
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <section class="modal hidden">
-      <div class="video-container">
-
-      </div>
-      <p>
-        Ghost Hunt
-      </p>
-      <button class="btn-close btn-modal">⨉</button>
-    </section>
-    <!-- Projects -->
-    <section id="recent-projects" class="section projects">
-      <h2 class="section__title">Recent &nbsp;Projects</h2>
-      <p>-click on project to expand-</p>
-
-      <div class="project big-project btn-open">
-        <h3 class="project-title">XHaler</h3>
-        <!-- <p>(on going)</p> -->
-        <br>
-        <img class="project-img-big" src="./assets/xhaler-archer.png" alt="">
-        <img class="project-img-big" src="./assets/xhaler-dive.png" alt="">
-        <p class="project__description_big">
-          Xhaler is a student-driven project exploring the use of breathing as a game input. By developing prototypes
-          that map different breathing patterns to in-game actions, we aim to enhance immersion in virtual reality.
-        </p>
-        <ul class="project__stack">
-          <li class="project__stack-item">VR</li>
-          <li class="project__stack-item">Python</li>
-          <li class="project__stack-item">Arduino</li>
-        </ul>
-
-        <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-          <i aria-hidden="true" class="fab fa-github"></i>
-        </a> -->
-        <a href="https://projects.etc.cmu.edu/xhaler/about-us/" aria-label="live preview" class="link link--icon"
-          target="_blank" rel="noopener noreferrer">
-          <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-        </a>
-      </div>
-      <div class="projects__grid">
-        <div class="project btn-open">
-          <h3 class="project-title">XReveal</h3>
-          <br>
-          <img class="project-img" src="./assets/xr.png" alt="">
-          <p class="project__description">
-            XReveal brings ideas to life by generating 3D assets through voice commands. Powered by AI, it
-            enables anyone (regardless of design or artistic skills) to visually share their thoughts.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">VR</li>
-            <li class="project__stack-item">OpenAI API </li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://devpost.com/software/xreveal-1bl4nr" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-
-
-
-        <div class="project btn-open">
-          <h3 class="project-title">GPT Battle</h3>
-          <br>
-          <img class="project-img" src="./assets/gpt.png" alt="">
-          <p class="project__description">
-            A 2v2 wizard spell battle where spells are created by shouting them out loud.
-            The microphone transcribes the voice, and ChatGPT interprets it through carefully designed rules to offer a
-            corresponding spell.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Shader</li>
-            <li class="project__stack-item">VFX Graph</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-
-
-        <div class="project btn-open">
-          <h3 class="project-title">Keep Your Head Up</h3>
-          <br>
-          <img class="project-img" src="./assets/snowman.png" alt="">
-          <p class="project__description">
-            Using two 3D Rudders as input, where both players put there feet on the rudders. One player controling the
-            head's movement while the other is tilting the entire map. Chaotic fun between players and the environment.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">3D Rudder</li>
-            <!-- <li class="project__stack-item">React</li> -->
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-        <div class="project btn-open">
-          <h3 class="project-title">Bar VR</h3>
-          <br>
-          <img class="project-img" src="./assets/bar.png" alt="">
-          <p class="project__description">
-            A VR bar fighting experience where player engages in a card game followed by throwing and dodging glass
-            bottles. Customized hand grabbing and throwing to bypass hardware limitations.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">VR</li>
-            <li class="project__stack-item">Hand Gesture</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-        <div class="project btn-open">
-          <h3 class="project-title">Meow Spa</h3>
-          <br>
-          <img class="project-img" src="./assets/cat.png" alt="">
-          <p class="project__description">
-            A two player game using buttons to control the conveyor belt and the machines. The game is desinged to
-            challange
-            coordination between players by putting the correct washing procedure on cats.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Adaptive Controllers</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-        <div class="project btn-open">
-          <h3 class="project-title">Q*duel</h3>
-          <br>
-          <img class="project-img" src="./assets/qduel.png" alt="">
-          <p class="project__description">
-            Inspired by the arcade game Q*bert, this game turns the classic into a local two player area control
-            challange. Color the cube to your color to win, and watch out for the environment!
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Enemy AI</li>
-            <li class="project__stack-item">Vocal SFX</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://yenchun.itch.io/qduel" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-      </div>
-    </section>
-    <!-- Projects -->
-    <section id="game-jams" class="section projects">
-      <h2 class="section__title">Game &nbsp;Jams</h2>
-      <p>-click on project to expand-</p>
-      <div class="projects__grid">
-        <div class="project btn-open">
-          <h3>Voice in the Void</h3>
-          <br>
-          <img class="project-img" src="./assets/void.png" alt="">
-          <p class="project__description">
-            A thatgamecompany × COREBLAZER GAME JAM 2025 submission for the theme "Gererousity," created in two days.
-            It's a chat-based game where players show generosity to aliens whose encrypted messages
-            gradually become clearer, eventually receiving gifts that decorate their home planets as symbols of
-            connection.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Open AI api</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://yenchun.itch.io/voice-in-the-void" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-
-        </div>
-        <div class="project btn-open">
-          <h3>Moustache Twins</h3>
-          <br>
-          <img class="project-img" src="./assets/twin.png" alt="">
-          <p class="project__description">
-            A Garena Game Jam 2025 submission for the theme "Super Hero," created in two days. It's a cooperative arcade
-            game that challange the player to coordinate with each other while dodging cheetos and saving people.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Online Leaderboard</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://loyiwu.itch.io/moustache-twins" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-
-        <div class="project btn-open">
-          <h3>Mento-Issue</h3>
-          <br>
-          <img class="project-img" src="./assets/mento.png" alt="">
-          <p class="project__description">
-            A Global Game Jam 2025 submission for the theme "Bubble," created in two days. It's a puzzle platformer with
-            10 levels, where players use Mentos and soda bottles to strategically elevate themselves. The game won the
-            Pittsburgh site non-traditional award for its creative approach.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Level Design</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://yenchun.itch.io/mento-issue" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-
-        <div class="project btn-open">
-          <h3>No Sight All Might</h3>
-          <br>
-          <img class="project-img" src="./assets/nosight.png" alt="">
-          <p class="project__description">
-            A 1-bit Jam 2024 submission for the theme "Light and Dark." Players control a ball while dodging enemies.
-            The twist is that
-            players can only attack enemies when they’re out of sight, requiring them to anticipate movements and track
-            them in the dark.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Skill System</li>
-            <li class="project__stack-item">Boss Fight</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://yenchun.itch.io/no-sight-all-might" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-
-        <div class="project btn-open">
-          <h3>Reefenge</h3>
-          <br>
-          <img class="project-img" src="./assets/reefenge.png" alt="">
-          <p class="project__description">
-            A game for GMTK Game Jam 2023 titled "Roles-Reverse." In this bullet hell game, players control
-            the enemy ships instead of the player, with the goal of eliminating the player's ship as quickly as
-            possible. Resource management and strategic troop deployment are key.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <!-- <li class="project__stack-item">TypeScript</li>
-            <li class="project__stack-item">React</li> -->
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://yenchun.itch.io/reefenge" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-      </div>
-    </section>
-    <section id="past-projects" class="section projects">
-      <h2 class="section__title">Past &nbsp;Projects</h2>
-      <p>-click on project to expand-</p>
-      <div class="projects__grid">
-        <div class="project btn-open">
-          <h3>3D Virtual Gallery</h3>
-          <br>
-          <img class="project-img" src="./assets/gallery.png" alt="">
-          <p class="project__description">
-            An online gallery showcasing past student works of Prof. Ei Jane Janet Lin.
-            Explored various possibility of how art can be presented in a digital way.
-            Implemented interesting mechanism where visitors can interact with art or the gallery itself,
-            such as painting on the wall, taking the travelator, etc.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">JavaScript</li>
-            <li class="project__stack-item">3D</li>
-            <li class="project__stack-item">HTML/CSS</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="https://jannihilator.github.io/Virtual-Gallery/" aria-label="live preview" class="link link--icon"
-            target="_blank" rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-
-        <div class="project btn-open">
-          <h3>Hand Motion Recognition</h3>
-          <br>
-          <img class="project-img" src="./assets/hand.png" alt="">
-          <p class="project__description">
-            A hand motion recognition tool using MediaPipe's solution. It not only recognizes static gestures but
-            also movements. Users will be able to browse through web pages by scrolling with their hand mid air,
-            reducing human contact during epidemic times. Later transformed into a game of shooting faces.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Python</li>
-            <li class="project__stack-item">MediaPipe</li>
-            <li class="project__stack-item">Raspberry Pi</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://yenchun.itch.io/no-sight-all-might" aria-label="live preview" class="link link--icon">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-
-        <div class="project btn-open">
-          <h3>Duel zone</h3>
-          <br>
-          <img class="project-img" src="./assets/duelzone.png" alt="">
-          <p class="project__description">
-            Duel zone is a two player card and area control game. Players manage their action cards
-            to play them in the most efficient sequence.
-            Win by either claim the most territory, develop techs or simply
-            knock the opponent out.
-            The game is about strategizing and anticipating moves of your opponent.
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Board Game</li>
-            <li class="project__stack-item">Paper Prototype</li>
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <a href="./assets/duelzone.pdf" aria-label="live preview" class="link link--icon" target="_blank"
-            rel="noopener noreferrer">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a>
-        </div>
-      </div>
-    </section>
-    <section id="prototypes" class="section projects">
-      <h2 class="section__title">Prototypes</h2>
-      <p>-click on project to expand-</p>
-      <div class="projects__grid">
-        <div class="project btn-open">
-          <h3>Pencil Shoot</h3>
-          <br>
-          <img class="project-img" src="./assets/pencil.png" alt="">
-          <p class="project__description">
-
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Tile Map</li>
-            <!-- <li class="project__stack-item">Boss Fight</li> -->
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-        <div class="project btn-open">
-          <h3>Slash-Moji</h3>
-          <br>
-          <img class="project-img" src="./assets/dash.png" alt="">
-          <p class="project__description">
-
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">2D Destruction</li>
-            <!-- <li class="project__stack-item">Online Leaderboard</li> -->
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-        <div class="project btn-open">
-          <h3>Ghost Hunt</h3>
-          <br>
-          <img class="project-img" src="./assets/ghost.png" alt="">
-          <p class="project__description">
-
-          </p>
-          <ul class="project__stack">
-            <li class="project__stack-item">Unity</li>
-            <li class="project__stack-item">Networking</li>
-            <!-- <li class="project__stack-item">React</li> -->
-          </ul>
-
-          <!-- <a href="https://github.com" aria-label="source code" class="link link--icon">
-            <i aria-hidden="true" class="fab fa-github"></i>
-          </a> -->
-          <!-- <a href="https://example.com" aria-label="live preview" class="link link--icon">
-            <i aria-hidden="true" class="fas fa-external-link-alt"></i>
-          </a> -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Skills -->
-    <section class="section skills" id="skills">
-      <h2 class="section__title">Skills</h2>
-      <ul class="skills__list">
-        <li class="skills__list-item btn btn--plain">Unity</li>
-        <li class="skills__list-item btn btn--plain">Unreal</li>
-        <li class="skills__list-item btn btn--plain">VR/XR</li>
-        <li class="skills__list-item btn btn--plain">C/C++</li>
-        <li class="skills__list-item btn btn--plain">C#</li>
-        <li class="skills__list-item btn btn--plain">Python</li>
-        <li class="skills__list-item btn btn--plain">JavaScript</li>
-        <li class="skills__list-item btn btn--plain">OOP</li>
-        <li class="skills__list-item btn btn--plain">Networking</li>
-        <li class="skills__list-item btn btn--plain">HTML/CSS</li>
-        <li class="skills__list-item btn btn--plain">Git</li>
-        <li class="skills__list-item btn btn--plain">Perforce</li>
-        <li class="skills__list-item btn btn--plain">Photoshop</li>
-        <li class="skills__list-item btn btn--plain">Particles</li>
-        <li class="skills__list-item btn btn--plain">VFX Graph</li>
-        <li class="skills__list-item btn btn--plain">Shader</li>
-      </ul>
-    </section>
-
-    <!-- Contact -->
-    <section class="section contact center" id="contact">
-      <h2 class="section__title">Contact</h2>
-      <a href="mailto:yenchun.haung11@gmail.com">
-        <span class="btn btn--outline">Email me</span>
-      </a>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <!-- <a
-        href="https://github.com/rjshkhr/cleanfolio-minimal"
-        class="link footer__link"
-      >
-        Created By Raj Shekhar
-      </a> -->
-    <div class="social-links">
-      <a rel="noreferrer" href="https://yenchun.itch.io/" target="_blank">
-        <i class="fa-brands fa-itch-io project__stack-item"></i>
-      </a>
-      <a rel="noreferrer" href="https://www.linkedin.com/in/yen-chun-huang" target="_blank">
-        <i class="fa-brands fa-linkedin project__stack-item"></i>
-      </a>
-      <a rel="noreferrer" href="https://github.com/Jannihilator" target="_blank">
-        <i class="fa-brands fa-github project__stack-item"></i>
-      </a>
-    </div>
-  </footer>
-
-
-  <div class="scroll-container">
-    <div class="scroll-top">
-      <a aria-label="Scroll up" href="#top">
-        <i aria-hidden="true" class="fas fa-arrow-up"></i>
-      </a>
+    <div id="last-node"
+      class="node absolute bg-transparent border-2 border-yellow-400 items-center justify-center h-16 w-40 text-sm font-bold select-none transition-all duration-300"
+      data-keyword="Yen-Chun Huang">
+      <span>Yen-Chun</span>
+      <span>Huang</span>
     </div>
   </div>
 
-  <script src="./script.js"></script>
+  <div id="success-screen"
+    class="hidden fixed inset-0 z-20 bg-black/80 flex flex-col items-center justify-center text-center p-8 backdrop-blur-sm">
+    <h1 class="text-5xl font-bold text-yellow-400 mb-4">Network Activated!</h1>
+    <p class="text-xl text-gray-300 mb-8">You've explored all the connections.</p>
+    <button id="next-page-button"
+      class="bg-yellow-500 text-gray-900 font-bold py-3 px-8 text-lg hover:bg-yellow-400 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-300">
+      Proceed to Next Page
+    </button>
+  </div>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const canvas = document.getElementById('visual-canvas');
+      const ctx = canvas.getContext('2d');
+      const initialNodes = Array.from(document.querySelectorAll('.node:not(#last-node)'));
+      const lastNode = document.getElementById('last-node');
+      const allNodes = [...initialNodes, lastNode];
+      const successScreen = document.getElementById('success-screen');
+
+      let particles = [];
+      let mouse = { x: null, y: null };
+      const visitedNodes = new Set();
+      let energyPulses = [];
+      let nodeCycle = [];
+
+      const getCenter = (element) => {
+        if (!element || element.style.display === 'none') return null;
+        const rect = element.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      };
+
+      const getEdgePoint = (fromElement, toElement) => {
+        const fromRect = fromElement.getBoundingClientRect();
+        const toRect = toElement.getBoundingClientRect();
+
+        const fromCenter = { x: fromRect.left + fromRect.width / 2, y: fromRect.top + fromRect.height / 2 };
+        const toCenter = { x: toRect.left + toRect.width / 2, y: toRect.top + toRect.height / 2 };
+
+        // Calculate angle from source to target
+        const angle = Math.atan2(toCenter.y - fromCenter.y, toCenter.x - fromCenter.x);
+
+        // Calculate intersection point with FROM element's border (rectangular)
+        const halfWidthFrom = fromRect.width / 2;
+        const halfHeightFrom = fromRect.height / 2;
+        const tanAngle = Math.tan(angle);
+        let fromEdgeX, fromEdgeY;
+
+        if (Math.abs(tanAngle) <= halfHeightFrom / halfWidthFrom) {
+          // Left or right edge
+          if (toCenter.x > fromCenter.x) {
+            fromEdgeX = fromCenter.x + halfWidthFrom;
+            fromEdgeY = fromCenter.y + (fromEdgeX - fromCenter.x) * tanAngle;
+          } else {
+            fromEdgeX = fromCenter.x - halfWidthFrom;
+            fromEdgeY = fromCenter.y + (fromEdgeX - fromCenter.x) * tanAngle;
+          }
+        } else {
+          // Top or bottom edge
+          if (toCenter.y > fromCenter.y) {
+            fromEdgeY = fromCenter.y + halfHeightFrom;
+            fromEdgeX = fromCenter.x + (fromEdgeY - fromCenter.y) / tanAngle;
+          } else {
+            fromEdgeY = fromCenter.y - halfHeightFrom;
+            fromEdgeX = fromCenter.x + (fromEdgeY - fromCenter.y) / tanAngle;
+          }
+        }
+
+        // Calculate intersection point with TO element's border (rectangular)
+        const halfWidthTo = toRect.width / 2;
+        const halfHeightTo = toRect.height / 2;
+        let toEdgeX, toEdgeY;
+
+        if (Math.abs(tanAngle) <= halfHeightTo / halfWidthTo) {
+          // Left or right edge
+          if (toCenter.x > fromCenter.x) {
+            toEdgeX = toCenter.x - halfWidthTo;
+            toEdgeY = toCenter.y - (toCenter.x - toEdgeX) * tanAngle;
+          } else {
+            toEdgeX = toCenter.x + halfWidthTo;
+            toEdgeY = toCenter.y - (toCenter.x - toEdgeX) * tanAngle;
+          }
+        } else {
+          // Top or bottom edge
+          if (toCenter.y > fromCenter.y) {
+            toEdgeY = toCenter.y - halfHeightTo;
+            toEdgeX = toCenter.x - (toCenter.y - toEdgeY) / tanAngle;
+          } else {
+            toEdgeY = toCenter.y + halfHeightTo;
+            toEdgeX = toCenter.x - (toCenter.y - toEdgeY) / tanAngle;
+          }
+        }
+
+        return { from: { x: fromEdgeX, y: fromEdgeY }, to: { x: toEdgeX, y: toEdgeY } };
+      };
+
+      const setupCanvas = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+
+      const positionInitialNodes = () => {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const nodeWidth = 160;
+        const nodeHeight = 64;
+
+        // Define 4 large placement zones (quadrants)
+        const safeMargin = {
+          x: Math.max(60, W * 0.1),
+          y: Math.max(60, H * 0.1)
+        };
+        const halfW = W / 2;
+        const halfH = H / 2;
+
+        const quadrants = [
+          { x: safeMargin.x, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
+          { x: halfW + safeMargin.x * 0.5, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
+          { x: W - safeMargin.x - (halfW - safeMargin.x * 1.5), y: H - safeMargin.y - (halfH - safeMargin.y * 1.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
+          { x: safeMargin.x, y: H - safeMargin.y - (halfH - safeMargin.y * 1.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 }
+        ];
+
+        nodeCycle = [...initialNodes].sort(() => 0.5 - Math.random());
+
+        nodeCycle.forEach((node, index) => {
+          const q = quadrants[index];
+          const x = q.x + Math.random() * (q.w - nodeWidth);
+          const y = q.y + Math.random() * (q.h - nodeHeight);
+          node.style.left = `${x}px`;
+          node.style.top = `${y}px`;
+          node.className = 'node absolute bg-transparent border-2 border-yellow-400 flex items-center justify-center h-16 w-40 text-sm font-bold select-none transition-all duration-300';
+        });
+      };
+
+      const createPulsesFromVisitedNodes = () => {
+        energyPulses = [];
+
+        // For each visited node, create pulses to unvisited neighbors
+        visitedNodes.forEach(visitedNode => {
+          const startPoint = getCenter(visitedNode);
+          if (!startPoint) return;
+
+          if (initialNodes.includes(visitedNode)) {
+            const currentIndex = nodeCycle.indexOf(visitedNode);
+            const nextNode = nodeCycle[(currentIndex + 1) % nodeCycle.length];
+            const prevNode = nodeCycle[(currentIndex - 1 + nodeCycle.length) % nodeCycle.length];
+
+            // Pulse to neighbors in the cycle if they aren't visited
+            if (!visitedNodes.has(nextNode)) {
+              energyPulses.push(new EnergyPulse(visitedNode, nextNode));
+            }
+            if (!visitedNodes.has(prevNode)) {
+              energyPulses.push(new EnergyPulse(visitedNode, prevNode));
+            }
+
+            // Pulse to last node if all initial nodes are visited and last node isn't
+            if (visitedNodes.size === initialNodes.length && lastNode.style.display !== 'none' && !visitedNodes.has(lastNode)) {
+              energyPulses.push(new EnergyPulse(visitedNode, lastNode));
+            }
+          }
+          else if (visitedNode === lastNode) {
+            initialNodes.forEach(outerNode => {
+              if (!visitedNodes.has(outerNode)) {
+                energyPulses.push(new EnergyPulse(visitedNode, outerNode));
+              }
+            });
+          }
+        });
+      };
+
+      const handleNodeEnter = (event) => {
+        const node = event.target;
+
+        if (!visitedNodes.has(node)) {
+          node.classList.add('visited');
+          visitedNodes.add(node);
+
+          // Create firework burst when the last node (name) is visited
+          if (node === lastNode) {
+            const center = getCenter(lastNode);
+            if (center) {
+              createFireworkBurst(center.x, center.y);
+            }
+          }
+        }
+
+        if (visitedNodes.size === initialNodes.length && lastNode.style.display === 'none') {
+          lastNode.style.display = 'flex';
+        }
+
+        // Always recreate pulses after any node interaction
+        createPulsesFromVisitedNodes();
+
+        if (visitedNodes.size === allNodes.length) {
+          energyPulses = [];
+          setTimeout(() => {
+            window.location.href = 'portfolio.html';
+          }, 1000);
+        }
+      };
+
+      const handleMouseMove = (e) => {
+        mouse.x = e.clientX; mouse.y = e.clientY;
+        for (let i = 0; i < 5; i++) particles.push(new Particle(mouse.x, mouse.y));
+      };
+
+      class Particle {
+        constructor(x, y) {
+          this.x = x; this.y = y; this.size = Math.random() * 3 + 1;
+          this.speedX = Math.random() * 6 - 3; this.speedY = Math.random() * 6 - 3;
+          this.life = 1; const baseHue = 45; const hueSpread = 40;
+          const hue = (baseHue + (Math.random() * hueSpread) - (hueSpread / 2));
+          this.color = `hsl(${hue}, 100%, ${60 + Math.random() * 25}%)`;
+        }
+        update() {
+          this.x += this.speedX; this.y += this.speedY;
+          if (this.size > 0.1) this.size -= 0.05; this.life -= 0.025;
+        }
+        draw() {
+          ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color;
+          ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      class FireworkParticle {
+        constructor(x, y, hue) {
+          this.x = x;
+          this.y = y;
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 8 + 4;
+          this.speedX = Math.cos(angle) * speed;
+          this.speedY = Math.sin(angle) * speed;
+          this.size = Math.random() * 4 + 2;
+          this.life = 1;
+          this.gravity = 0.15;
+          this.hue = hue;
+          this.color = `hsl(${hue}, 100%, ${60 + Math.random() * 20}%)`;
+        }
+        update() {
+          this.speedY += this.gravity;
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.life -= 0.015;
+          if (this.size > 0.1) this.size -= 0.08;
+        }
+        draw() {
+          ctx.globalAlpha = Math.max(0, this.life);
+          ctx.fillStyle = this.color;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Add glow
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 15;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      let fireworkParticles = [];
+
+      const createFireworkBurst = (x, y) => {
+        const hues = [45, 30, 60, 50, 40]; // Yellow/gold variations
+        for (let i = 0; i < 100; i++) {
+          const hue = hues[Math.floor(Math.random() * hues.length)];
+          fireworkParticles.push(new FireworkParticle(x, y, hue));
+        }
+      };
+
+      class EnergyPulse {
+        constructor(fromNode, toNode) {
+          this.fromNode = fromNode;
+          this.toNode = toNode;
+          this.progress = 0;
+          this.tailLength = 0.15;
+        }
+        update() {
+          this.progress += 0.015;
+          if (this.progress > 1 + this.tailLength) this.progress = 0;
+        }
+        draw() {
+          const edgePoints = getEdgePoint(this.fromNode, this.toNode);
+          if (!edgePoints) return;
+
+          const start = edgePoints.from;
+          const end = edgePoints.to;
+
+          const headProgress = Math.min(this.progress, 1);
+          const tailProgress = Math.max(0, this.progress - this.tailLength);
+          if (headProgress <= tailProgress) return;
+
+          const headX = start.x + (end.x - start.x) * headProgress;
+          const headY = start.y + (end.y - start.y) * headProgress;
+          const tailX = start.x + (end.x - start.x) * tailProgress;
+          const tailY = start.y + (end.y - start.y) * tailProgress;
+          const gradient = ctx.createLinearGradient(tailX, tailY, headX, headY);
+          gradient.addColorStop(0, 'rgba(254, 240, 138, 0)');
+          gradient.addColorStop(1, '#fef08a');
+          ctx.strokeStyle = gradient; ctx.lineWidth = 4; ctx.lineCap = 'round';
+          ctx.shadowColor = '#f59e0b'; ctx.shadowBlur = 20;
+          ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(headX, headY); ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      const animate = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < nodeCycle.length; i++) {
+          const startNode = nodeCycle[i];
+          const endNode = nodeCycle[(i + 1) % nodeCycle.length];
+          const edgePoints = getEdgePoint(startNode, endNode);
+          if (edgePoints) {
+            const bothVisited = visitedNodes.has(startNode) && visitedNodes.has(endNode);
+            ctx.beginPath();
+            ctx.moveTo(edgePoints.from.x, edgePoints.from.y);
+            ctx.lineTo(edgePoints.to.x, edgePoints.to.y);
+            ctx.lineWidth = bothVisited ? 3 : 2;
+            ctx.strokeStyle = bothVisited ? '#facc15' : 'rgba(250, 204, 21, 0.2)';
+            if (bothVisited) { ctx.shadowColor = '#facc15'; ctx.shadowBlur = 10; }
+            ctx.stroke(); ctx.shadowBlur = 0;
+          }
+        }
+
+        if (lastNode.style.display !== 'none') {
+          initialNodes.forEach(node => {
+            const edgePoints = getEdgePoint(node, lastNode);
+            if (edgePoints) {
+              const bothVisited = visitedNodes.has(node) && visitedNodes.has(lastNode);
+              ctx.beginPath();
+              ctx.moveTo(edgePoints.from.x, edgePoints.from.y);
+              ctx.lineTo(edgePoints.to.x, edgePoints.to.y);
+              ctx.lineWidth = bothVisited ? 3 : 2;
+              ctx.strokeStyle = bothVisited ? '#facc15' : 'rgba(250, 204, 21, 0.2)';
+              if (bothVisited) { ctx.shadowColor = '#facc15'; ctx.shadowBlur = 10; }
+              ctx.stroke(); ctx.shadowBlur = 0;
+            }
+          });
+        }
+
+        energyPulses.forEach(pulse => { pulse.update(); pulse.draw(); });
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          particles[i].update(); particles[i].draw();
+          if (particles[i].life <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = fireworkParticles.length - 1; i >= 0; i--) {
+          fireworkParticles[i].update(); fireworkParticles[i].draw();
+          if (fireworkParticles[i].life <= 0) fireworkParticles.splice(i, 1);
+        }
+
+        ctx.globalAlpha = 1;
+
+        if (mouse.x) {
+          ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 8, 0, Math.PI * 2);
+          ctx.strokeStyle = '#fde047'; ctx.lineWidth = 2; ctx.stroke();
+        }
+        requestAnimationFrame(animate);
+      };
+
+      // --- Initial Setup ---
+      lastNode.style.display = 'none';
+      setupCanvas();
+      positionInitialNodes();
+      animate();
+
+      window.addEventListener('resize', () => {
+        setupCanvas();
+        positionInitialNodes();
+        lastNode.style.display = 'none';
+        visitedNodes.clear();
+        allNodes.forEach(n => n.classList.remove('visited'));
+        energyPulses = [];
+      });
+
+      window.addEventListener('mousemove', handleMouseMove);
+      allNodes.forEach(node => { node.addEventListener('mouseenter', handleNodeEnter); });
+      document.getElementById('next-page-button').addEventListener('click', () => location.reload());
+    });
+  </script>
 </body>
-<script src="new.js"></script>
-<script src="modal.js"></script>
 
 </html>
