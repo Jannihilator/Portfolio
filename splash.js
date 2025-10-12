@@ -103,30 +103,31 @@ function initializeSplash() {
     const positionInitialNodes = () => {
         const W = window.innerWidth;
         const H = window.innerHeight;
-        
+
         // Detect mobile/tablet vs desktop
         const isMobile = W < 768;
-        const nodeWidth = isMobile ? 120 : 160;
+        const nodeWidth = isMobile ? 90 : 160;
         const nodeHeight = isMobile ? 48 : 64;
         const fontSize = isMobile ? '0.75rem' : '0.875rem';
 
         const safeMargin = {
-            x: Math.max(isMobile ? 40 : 60, W * 0.1),
-            y: Math.max(isMobile ? 40 : 60, H * 0.1)
+            x: Math.max(isMobile ? 30 : 60, W * 0.1),
+            y: Math.max(isMobile ? 80 : 60, H * (isMobile ? 0.05 : 0.1))
         };
         const halfW = W / 2;
         const halfH = H / 2;
 
         // Quadrants arranged in proper order to form a loop
         const quadrants = [
-            { x: safeMargin.x, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
-            { x: halfW + safeMargin.x * 0.5, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
-            { x: halfW + safeMargin.x * 0.5, y: halfH + safeMargin.y * 0.5, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
-            { x: safeMargin.x, y: halfH + safeMargin.y * 0.5, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 }
+            { x: safeMargin.x, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * (isMobile ? 1.8 : 1.5) },
+            { x: halfW + safeMargin.x * 0.5, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * (isMobile ? 1.8 : 1.5) },
+            { x: halfW + safeMargin.x * 0.5, y: halfH + safeMargin.y * (isMobile ? 1.2 : 0.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * (isMobile ? 1.8 : 1.5) },
+            { x: safeMargin.x, y: halfH + safeMargin.y * (isMobile ? 1.2 : 0.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * (isMobile ? 1.8 : 1.5) }
         ];
 
         // Don't randomize the order - keep nodes in sequence to form proper loop
         nodeCycle = [...initialNodes];
+        let showLines = false; // <-- ADDED THIS LINE
 
         nodeCycle.forEach((node, index) => {
             const q = quadrants[index];
@@ -143,7 +144,7 @@ function initializeSplash() {
             node.style.fontSize = fontSize;
             node.className = 'node absolute bg-transparent border-2 border-yellow-400 flex items-center justify-center font-bold select-none transition-all duration-300';
         });
-        
+
         // Also adjust last node size
         if (lastNode) {
             lastNode.style.width = `${nodeWidth}px`;
@@ -153,6 +154,7 @@ function initializeSplash() {
     };
 
     async function flyOutNodesSequentially() {
+        showLines = false;
         for (let i = 0; i < nodeCycle.length; i++) {
             const node = nodeCycle[i];
             node.style.opacity = '1';
@@ -178,6 +180,7 @@ function initializeSplash() {
             });
             await new Promise(r => setTimeout(r, 150));
         }
+        showLines = true
     }
 
     const createPulsesFromVisitedNodes = () => {
@@ -224,7 +227,7 @@ function initializeSplash() {
             mouse.x = e.touches[0].clientX;
             mouse.y = e.touches[0].clientY;
             for (let i = 0; i < 5; i++) particles.push(new Particle(mouse.x, mouse.y));
-            
+
             // Check if touch is over any node
             const touch = e.touches[0];
             const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -383,32 +386,13 @@ function initializeSplash() {
 
     const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < nodeCycle.length; i++) {
-            const startNode = nodeCycle[i];
-            const endNode = nodeCycle[(i + 1) % nodeCycle.length];
-            const edgePoints = getEdgePoint(startNode, endNode);
-            if (edgePoints) {
-                const bothVisited = visitedNodes.has(startNode) && visitedNodes.has(endNode);
-                ctx.beginPath();
-                ctx.moveTo(edgePoints.from.x, edgePoints.from.y);
-                ctx.lineTo(edgePoints.to.x, edgePoints.to.y);
-                ctx.lineWidth = bothVisited ? 3 : 2;
-                ctx.strokeStyle = bothVisited ? '#facc15' : 'rgba(250, 204, 21, 0.2)';
-                if (bothVisited) {
-                    ctx.shadowColor = '#facc15';
-                    ctx.shadowBlur = 10;
-                }
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
-        }
-
-        if (lastNode.style.display !== 'none') {
-            initialNodes.forEach(node => {
-                const edgePoints = getEdgePoint(node, lastNode);
+        if (showLines) {
+            for (let i = 0; i < nodeCycle.length; i++) {
+                const startNode = nodeCycle[i];
+                const endNode = nodeCycle[(i + 1) % nodeCycle.length];
+                const edgePoints = getEdgePoint(startNode, endNode);
                 if (edgePoints) {
-                    const bothVisited = visitedNodes.has(node) && visitedNodes.has(lastNode);
+                    const bothVisited = visitedNodes.has(startNode) && visitedNodes.has(endNode);
                     ctx.beginPath();
                     ctx.moveTo(edgePoints.from.x, edgePoints.from.y);
                     ctx.lineTo(edgePoints.to.x, edgePoints.to.y);
@@ -421,9 +405,28 @@ function initializeSplash() {
                     ctx.stroke();
                     ctx.shadowBlur = 0;
                 }
-            });
-        }
+            }
 
+            if (lastNode.style.display !== 'none') {
+                initialNodes.forEach(node => {
+                    const edgePoints = getEdgePoint(node, lastNode);
+                    if (edgePoints) {
+                        const bothVisited = visitedNodes.has(node) && visitedNodes.has(lastNode);
+                        ctx.beginPath();
+                        ctx.moveTo(edgePoints.from.x, edgePoints.from.y);
+                        ctx.lineTo(edgePoints.to.x, edgePoints.to.y);
+                        ctx.lineWidth = bothVisited ? 3 : 2;
+                        ctx.strokeStyle = bothVisited ? '#facc15' : 'rgba(250, 204, 21, 0.2)';
+                        if (bothVisited) {
+                            ctx.shadowColor = '#facc15';
+                            ctx.shadowBlur = 10;
+                        }
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+                });
+            }
+        }
         energyPulses.forEach(pulse => {
             pulse.update();
             pulse.draw();
@@ -468,6 +471,7 @@ function initializeSplash() {
             visitedNodes.clear();
             allNodes.forEach(n => n.classList.remove('visited'));
             energyPulses = [];
+            flyOutNodesSequentially();
         });
 
         window.addEventListener('mousemove', handleMouseMove);
