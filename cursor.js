@@ -1,5 +1,13 @@
 // Cursor Effect for Home Page
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if device is mobile/tablet
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    // Skip cursor effect on mobile
+    if (isMobile) {
+        return;
+    }
+
     // Create canvas element
     const canvas = document.createElement('canvas');
     canvas.id = 'cursor-canvas';

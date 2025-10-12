@@ -103,37 +103,53 @@ function initializeSplash() {
     const positionInitialNodes = () => {
         const W = window.innerWidth;
         const H = window.innerHeight;
-        const nodeWidth = 160;
-        const nodeHeight = 64;
+        
+        // Detect mobile/tablet vs desktop
+        const isMobile = W < 768;
+        const nodeWidth = isMobile ? 120 : 160;
+        const nodeHeight = isMobile ? 48 : 64;
+        const fontSize = isMobile ? '0.75rem' : '0.875rem';
 
         const safeMargin = {
-            x: Math.max(60, W * 0.1),
-            y: Math.max(60, H * 0.1)
+            x: Math.max(isMobile ? 40 : 60, W * 0.1),
+            y: Math.max(isMobile ? 40 : 60, H * 0.1)
         };
         const halfW = W / 2;
         const halfH = H / 2;
 
+        // Quadrants arranged in proper order to form a loop
         const quadrants = [
             { x: safeMargin.x, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
             { x: halfW + safeMargin.x * 0.5, y: safeMargin.y, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
-            { x: W - safeMargin.x - (halfW - safeMargin.x * 1.5), y: H - safeMargin.y - (halfH - safeMargin.y * 1.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
-            { x: safeMargin.x, y: H - safeMargin.y - (halfH - safeMargin.y * 1.5), w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 }
+            { x: halfW + safeMargin.x * 0.5, y: halfH + safeMargin.y * 0.5, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 },
+            { x: safeMargin.x, y: halfH + safeMargin.y * 0.5, w: halfW - safeMargin.x * 1.5, h: halfH - safeMargin.y * 1.5 }
         ];
 
-        nodeCycle = [...initialNodes].sort(() => 0.5 - Math.random());
+        // Don't randomize the order - keep nodes in sequence to form proper loop
+        nodeCycle = [...initialNodes];
 
         nodeCycle.forEach((node, index) => {
             const q = quadrants[index];
-            const x = q.x + Math.random() * (q.w - nodeWidth);
-            const y = q.y + Math.random() * (q.h - nodeHeight);
+            const x = q.x + Math.random() * Math.max(0, q.w - nodeWidth);
+            const y = q.y + Math.random() * Math.max(0, q.h - nodeHeight);
             node.dataset.targetX = x;
             node.dataset.targetY = y;
             // Start from center, hidden
             node.style.left = `${W / 2 - nodeWidth / 2}px`;
             node.style.top = `${H / 2 - nodeHeight / 2}px`;
             node.style.opacity = '0';
-            node.className = 'node absolute bg-transparent border-2 border-yellow-400 flex items-center justify-center h-16 w-40 text-sm font-bold select-none transition-all duration-300';
+            node.style.width = `${nodeWidth}px`;
+            node.style.height = `${nodeHeight}px`;
+            node.style.fontSize = fontSize;
+            node.className = 'node absolute bg-transparent border-2 border-yellow-400 flex items-center justify-center font-bold select-none transition-all duration-300';
         });
+        
+        // Also adjust last node size
+        if (lastNode) {
+            lastNode.style.width = `${nodeWidth}px`;
+            lastNode.style.height = `${nodeHeight}px`;
+            lastNode.style.fontSize = fontSize;
+        }
     };
 
     async function flyOutNodesSequentially() {
@@ -208,6 +224,13 @@ function initializeSplash() {
             mouse.x = e.touches[0].clientX;
             mouse.y = e.touches[0].clientY;
             for (let i = 0; i < 5; i++) particles.push(new Particle(mouse.x, mouse.y));
+            
+            // Check if touch is over any node
+            const touch = e.touches[0];
+            const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (elementAtTouch && elementAtTouch.classList.contains('node')) {
+                handleNodeEnter({ currentTarget: elementAtTouch });
+            }
         }
     };
 
