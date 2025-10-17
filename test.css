@@ -247,3 +247,8 @@
 body {
     cursor: none;
 }
+
+.highlight {
+    color: #facc15;
+    /* font-weight: 600; */
+}
