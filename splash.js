@@ -27,6 +27,7 @@ function initializeSplash() {
 
     let particles = [];
     let fireworkParticles = [];
+    let breathingPulses = [];
     let mouse = { x: null, y: null };
     const visitedNodes = new Set();
     let energyPulses = [];
@@ -168,7 +169,7 @@ function initializeSplash() {
 
                 const animate = (time) => {
                     const t = Math.min(1, (time - startTime) / duration);
-                    const ease = 1 - Math.pow(1 - t, 3);
+                    const ease = 1 - Math.pow(1 - t, 2);
                     const x = startX + (endX - startX) * ease;
                     const y = startY + (endY - startY) * ease;
                     node.style.left = `${x}px`;
@@ -178,7 +179,7 @@ function initializeSplash() {
                 };
                 requestAnimationFrame(animate);
             });
-            await new Promise(r => setTimeout(r, 150));
+            // await new Promise(r => setTimeout(r, 150));
         }
         showLines = true
     }
@@ -383,6 +384,63 @@ function initializeSplash() {
             ctx.shadowBlur = 0;
         }
     }
+    // **MODIFIED**: Class for a double-wave rectangular pulse effect
+    class BreathingPulse {
+        constructor(node) {
+            this.node = node;
+            this.center = getCenter(node);
+            // Get base dimensions from the node's bounding rectangle
+            const rect = node.getBoundingClientRect();
+            this.baseWidth = rect.width;
+            this.baseHeight = rect.height;
+
+            this.expansion = 0; // Controls the growth of the rectangles
+            this.maxExpansion = 50; // How far it expands before fading
+            this.life = 0.8;
+            this.speed = 0.5;
+        }
+        update() {
+            if (!this.center) {
+                this.life = 0;
+                return;
+            };
+            this.expansion += this.speed;
+            // Life is tied to the expansion progress
+            this.life = Math.max(0, 1 - (this.expansion / this.maxExpansion));
+        }
+        draw() {
+            if (!this.center || this.life <= 0) return;
+
+            ctx.save();
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 8;
+
+            // 1. Draw the primary, brighter rectangle
+            const primaryWidth = this.baseWidth + this.expansion;
+            const primaryHeight = this.baseHeight + this.expansion;
+            const primaryX = this.center.x - primaryWidth / 2;
+            const primaryY = this.center.y - primaryHeight / 2;
+
+            ctx.strokeStyle = `rgba(254, 240, 138, ${this.life * 0.8})`;
+            ctx.shadowColor = `rgba(254, 240, 138, ${this.life * 0.8})`;
+            ctx.strokeRect(primaryX, primaryY, primaryWidth, primaryHeight);
+
+            // 2. Draw the secondary, fainter "echo" rectangle
+            const echoExpansion = this.expansion - 20; // Offset from the main pulse
+            if (echoExpansion > 0) {
+                const echoWidth = this.baseWidth + echoExpansion;
+                const echoHeight = this.baseHeight + echoExpansion;
+                const echoX = this.center.x - echoWidth / 2;
+                const echoY = this.center.y - echoHeight / 2;
+                
+                ctx.strokeStyle = `rgba(254, 240, 138, ${this.life * 0.3})`;
+                ctx.shadowColor = `rgba(254, 240, 138, ${this.life * 0.3})`;
+                ctx.strokeRect(echoX, echoY, echoWidth, echoHeight);
+            }
+            
+            ctx.restore();
+        }
+    }
 
     const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -427,6 +485,16 @@ function initializeSplash() {
                 });
             }
         }
+
+        for (let i = breathingPulses.length - 1; i >= 0; i--) {
+            breathingPulses[i].update();
+            breathingPulses[i].draw();
+            // Remove the pulse if its life is over
+            if (breathingPulses[i].life <= 0) {
+                breathingPulses.splice(i, 1);
+            }
+        }
+
         energyPulses.forEach(pulse => {
             pulse.update();
             pulse.draw();
@@ -463,7 +531,13 @@ function initializeSplash() {
     // Fly out nodes sequentially, then start animation
     flyOutNodesSequentially().then(() => {
         animate();
-
+        setInterval(() => {
+            nodeCycle.forEach(node => {
+                if (!visitedNodes.has(node)) {
+                    breathingPulses.push(new BreathingPulse(node));
+                }
+            });
+        }, 3000);
         window.addEventListener('resize', () => {
             setupCanvas();
             positionInitialNodes();
@@ -471,6 +545,7 @@ function initializeSplash() {
             visitedNodes.clear();
             allNodes.forEach(n => n.classList.remove('visited'));
             energyPulses = [];
+            breathingPulses = [];
             flyOutNodesSequentially();
         });
 
