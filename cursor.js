@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Check if device is mobile/tablet
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-    
+
     // Skip cursor effect on mobile
     if (isMobile) {
         return;
@@ -18,10 +18,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let particles = [];
     let mouse = { x: null, y: null };
 
+    // In cursor.js
+
     // Setup canvas
     const setupCanvas = () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // 1. Get the device's pixel ratio
+        const dpr = window.devicePixelRatio || 1;
+
+        // 2. Get the size of the canvas in CSS pixels
+        const rect = canvas.getBoundingClientRect();
+
+        // 3. Set the canvas's drawing surface size to match the physical pixels
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+
+        // 4. Scale the drawing context down by the same amount
+        // This allows you to use CSS pixel coordinates for all drawing operations
+        ctx.scale(dpr, dpr);
     };
 
     // Mouse move handler

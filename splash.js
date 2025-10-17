@@ -255,6 +255,7 @@ function initializeSplash() {
 
         if (visitedNodes.size === initialNodes.length && lastNode.style.display === 'none') {
             lastNode.style.display = 'flex';
+            breathingPulses.push(new BreathingPulse(lastNode));
         }
 
         createPulsesFromVisitedNodes();
@@ -384,7 +385,7 @@ function initializeSplash() {
             ctx.shadowBlur = 0;
         }
     }
-    // **MODIFIED**: Class for a double-wave rectangular pulse effect
+
     class BreathingPulse {
         constructor(node) {
             this.node = node;
