@@ -62,7 +62,7 @@ h3,
 h4 {
   line-height: 1.2;
   color: var(--clr-fg-alt);
-  font-family: "Smooch Sans", serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 
 h1 {
@@ -74,7 +74,7 @@ h2 {
 }
 
 h3 {
-  font-size: 2rem;
+  font-size: 1.8rem;
 }
 
 h4 {
