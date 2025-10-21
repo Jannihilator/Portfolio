@@ -1,7 +1,7 @@
 const body = document.body
 const btnToggle = document.getElementById('theme-toggle') // Attach event to button, not icon
 const iconTheme = document.getElementById('btn-theme')
-
+const btnHamburger = document.querySelector('.nav__hamburger')	
 const getBodyTheme = localStorage.getItem('portfolio-theme') || 'dark'
 const getBtnTheme = localStorage.getItem('portfolio-btn-theme') || 'fa-sun'
 
@@ -28,17 +28,18 @@ const toggleTheme = () => {
 btnToggle.addEventListener('click', toggleTheme) // Attach event to button
 
 const displayList = () => {
-	const navUl = document.querySelector('.nav__list')
+  const navUl = document.querySelector('.nav__list')
+  const hamburgerIcon = btnHamburger.querySelector('i')
 
-	if (btnHamburger.classList.contains('fa-bars')) {
-		btnHamburger.classList.remove('fa-bars')
-		btnHamburger.classList.add('fa-times')
-		navUl.classList.add('display-nav-list')
-	} else {
-		btnHamburger.classList.remove('fa-times')
-		btnHamburger.classList.add('fa-bars')
-		navUl.classList.remove('display-nav-list')
-	}
+  if (hamburgerIcon.classList.contains('fa-bars')) {
+    hamburgerIcon.classList.remove('fa-bars')
+    hamburgerIcon.classList.add('fa-times')
+    navUl.classList.add('display-nav-list')
+  } else {
+    hamburgerIcon.classList.remove('fa-times')
+    hamburgerIcon.classList.add('fa-bars')
+    navUl.classList.remove('display-nav-list')
+  }
 }
 
 btnHamburger.addEventListener('click', displayList)

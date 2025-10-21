@@ -1,128 +1,88 @@
-var cue = 1;
-var scrollScale = window.innerHeight * 0.1
-// document.querySelector("#hero").style.top = scrollScale * 5;
-window.addEventListener('scroll',function(e){
-    const scrolled = window.scrollY;
+// config (tweak if needed)
+const scrollScale = window.innerHeight * 0.08;
+// Compute offset dynamically from the video container
+const videoContainer = document.querySelector('#reel');
+let offset = 0;
+const offsetMargin = scrollScale*7.5;
 
 
-    if(scrolled<scrollScale){
-        if(cue==2){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word1").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
+// Wait for layout to be ready
+function updateOffset() {
+  const rect = videoContainer.getBoundingClientRect();
+  offset = rect.bottom - offsetMargin; // absolute scroll position where the video ends
+}
+
+// Run once and also when window resizes
+updateOffset();
+window.addEventListener('resize', updateOffset);
+
+// grab word elements (auto-collects any #word1, #word2, ...)
+const words = Array.from(document.querySelectorAll('[id^="word"]'));
+
+// visible state per word (false = hidden, true = shown)
+const visible = new Array(words.length).fill(false);
+
+let lastScroll = window.scrollY || 0;
+
+// helper functions to show / hide a word's boxes
+function showWord(i) {
+  const boxes = Array.from(words[i].children);
+  boxes.forEach((box, index) => {
+    box.style.animationDelay = `${index * 0.2}s`;
+    box.classList.add('animate');
+    box.classList.remove('hide');
+  });
+  visible[i] = true;
+}
+
+function hideWord(i) {
+  const boxes = Array.from(words[i].children);
+  boxes.forEach((box, index) => {
+    box.style.animationDelay = `${1.2 - index * 0.2}s`;
+    box.classList.remove('animate');
+    box.classList.add('hide');
+  });
+  visible[i] = false;
+}
+
+// initialize based on current scroll position so page load / refresh works
+(function initFromScroll() {
+  const scrolled = window.scrollY;
+  for (let i = 0; i < words.length; i++) {
+    const threshold = offset + scrollScale * i; // reveal when scrolled >= threshold
+    if (scrolled >= threshold) {
+      showWord(i);
+    } else {
+      // leave hidden on init (so initial upward hides work correctly)
+      hideWord(i);
     }
-    if(scrolled> scrollScale && scrolled<scrollScale*2){
-        if(cue==1){
-            cue++;
-            const boxes = Array.from(document.querySelector("#word1").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${index*0.2}s`;
-                box.classList.add("animate");
-                box.classList.remove("hide");
-            });
-        }if(cue==3){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word2").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
-    }if(scrolled>scrollScale*2 && scrolled<scrollScale*3){
-        if(cue==2){
-            cue++;
-            const boxes = Array.from(document.querySelector("#word2").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${index*0.2}s`;
-                box.classList.add("animate");
-                box.classList.remove("hide");
-            });
-        }if(cue==4){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word3").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
-    }if(scrolled>scrollScale*3 && scrolled<scrollScale*4){
-        if(cue==3){
-            cue++;
-            const boxes = Array.from(document.querySelector("#word3").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${index*0.2}s`;
-                box.classList.add("animate");
-                box.classList.remove("hide");
-            });
-        }if(cue==5){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word4").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
-    }if(scrolled>scrollScale*4 && scrolled<scrollScale*5){
-        if(cue==4){
-            cue++;
-            const boxes = Array.from(document.querySelector("#word4").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${index*0.2}s`;
-                box.classList.add("animate");
-                box.classList.remove("hide");
-            });
-        }if(cue==6){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word5").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
-    }if(scrolled>scrollScale*5 && scrolled<scrollScale*6){
-        if(cue==5){
-            cue++;
-            const boxes = Array.from(document.querySelector("#word5").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${index*0.2}s`;
-                box.classList.add("animate");
-                box.classList.remove("hide");
-            });
-        }if(cue==7){
-            cue--;
-            const boxes = Array.from(document.querySelector("#word6").children);
-            boxes.forEach((box, index)=> {
-                box.style.animationDelay = `${1.2-index*0.2}s`;
-                box.classList.remove("animate");
-                box.classList.add("hide");
-            });
-        }
-    }if(scrolled>scrollScale*6 && cue==6){
-        cue++;
-        const boxes = Array.from(document.querySelector("#word6").children);
-        boxes.forEach((box, index)=> {
-            box.style.animationDelay = `${index*0.2}s`;
-            box.classList.add("animate");
-            box.classList.remove("hide");
-        });
-    }
-    // if(scrollBefore > scrolled){
-    //     console.log("ScrollUP");
-    //     scrollBefore = scrolled;
-    //     //Desired action
-    // }else{
-    //     scrollBefore = scrolled;
-    //     console.log("ScrollDOWN");
-    //     //Desired action
-    // }
+  }
+})();
 
-})
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const goingDown = scrolled > lastScroll;
+  lastScroll = scrolled;
+
+  for (let i = 0; i < words.length; i++) {
+    const threshold = offset + scrollScale * i;
+
+    if (goingDown) {
+      // Reveal when crossing threshold while scrolling down.
+      if (scrolled >= threshold && !visible[i]) {
+        showWord(i);
+      }
+      // NOTE: do NOT hide when continuing to scroll down (persist)
+    } else {
+      // Scrolling up: hide if we've gone back above (less than) the threshold
+      if (scrolled < threshold && visible[i]) {
+        // hide all words from highest index down to i (so hiding is "stacked" reverse)
+        // This keeps the disappearing order correct if user scrolls up quickly.
+        for (let j = words.length - 1; j >= i; j--) {
+          if (visible[j]) hideWord(j);
+        }
+        break; // we already hid everything >= i, no need to continue loop
+      }
+    }
+  }
+});
