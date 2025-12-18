@@ -433,12 +433,12 @@ function initializeSplash() {
                 const echoHeight = this.baseHeight + echoExpansion;
                 const echoX = this.center.x - echoWidth / 2;
                 const echoY = this.center.y - echoHeight / 2;
-                
+
                 ctx.strokeStyle = `rgba(254, 240, 138, ${this.life * 0.3})`;
                 ctx.shadowColor = `rgba(254, 240, 138, ${this.life * 0.3})`;
                 ctx.strokeRect(echoX, echoY, echoWidth, echoHeight);
             }
-            
+
             ctx.restore();
         }
     }
@@ -532,6 +532,14 @@ function initializeSplash() {
     // Fly out nodes sequentially, then start animation
     flyOutNodesSequentially().then(() => {
         animate();
+        setTimeout(() => {
+            nodeCycle.forEach(node => {
+            if (!visitedNodes.has(node)) {
+                breathingPulses.push(new BreathingPulse(node));
+            }
+        });
+        }, 1000);
+        
         setInterval(() => {
             nodeCycle.forEach(node => {
                 if (!visitedNodes.has(node)) {
