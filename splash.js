@@ -538,7 +538,7 @@ function initializeSplash() {
                     breathingPulses.push(new BreathingPulse(node));
                 }
             });
-        }, 3000);
+        }, 2000);
         window.addEventListener('resize', () => {
             setupCanvas();
             positionInitialNodes();
