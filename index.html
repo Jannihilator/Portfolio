@@ -171,6 +171,21 @@
 
     <section class="modal hidden">
       <div class="video-container">
+
+        <!-- TODO: Replace with your project trailer embed URL -->
+        <iframe src="https://drive.google.com/file/d/1sZ405WvoAjn0LUHkDcQZ-Wb8p8N224A0/preview"
+          allow="autoplay"></iframe>
+      </div>
+      <p>
+        Rain to Serene
+        <!-- TODO: Project name -->
+      </p>
+      <!-- TODO: Replace # with your project link -->
+      <!-- <a href="#">Project website</a> -->
+      <button class="btn-close btn-modal">⨉</button>
+    </section>
+    <section class="modal hidden">
+      <div class="video-container">
         <iframe src="https://www.youtube.com/embed/ulOF7EMQaaA?si=Ya-9DIRYZQONljsz" allow="autoplay"></iframe>
       </div>
       <p>
@@ -372,6 +387,30 @@
       <p>-click on project to expand-</p>
 
       <div class="project big-project btn-open">
+        <h3 class="project-title">Rain to Serene (In Progress)</h3>
+        <br>
+        <video class="project-video-big" autoplay muted loop playsinline>
+          <!-- TODO: Replace with your video file path, e.g. src="./assets/your-video.mp4" -->
+          <source src="./assets/rain-demo.mp4" type="video/mp4">
+        </video>
+        <p class="project__description_big">
+          A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two
+          distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf
+          splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations.
+          The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each
+          lily pad carries unique procedurally-assigned shader properties .
+        </p>
+        <ul class="project__stack">
+          <!-- TODO: Add your stack tags -->
+          <li class="project__stack-item">Shader</li>
+          <li class="project__stack-item">Object Pooling</li>
+        </ul>
+        <!-- TODO: Uncomment and update the link below -->
+        <!-- <a href="#" aria-label="live preview" class="link link--icon" target="_blank" rel="noopener noreferrer">
+          <i aria-hidden="true" class="fas fa-external-link-alt"></i>
+        </a> -->
+      </div>
+      <div class="project big-project btn-open">
         <h3 class="project-title">Borderless</h3>
         <!-- <p>(on going)</p> -->
         <br>
@@ -456,7 +495,8 @@
           <br>
           <img class="project-img" src="./assets/sheep.png" alt="">
           <p class="project__description">
-            A Global Game Jam 2026 submission for the theme "Mask". Programmed organic herding animal behaviors with state machine. Implemented special mask abilities that cross influence the animals.
+            A Global Game Jam 2026 submission for the theme "Mask". Programmed organic herding animal behaviors with
+            state machine. Implemented special mask abilities that cross influence the animals.
           </p>
           <ul class="project__stack">
             <li class="project__stack-item">Unity</li>

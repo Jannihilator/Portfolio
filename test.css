@@ -154,6 +154,14 @@
   aspect-ratio: 16 / 9;
   object-fit:cover;
 }
+.project-video-big {
+  max-width: 80%;
+  width: 100%;
+  pointer-events: none;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+}
 
 .project__description {
   pointer-events: none;
