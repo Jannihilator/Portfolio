@@ -1,0 +1,651 @@
+/* LED wall test stage */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #050506;
+  font-family: "Space Grotesk", "Poppins", system-ui, sans-serif;
+  color: #e8e8e8;
+}
+
+#led-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #050506;
+}
+
+#led-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* The page the wall opens to. Sits exactly over the lit cells, so the LEDs
+   around it read as its border. */
+#page {
+  /* Overwritten per view by the page script, so a panel's cards, chips and
+     hovers all pick up the color the wall lit for it */
+  --accent: #facc15;
+  --accent-rgb: 250, 204, 21;
+  position: fixed;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #ffffff;
+  color: #16181d;
+  opacity: 0;
+  transition: opacity 0.22s ease-out;
+}
+
+#page.is-open {
+  opacity: 1;
+}
+
+#page[hidden] {
+  display: none;
+}
+
+/* Only the copy scrolls, so the close button never leaves the corner. The
+   scroller spans the whole panel and the column is centered inside it, which
+   keeps the bar on the panel's right edge instead of beside the text. */
+.page-inner {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #16181d #eceef1;
+}
+
+.page-inner::-webkit-scrollbar {
+  width: 10px;
+}
+
+.page-inner::-webkit-scrollbar-track {
+  background: #eceef1;
+}
+
+/* Square, no taper: the bar is another block on a wall made of blocks */
+.page-inner::-webkit-scrollbar-thumb {
+  background: #16181d;
+  border: 2px solid #eceef1;
+}
+
+.page-body {
+  width: 100%;
+  /* Every paragraph runs the whole column, so it is held to a measure that
+     stays readable line after line */
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 3.5rem) clamp(1.5rem, 4vw, 3.5rem);
+  box-sizing: border-box;
+}
+
+.about {
+  display: flow-root;
+  margin-top: clamp(1rem, 3vw, 2rem);
+}
+
+/* Portrait and name are one masthead, so the copy below keeps a single
+   uninterrupted measure instead of running around the picture */
+.about-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin-bottom: clamp(1.5rem, 3.5vw, 2.25rem);
+}
+
+.about-portrait {
+  flex: none;
+  width: clamp(6.5rem, 24%, 10rem);
+  margin: 0;
+}
+
+/* Wraps under the portrait rather than setting the name one word per line */
+#page .about-head h1 {
+  flex: 1 1 13rem;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Cut to the portrait's own 1178x1563, so the masthead never reflows while
+   the file is still loading */
+.about-portrait img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  /* height:auto or the width/height attributes size it themselves */
+  height: auto;
+  aspect-ratio: 1178 / 1563;
+  object-fit: cover;
+  background: #eceef1;
+  border: 2px solid #16181d;
+  box-shadow: 3px 3px 0 #16181d;
+}
+
+
+#page h1 {
+  margin: clamp(1rem, 3vw, 2rem) 0 0.75rem;
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  letter-spacing: -0.02em;
+}
+
+#page h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+#page p {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #33383f;
+}
+
+#page .lede {
+  font-size: 1.15rem;
+  color: #16181d;
+}
+
+/* The wall's own dot yellow, laid under the words like a marker */
+#page .highlight {
+  color: #16181d;
+  font-weight: 600;
+  box-shadow: inset 0 -0.35em 0 rgba(250, 204, 21, 0.55);
+}
+
+/* Buttons are the one bit of the page that stays on the wall's terms: pixel
+   type, a hard square border and an offset block instead of a soft shadow */
+.pixel-btn {
+  display: inline-block;
+  box-sizing: border-box;
+  padding: 0.9em 1.1em;
+  border: 2px solid #16181d;
+  border-radius: 0;
+  background: #ffffff;
+  color: #16181d;
+  box-shadow: 3px 3px 0 #16181d;
+  font-family: "Press Start 2P", "Space Grotesk", monospace;
+  font-size: 0.6rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  /* Left in the case it is written in: this font draws accented capitals at
+     x-height, so an uppercased Résumé comes out ragged */
+  text-transform: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.14s ease-out, color 0.14s ease-out,
+    transform 0.06s steps(1), box-shadow 0.06s steps(1);
+}
+
+.pixel-btn:hover,
+.pixel-btn:focus-visible {
+  background: #16181d;
+  color: #ffffff;
+}
+
+/* Pressing it drops the face onto its own shadow */
+.pixel-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 #16181d;
+}
+
+.page-body--wide {
+  max-width: 64rem;
+}
+
+.page-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem 0.6rem;
+}
+
+.page-bar-spacer {
+  flex: 1;
+}
+
+#page-back,
+#page-close {
+  flex: none;
+}
+
+#page-back[hidden] {
+  display: none;
+}
+
+#page h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.projects-hint {
+  text-align: center;
+  color: #6b7280;
+}
+
+#page .projects-hint {
+  margin: 0.25rem 0 1.5rem;
+}
+
+.projects-section + .projects-section {
+  margin-top: 3rem;
+}
+
+#page .projects-section h2 {
+  margin: 0 0 1.35rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(22, 24, 29, 0.15);
+}
+
+.projects-stack,
+.projects-grid {
+  display: grid;
+}
+
+.projects-stack {
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+}
+
+.projects-grid {
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.5rem;
+}
+
+/* A frame rather than a button face: a hairline that warms under the pointer,
+   with no offset block to press */
+.project-card,
+.blog-card,
+.contact-links a {
+  box-sizing: border-box;
+  padding: 0.75rem 0.75rem 0.95rem;
+  border: 1px solid rgba(22, 24, 29, 0.18);
+  background: rgba(22, 24, 29, 0.03);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease-out, background-color 0.16s ease-out;
+}
+
+.project-card:hover,
+.project-card:focus-visible,
+.blog-card:hover,
+.blog-card:focus-visible,
+.contact-links a:hover,
+.contact-links a:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.09);
+}
+
+.project-card:focus-visible,
+.blog-card:focus-visible,
+.contact-links a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Held above #page h3, which pulls every heading's margin to the top */
+#page .project-card h3 {
+  margin: 0.85rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  transition: color 0.16s ease-out;
+}
+
+.project-card:hover h3,
+.project-card:focus-visible h3 {
+  color: var(--accent);
+}
+
+.project-card-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0;
+  /* Holds the hover push-in, so the frame itself never moves */
+  overflow: hidden;
+  background: #0c0d10;
+}
+
+.project-card .project-thumb {
+  pointer-events: none;
+  transition: transform 0.4s ease-out, filter 0.4s ease-out;
+}
+
+.project-card:hover .project-thumb,
+.project-card:focus-visible .project-thumb {
+  transform: scale(1.045);
+  filter: brightness(1.08);
+}
+
+.project-thumb,
+.project-detail-media {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #0c0d10;
+}
+
+/* Two stills sit side by side on a wide card, one video fills it */
+.project-card--big .project-thumb {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.project-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-stack li {
+  padding: 0.25em 0.55em;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.project-link {
+  margin-top: 1rem;
+}
+
+/* Blogs: no thumbnails to lean on, so the date and dek carry the card */
+.blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.5rem;
+}
+
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-date {
+  font-family: "Press Start 2P", "Space Grotesk", monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+#page .blog-card h3 {
+  margin: 0.7rem 0 0.5rem;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  transition: color 0.16s ease-out;
+}
+
+.blog-card:hover h3,
+.blog-card:focus-visible h3 {
+  color: var(--accent);
+}
+
+#page .blog-card p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Pinned to the bottom so tags line up across a row of uneven cards */
+.blog-card .project-stack {
+  margin-top: auto;
+  padding-top: 0.85rem;
+}
+
+.blogs-all {
+  display: block;
+  width: fit-content;
+  margin: 2rem auto 0;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skills-list li {
+  padding: 0.5em 0.8em;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  color: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-links a:hover,
+.contact-links a:focus-visible {
+  color: var(--accent);
+}
+
+.contact-links i {
+  font-size: 1.15rem;
+}
+
+.project-detail h1 {
+  margin-top: 0.25rem;
+}
+
+.project-embed {
+  width: 100%;
+  margin: 0 0 1.25rem;
+}
+
+.project-embed iframe,
+.project-detail .project-card-media {
+  width: 100%;
+}
+
+.project-embed iframe,
+.project-embed-fallback {
+  display: block;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  background: #0c0d10;
+}
+
+.project-embed-fallback {
+  position: relative;
+  overflow: hidden;
+  color: #f4f6f8;
+  text-decoration: none;
+}
+
+.project-embed-fallback img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+}
+
+.project-embed-fallback span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0.55rem 0.8rem;
+  border: 2px solid currentColor;
+  background: rgba(12, 13, 16, 0.72);
+  font-family: "Press Start 2P", monospace;
+  font-size: 0.55rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.project-detail .project-detail-media {
+  margin-bottom: 1rem;
+}
+
+/* Dark fill: used when a project is open so the video sits on a darker sheet */
+#page.is-dark {
+  color: #e8ecf2;
+}
+
+#page.is-dark h1,
+#page.is-dark h3 {
+  color: #f4f6f8;
+}
+
+#page.is-dark h2 {
+  color: #9aa1ad;
+}
+
+#page.is-dark p {
+  color: #c5cad3;
+}
+
+#page.is-dark .projects-hint {
+  color: #9aa1ad;
+}
+
+#page.is-dark .page-inner {
+  scrollbar-color: #e8ecf2 #2a2d34;
+}
+
+#page.is-dark .page-inner::-webkit-scrollbar-track {
+  background: #2a2d34;
+}
+
+#page.is-dark .page-inner::-webkit-scrollbar-thumb {
+  background: #e8ecf2;
+  border-color: #2a2d34;
+}
+
+#page.is-dark .pixel-btn {
+  background: #16181d;
+  color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 3px 3px 0 #ffffff;
+}
+
+#page.is-dark .pixel-btn:hover,
+#page.is-dark .pixel-btn:focus-visible {
+  background: #ffffff;
+  color: #16181d;
+}
+
+#page.is-dark .pixel-btn:active {
+  box-shadow: 0 0 0 #ffffff;
+}
+
+#page.is-dark .projects-section h2 {
+  border-bottom-color: rgba(232, 236, 242, 0.18);
+}
+
+/* Frames stay neutral until the pointer lands, so a grid of them reads as one
+   surface rather than a spread of colored boxes */
+#page.is-dark .project-card,
+#page.is-dark .blog-card,
+#page.is-dark .contact-links a {
+  border-color: rgba(232, 236, 242, 0.16);
+  background: rgba(232, 236, 242, 0.04);
+}
+
+/* Has to out-rank the neutral frame above, which is why it repeats #page */
+#page.is-dark .project-card:hover,
+#page.is-dark .project-card:focus-visible,
+#page.is-dark .blog-card:hover,
+#page.is-dark .blog-card:focus-visible,
+#page.is-dark .contact-links a:hover,
+#page.is-dark .contact-links a:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.7);
+  background: rgba(var(--accent-rgb), 0.09);
+}
+
+#page.is-dark .project-card:hover h3,
+#page.is-dark .project-card:focus-visible h3,
+#page.is-dark .blog-card:hover h3,
+#page.is-dark .blog-card:focus-visible h3 {
+  color: var(--accent);
+}
+
+#page.is-dark .blog-date {
+  color: #9aa1ad;
+}
+
+.page-resume {
+  margin-top: 1.5rem;
+}
+
+#hud {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#hud .hint {
+  font-size: 0.8rem;
+  color: rgba(232, 232, 232, 0.45);
+}
+
+/* The page takes the whole wall on a phone, so it has to earn its own margins */
+@media (max-width: 720px) {
+  .page-body {
+    padding: 0 1.15rem 1.75rem;
+  }
+
+  .page-bar {
+    padding: 0.75rem 0.9rem 0.5rem;
+  }
+
+  .projects-grid,
+  .blogs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .projects-section + .projects-section {
+    margin-top: 2.25rem;
+  }
+
+  #hud {
+    display: none;
+  }
+}
