@@ -110,7 +110,7 @@ function fontMetrics(name) {
 
 function mergeConfig(overrides = {}) {
   const file = window.LED_WALL_CONFIG || {};
-  return {
+  const defaults = {
     targetCellPx: 11,
     minCellPx: 5,
     cellGapRatio: 0.28,
@@ -170,14 +170,57 @@ function mergeConfig(overrides = {}) {
     panelSweepJitter: 0.12,
     panelFlash: 3,
     panelGlow: 2.5,
+    extrude: true,
+    extrudeDepth: 0.25,
+    extrudeLeanX: -0.45,
+    extrudeLeanY: -0.32,
+    extrudeCameraDist: 1.4,
+    extrudeVanishX: 1.1,
+    extrudeVanishY: 1.15,
+    extrudeHeights: {
+      wall: 0.5,
+      label: 1.3,
+      labelHover: 1.5,
+      food: 0.8,
+      snake: 1,
+      snakeHead: 1.15,
+      spark: 2,
+    },
+    extrudeSideShade: 0.82,
+    extrudeAmbient: 34,
+    extrudeLight: { x: 1, y: 0.5 },
     bloom: true,
     bloomStrength: 0.12,
     bloomSpread: 0.3,
     bloomBrightnessFloor: 50,
-    ...file,
-    ...overrides,
   };
+
+  const cfg = { ...defaults, ...file, ...overrides };
+  // Heights are a nested block, so a config naming only one of them still gets
+  // the defaults for the rest
+  cfg.extrudeHeights = {
+    ...defaults.extrudeHeights,
+    ...(file.extrudeHeights || {}),
+    ...(overrides.extrudeHeights || {}),
+  };
+  return cfg;
 }
+
+/** Which way each side of a block points, in screen axes */
+const FACE_NORMALS = {
+  north: [0, -1],
+  west: [-1, 0],
+  east: [1, 0],
+  south: [0, 1],
+};
+const FACE_ORDER = ["north", "west", "east", "south"];
+
+/** A face thinner than this is not worth a fill */
+const FACE_MIN_PX = 0.25;
+
+/** Scratch for the two sides of a block the viewer can see, and their light */
+const sideKeys = ["", ""];
+const tint = [0, 0, 0];
 
 function createLedWall(canvas, options = {}) {
   const cfg = mergeConfig(options);
@@ -199,6 +242,27 @@ function createLedWall(canvas, options = {}) {
   let offsetY = 0;
   let pitch = 0;
   let cellCount = 0;
+  /** The LED inside its cell, and the gap it leaves on each side */
+  let insetPx = 0;
+  let ledPx = 0;
+
+  // --- Perspective ---
+  /** The spot the viewer is standing at, in canvas pixels */
+  let vpX = 0;
+  let vpY = 0;
+  /** Screen scale a block of height 1 gains: face = base scaled away from the
+   *  vanishing point, which is all the perspective this needs */
+  let extrudeK = 0;
+  /** Pixels a block of height 1 leans, so a block still reads as standing
+   *  even where it sits right under the viewer */
+  let leanX = 0;
+  let leanY = 0;
+  /** What each side of a block keeps of its own light, and catches of the
+   *  room's, worked out from where the light is standing */
+  const faceLight = {};
+  /** The dark wall is fixed geometry, so it is drawn once and blitted */
+  let wallSheet = null;
+  let wallSheetCtx = null;
 
   /** 1 where a label glyph blocks the wall */
   let obstacle = new Uint8Array(0);
@@ -212,6 +276,12 @@ function createLedWall(canvas, options = {}) {
   let frameBuf = new Float32Array(0);
   /** Per-cell bloom multiplier, so a hovered label can glow harder */
   let glowBuf = new Float32Array(0);
+  /** How far each cell's block stands off the wall */
+  let heightBuf = new Float32Array(0);
+  /** Lit cells of the current frame, sorted back to front before they are drawn */
+  let litList = new Int32Array(0);
+  /** How near each cell sits to the viewer, which is the order they paint in */
+  let depthBuf = new Float32Array(0);
   /** 1 where a cell differs from the plain off color (lets dark LEDs batch) */
   let lit = new Uint8Array(0);
 
@@ -1129,13 +1199,14 @@ function createLedWall(canvas, options = {}) {
 
   // --- Rendering ----------------------------------------------------------
 
-  function writeCell(i, r, g, b, a, glow = 1) {
+  function writeCell(i, r, g, b, a, glow = 1, height = cfg.extrudeHeights.wall) {
     const o = i * 4;
     frameBuf[o] = r;
     frameBuf[o + 1] = g;
     frameBuf[o + 2] = b;
     frameBuf[o + 3] = a;
     glowBuf[i] = glow;
+    heightBuf[i] = height;
     lit[i] = 1;
   }
 
@@ -1155,6 +1226,9 @@ function createLedWall(canvas, options = {}) {
     // hovering never makes an item look dimmer than its neighbours
     const floor = Math.max(cfg.labelAlpha, cfg.labelHoverAlpha * (1 - dip));
 
+    // The word lifts a little off the wall on hover, and the sweep carries a
+    // ripple of extra height along with the highlight
+    const lift = cfg.extrudeHeights.labelHover;
     for (const i of label.cells) {
       const u = (colOf(i) - box.x0 + (rowOf(i) - box.y0)) / span;
       const d = (u - head) / 0.16;
@@ -1165,11 +1239,13 @@ function createLedWall(canvas, options = {}) {
         col.g,
         col.b,
         floor + (cfg.labelHoverAlpha - floor) * shine,
-        cfg.labelHoverGlow * (0.8 + 0.7 * shine)
+        cfg.labelHoverGlow * (0.8 + 0.7 * shine),
+        lift + (lift - cfg.extrudeHeights.label) * shine
       );
     }
 
     if (cfg.labelHoverHalo <= 0) return;
+    // The halo is light thrown onto the wall, so it stays at wall height
     for (const { i, strength } of label.halo) {
       writeCell(
         i,
@@ -1177,7 +1253,8 @@ function createLedWall(canvas, options = {}) {
         col.g,
         col.b,
         cfg.labelHoverHalo * strength,
-        cfg.labelHoverGlow * 0.6 * strength
+        cfg.labelHoverGlow * 0.6 * strength,
+        cfg.extrudeHeights.wall
       );
     }
   }
@@ -1195,7 +1272,7 @@ function createLedWall(canvas, options = {}) {
       }
       const col = cfg.labelColor;
       for (const i of label.cells) {
-        writeCell(i, col.r, col.g, col.b, cfg.labelAlpha);
+        writeCell(i, col.r, col.g, col.b, cfg.labelAlpha, 1, cfg.extrudeHeights.label);
       }
     }
 
@@ -1205,7 +1282,8 @@ function createLedWall(canvas, options = {}) {
       const twinkle = 0.82 + 0.18 * Math.sin(timeMs * 0.004 + i * 0.7);
       // Dots on the clock dim away over their last stretch
       const life = expiresAt ? clamp((expiresAt - timeMs) / fadeMs, 0, 1) : 1;
-      writeCell(i, fc.r, fc.g, fc.b, twinkle * life);
+      // The twinkle bobs the dot as well as brightening it
+      writeCell(i, fc.r, fc.g, fc.b, twinkle * life, 1, cfg.extrudeHeights.food * twinkle);
     }
 
     for (const snake of snakes) {
@@ -1216,12 +1294,18 @@ function createLedWall(canvas, options = {}) {
         const t = len === 1 ? 0 : n / (len - 1);
         const a = 1 - (1 - cfg.tailFade) * t;
         const head = n === 0;
+        // The body sinks back toward the wall along its length, so a snake
+        // reads as a ridge with its head standing highest
         writeCell(
           snake.body[n],
           head ? Math.min(255, col.r + 40) : col.r,
           head ? Math.min(255, col.g + 40) : col.g,
           head ? Math.min(255, col.b + 40) : col.b,
-          a
+          a,
+          1,
+          head
+            ? cfg.extrudeHeights.snakeHead
+            : cfg.extrudeHeights.snake * (1 - 0.35 * t)
         );
       }
     }
@@ -1246,16 +1330,204 @@ function createLedWall(canvas, options = {}) {
         const c = clamp(Math.floor(s.pc + (s.c - s.pc) * f), 0, cols - 1);
         const r = clamp(Math.floor(s.pr + (s.r - s.pr) * f), 0, rows - 1);
         const head = k === steps;
+        // A spark is in the air, so it rides well above the wall and the
+        // streak behind it climbs up to meet it
+        const air = cfg.extrudeHeights.wall +
+          (cfg.extrudeHeights.spark - cfg.extrudeHeights.wall) * (head ? 1 : f);
         writeCell(
           idx(c, r),
           sr,
           sg,
           sb,
           head ? a : a * cfg.burstTrail * f,
-          head ? glow : 1
+          head ? glow : 1,
+          air
         );
       }
     }
+  }
+
+  /**
+   * The wall is a field of blocks seen head-on. A block's face stands off the
+   * wall by its own height, which on screen is just its base scaled away from
+   * the spot the viewer is standing at — one vanishing point, no camera math.
+   * Cells near that spot show only their face; the further out they sit, the
+   * more of their sides come into view.
+   */
+  function faceScale(height) {
+    return 1 + height * extrudeK;
+  }
+
+  /**
+   * On top of the perspective, every block leans the same way by its own
+   * height: the viewer is off to one side of the wall rather than square in
+   * front of it. Perspective alone leaves the cells right under the vanishing
+   * point flat, and the wall is meant to read as blocks everywhere, not only
+   * out at the far corner.
+   */
+  function faceX(x, s, height) {
+    return vpX + (x - vpX) * s + height * leanX;
+  }
+
+  function faceY(y, s, height) {
+    return vpY + (y - vpY) * s + height * leanY;
+  }
+
+  /**
+   * How much light each side of a block gets: some of the block's own, plus
+   * whatever the room throws on it. The ambient term is what makes a dark
+   * diode read as a block at all — no multiple of near-black shows up against
+   * near-black.
+   */
+  function computeFaceLight() {
+    const light = cfg.extrudeLight || { x: 1, y: 0.5 };
+    const len = Math.hypot(light.x, light.y) || 1;
+    for (const key of FACE_ORDER) {
+      const n = FACE_NORMALS[key];
+      // How square-on this side is to the light, 0 once it is turned away.
+      // Only the room's light cares: a side keeps the same share of the
+      // block's own light whichever way it faces, which is what keeps a white
+      // word from doubling in width once its sides come into view.
+      const facing = Math.max(0, (n[0] * light.x + n[1] * light.y) / len);
+      faceLight[key] = {
+        keep: 1 - cfg.extrudeSideShade,
+        amb: cfg.extrudeAmbient * (0.25 + 0.75 * facing),
+      };
+    }
+  }
+
+  /** One side of a block, in its own light plus the room's */
+  function faceTint(key, r, g, b) {
+    const light = faceLight[key];
+    tint[0] = Math.min(255, r * light.keep + light.amb) | 0;
+    tint[1] = Math.min(255, g * light.keep + light.amb) | 0;
+    tint[2] = Math.min(255, b * light.keep + light.amb) | 0;
+    return tint;
+  }
+
+  /**
+   * Traces one side of a block onto the current path and says whether the
+   * viewer can see it at all. A face turned away from the vanishing point is
+   * behind the block, so it is never drawn.
+   */
+  function traceFace(g, key, x, y, size, tx, ty, ts) {
+    const x1 = x + size;
+    const y1 = y + size;
+    const tx1 = tx + ts;
+    const ty1 = ty + ts;
+    if (key === "west") {
+      if (tx - x < FACE_MIN_PX) return false;
+      g.moveTo(x, y);
+      g.lineTo(tx, ty);
+      g.lineTo(tx, ty1);
+      g.lineTo(x, y1);
+    } else if (key === "east") {
+      if (x1 - tx1 < FACE_MIN_PX) return false;
+      g.moveTo(x1, y);
+      g.lineTo(tx1, ty);
+      g.lineTo(tx1, ty1);
+      g.lineTo(x1, y1);
+    } else if (key === "north") {
+      if (ty - y < FACE_MIN_PX) return false;
+      g.moveTo(x, y);
+      g.lineTo(tx, ty);
+      g.lineTo(tx1, ty);
+      g.lineTo(x1, y);
+    } else {
+      if (y1 - ty1 < FACE_MIN_PX) return false;
+      g.moveTo(x, y1);
+      g.lineTo(tx, ty1);
+      g.lineTo(tx1, ty1);
+      g.lineTo(x1, y1);
+    }
+    g.closePath();
+    return true;
+  }
+
+  /** One lit cell as a block: its sides in its own light, then its face */
+  function drawBlock(i) {
+    const o = i * 4;
+    const r = frameBuf[o] | 0;
+    const g = frameBuf[o + 1] | 0;
+    const b = frameBuf[o + 2] | 0;
+    const a = frameBuf[o + 3];
+    const x = offsetX + colOf(i) * pitch + insetPx;
+    const y = offsetY + rowOf(i) * pitch + insetPx;
+    const h = heightBuf[i];
+    const s = faceScale(h);
+    const tx = faceX(x, s, h);
+    const ty = faceY(y, s, h);
+    const ts = ledPx * s;
+
+    // Only two of the four sides can face the viewer: one to the side of the
+    // vanishing point, one above or below it. The other two are behind.
+    sideKeys[0] = tx - x >= x + ledPx - (tx + ts) ? "west" : "east";
+    sideKeys[1] = ty - y >= y + ledPx - (ty + ts) ? "north" : "south";
+    for (const key of sideKeys) {
+      ctx.beginPath();
+      if (!traceFace(ctx, key, x, y, ledPx, tx, ty, ts)) continue;
+      const side = faceTint(key, r, g, b);
+      ctx.fillStyle = `rgba(${side[0]},${side[1]},${side[2]},${a})`;
+      ctx.fill();
+    }
+
+    ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+    ctx.fillRect(tx, ty, ts, ts);
+  }
+
+  /**
+   * The dark wall never changes shape, so its blocks are drawn once into their
+   * own canvas and blitted every frame. Gaps are left transparent, so the
+   * bloom underneath still shows between the blocks.
+   *
+   * Sides go down before faces: two blocks of the same height overlap where
+   * one's face hangs over the other's side, and the face is always the nearer
+   * of the two.
+   */
+  function paintWallSheet() {
+    if (!wallSheetCtx || !cellCount || !wallSheet.width) return;
+    const g = wallSheetCtx;
+    const off = cfg.offColor;
+    const height = cfg.extrudeHeights.wall;
+    const s = faceScale(height);
+    const ts = ledPx * s;
+
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, wallSheet.width, wallSheet.height);
+    const dpr = wallSheet.width / (canvas.clientWidth || window.innerWidth);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    for (const key of FACE_ORDER) {
+      const side = faceTint(key, off.r, off.g, off.b);
+      g.fillStyle = `rgb(${side[0]},${side[1]},${side[2]})`;
+      g.beginPath();
+      let any = false;
+      for (let i = 0; i < cellCount; i++) {
+        const x = offsetX + colOf(i) * pitch + insetPx;
+        const y = offsetY + rowOf(i) * pitch + insetPx;
+        const drawn = traceFace(
+          g,
+          key,
+          x,
+          y,
+          ledPx,
+          faceX(x, s, height),
+          faceY(y, s, height),
+          ts
+        );
+        any = any || drawn;
+      }
+      if (any) g.fill();
+    }
+
+    g.fillStyle = `rgb(${off.r},${off.g},${off.b})`;
+    g.beginPath();
+    for (let i = 0; i < cellCount; i++) {
+      const x = offsetX + colOf(i) * pitch + insetPx;
+      const y = offsetY + rowOf(i) * pitch + insetPx;
+      g.rect(faceX(x, s, height), faceY(y, s, height), ts, ts);
+    }
+    g.fill();
   }
 
   function draw() {
@@ -1276,42 +1548,33 @@ function createLedWall(canvas, options = {}) {
         const b = frameBuf[o + 2];
         const bright = (r + g + b) / 3;
         if (bright < cfg.bloomBrightnessFloor) continue;
-        const x = offsetX + colOf(i) * pitch;
-        const y = offsetY + rowOf(i) * pitch;
+        // The glow belongs to the face, so it rides up with it
+        const height = heightBuf[i];
+        const s = faceScale(height);
+        const x = faceX(offsetX + colOf(i) * pitch, s, height);
+        const y = faceY(offsetY + rowOf(i) * pitch, s, height);
         const boost = glowBuf[i];
         const pad = basePad * boost;
         const glow = (bright / 255) * cfg.bloomStrength * frameBuf[o + 3] * boost;
         ctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${glow})`;
-        ctx.fillRect(x - pad, y - pad, cellSize + pad * 2, cellSize + pad * 2);
+        ctx.fillRect(x - pad, y - pad, cellSize * s + pad * 2, cellSize * s + pad * 2);
       }
       drawPanelGlow();
     }
 
-    const inset = Math.max(0.5, cellSize * cfg.diodeInset);
-    const size = cellSize - inset * 2;
-    const off = cfg.offColor;
+    if (wallSheet && wallSheet.width) ctx.drawImage(wallSheet, 0, 0, w, h);
 
-    // Every dark diode shares one color, so draw them as a single path
-    ctx.fillStyle = `rgb(${off.r},${off.g},${off.b})`;
-    ctx.beginPath();
+    // Back to front, so the block nearest the viewer is the one in front.
+    // Height is not the key: a block's sides only ever sweep away from the
+    // viewer, so the nearer cell wins the overlap however tall its neighbour
+    // is standing.
+    let n = 0;
     for (let i = 0; i < cellCount; i++) {
-      if (lit[i]) continue;
-      const x = offsetX + colOf(i) * pitch + inset;
-      const y = offsetY + rowOf(i) * pitch + inset;
-      ctx.rect(x, y, size, size);
+      if (lit[i]) litList[n++] = i;
     }
-    ctx.fill();
-
-    for (let i = 0; i < cellCount; i++) {
-      if (!lit[i]) continue;
-      const o = i * 4;
-      const x = offsetX + colOf(i) * pitch;
-      const y = offsetY + rowOf(i) * pitch;
-      ctx.fillStyle = `rgba(${frameBuf[o] | 0},${frameBuf[o + 1] | 0},${
-        frameBuf[o + 2] | 0
-      },${frameBuf[o + 3]})`;
-      ctx.fillRect(x + inset, y + inset, size, size);
-    }
+    const order = litList.subarray(0, n);
+    order.sort((a, b) => depthBuf[a] - depthBuf[b]);
+    for (let k = 0; k < n; k++) drawBlock(order[k]);
 
     if (page.state !== "closed") drawPanel();
   }
@@ -1380,8 +1643,8 @@ function createLedWall(canvas, options = {}) {
       return;
     }
 
-    const inset = Math.max(0.5, cellSize * cfg.diodeInset);
-    const ledSize = cellSize - inset * 2;
+    const inset = insetPx;
+    const ledSize = ledPx;
     const flarePad = cellSize * cfg.bloomSpread * Math.max(0, cfg.panelFlash);
     const active = [];
 
@@ -1411,14 +1674,21 @@ function createLedWall(canvas, options = {}) {
       const x = offsetX + c * pitch;
       const y = offsetY + r * pitch;
 
+      // The block sinks back flush with the wall as its cell comes up, so the
+      // sheet closes as one flat surface rather than over a field of studs
+      const stand = (lit[i] ? heightBuf[i] : cfg.extrudeHeights.wall) * (1 - up);
+      const s = faceScale(stand);
+
       // A diode driven up to white overshoots before it holds, so it blooms
       // hardest halfway through. A label is lit already and has nothing to
       // announce, so it comes up dark of the flare.
       const flare = obstacle[i] ? 0 : Math.sin(Math.PI * up);
       if (flare > 0 && flarePad > 0 && cfg.bloomStrength > 0) {
         const pad = flarePad * flare;
+        const fx = faceX(x, s, stand) - pad;
+        const fy = faceY(y, s, stand) - pad;
         ctx.fillStyle = `rgba(${ig.r},${ig.g},${ig.b},${cfg.bloomStrength * flare})`;
-        ctx.fillRect(x - pad, y - pad, pitch + pad * 2, pitch + pad * 2);
+        ctx.fillRect(fx, fy, pitch * s + pad * 2, pitch * s + pad * 2);
       }
 
       // Color arrives ahead of size: the diode whitens first, then grows over
@@ -1428,7 +1698,7 @@ function createLedWall(canvas, options = {}) {
       const tone = Math.min(1, up * 1.8);
       const grow = up * up * (3 - 2 * up);
       const o = inset * (1 - grow);
-      const size = ledSize + (pitch - ledSize) * grow;
+      const size = (ledSize + (pitch - ledSize) * grow) * s;
       const tr = mix(ig.r, back.r, up);
       const tg = mix(ig.g, back.g, up);
       const tb = mix(ig.b, back.b, up);
@@ -1437,7 +1707,7 @@ function createLedWall(canvas, options = {}) {
         tb,
         tone
       )})`;
-      ctx.fillRect(x + o, y + o, size, size);
+      ctx.fillRect(faceX(x + o, s, stand), faceY(y + o, s, stand), size, size);
     }
   }
 
@@ -1477,6 +1747,20 @@ function createLedWall(canvas, options = {}) {
     const usedH = rows * cellSize + (rows - 1) * gap;
     offsetX = Math.floor((w - usedW) / 2);
     offsetY = Math.floor((h - usedH) / 2);
+    insetPx = Math.max(0.5, cellSize * cfg.diodeInset);
+    ledPx = cellSize - insetPx * 2;
+
+    // Where the viewer is standing, and how much of a block's side that lets
+    // them see. Lean and depth are in cells so the blocks keep their
+    // proportions when the diodes shrink; the camera sits back a multiple of
+    // the wall itself, so the perspective does not change with the window.
+    vpX = offsetX + usedW * cfg.extrudeVanishX;
+    vpY = offsetY + usedH * cfg.extrudeVanishY;
+    const camera = Math.max(1, cfg.extrudeCameraDist * Math.max(usedW, usedH));
+    extrudeK = cfg.extrude ? (cfg.extrudeDepth * cellSize) / camera : 0;
+    leanX = cfg.extrude ? cfg.extrudeLeanX * cellSize : 0;
+    leanY = cfg.extrude ? cfg.extrudeLeanY * cellSize : 0;
+    computeFaceLight();
 
     obstacle = new Uint8Array(cellCount);
     letterBlock = new Uint8Array(cellCount);
@@ -1484,11 +1768,31 @@ function createLedWall(canvas, options = {}) {
     occupancy = new Int16Array(cellCount);
     frameBuf = new Float32Array(cellCount * 4);
     glowBuf = new Float32Array(cellCount);
+    heightBuf = new Float32Array(cellCount);
     lit = new Uint8Array(cellCount);
+    litList = new Int32Array(cellCount);
+    depthBuf = new Float32Array(cellCount);
+
+    // Which way the viewer sits, as one vector: the flat lean plus the way the
+    // perspective pushes at the middle of the wall. A cell further along it is
+    // nearer the viewer, and so paints later.
+    const towardX = -leanX + (vpX - (offsetX + usedW / 2)) * extrudeK;
+    const towardY = -leanY + (vpY - (offsetY + usedH / 2)) * extrudeK;
+    for (let i = 0; i < cellCount; i++) {
+      depthBuf[i] = colOf(i) * towardX + rowOf(i) * towardY;
+    }
     bfsStamp = new Int32Array(cellCount);
     bfsParent = new Int32Array(cellCount);
     bfsQueue = new Int32Array(cellCount);
     bfsGen = 0;
+
+    if (!wallSheet) {
+      wallSheet = document.createElement("canvas");
+      wallSheetCtx = wallSheet.getContext("2d");
+    }
+    wallSheet.width = canvas.width;
+    wallSheet.height = canvas.height;
+    paintWallSheet();
 
     layoutLabels();
 
@@ -1505,10 +1809,18 @@ function createLedWall(canvas, options = {}) {
     if (paused) draw();
   }
 
-  function cellFromPointer(clientX, clientY) {
+  /**
+   * The cursor is over the face of a block, not the wall behind it, so the
+   * point is dropped back down to wall height before it is turned into a cell.
+   * The height asked for is the one being aimed at: a word stands taller than
+   * the wall it sits on, and by the edges of the wall that is several pixels
+   * of difference.
+   */
+  function cellFromPointer(clientX, clientY, height = cfg.extrudeHeights.wall) {
     const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left - offsetX;
-    const y = clientY - rect.top - offsetY;
+    const s = faceScale(height);
+    const x = vpX + (clientX - rect.left - height * leanX - vpX) / s - offsetX;
+    const y = vpY + (clientY - rect.top - height * leanY - vpY) / s - offsetY;
     if (x < -pitch || y < -pitch || x >= cols * pitch + pitch || y >= rows * pitch + pitch) {
       return null;
     }
@@ -1517,9 +1829,17 @@ function createLedWall(canvas, options = {}) {
     return { c, r, i: idx(c, r) };
   }
 
+  /**
+   * Words are read at their resting height even while they are lifted, so the
+   * hover cannot chase itself off the cursor.
+   */
+  function labelFromPointer(clientX, clientY) {
+    const cell = cellFromPointer(clientX, clientY, cfg.extrudeHeights.label);
+    return cell ? labelAt(cell.c, cell.r) : null;
+  }
+
   function onPointerMove(e) {
-    const cell = cellFromPointer(e.clientX, e.clientY);
-    hoverLabel = cell ? labelAt(cell.c, cell.r) : null;
+    hoverLabel = labelFromPointer(e.clientX, e.clientY);
     canvas.style.cursor = hoverLabel ? "pointer" : "default";
   }
 
@@ -1528,13 +1848,14 @@ function createLedWall(canvas, options = {}) {
   }
 
   function onClick(e) {
-    const cell = cellFromPointer(e.clientX, e.clientY);
-    if (!cell) return;
-    const label = labelAt(cell.c, cell.r);
+    const label = labelFromPointer(e.clientX, e.clientY);
     if (label) {
       onSelect(label);
       return;
     }
+    // Bare wall is aimed at down on the wall itself, not up where the words are
+    const cell = cellFromPointer(e.clientX, e.clientY);
+    if (!cell) return;
     // Bare wall: hand the snakes a fresh handful of dots. A stopped wall has
     // no frames to fly them in, so it takes no bursts.
     if (cfg.burstCountMax > 0 && !paused && !panelMask[cell.i]) {

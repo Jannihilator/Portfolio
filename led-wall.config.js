@@ -125,11 +125,56 @@ window.LED_WALL_CONFIG = {
   /** Extra bloom a cell throws while it comes up (0 = no flare) */
   panelFlash: 3,
   /** Bloom spread multiplier along the edge of the settled sheet */
-  panelGlow: 5,
+  panelGlow: 0,
+
+  // --- Perspective (every cell is a block standing off the wall, seen from
+  //     down at the bottom right, so the blocks lean up and to the left and
+  //     show the two sides turned back toward the viewer) ---
+  extrude: true,
+  /** How far a height-1 block leans, in cells. Negative is up / left, so this
+   *  pair is where the viewer is standing: below and right of the wall. This
+   *  is the strength of the whole effect — turn it up to lean harder */
+  extrudeLeanX: -0.15,
+  extrudeLeanY: -0.32,
+  /** The perspective laid over that lean: how much harder the far corner
+   *  leans than the near one (0 = the same lean everywhere, no perspective) */
+  extrudeDepth: 0.25,
+  /** Viewer distance in multiples of the wall's longest side. Lower = the
+   *  perspective splays out harder */
+  extrudeCameraDist: 1.4,
+  /** Where the viewer is standing, 0-1 across the wall. Just past the bottom
+   *  right corner, so the perspective leans every block the same way the flat
+   *  lean does instead of fighting it somewhere in the middle */
+  extrudeVanishX: 1.1,
+  extrudeVanishY: 1.15,
+  /** Block heights per kind of cell — this is what makes a word read as a
+   *  raised plate, a snake as a ridge running over it, and a dot as a stud */
+  extrudeHeights: {
+    wall: 0.5,
+    label: 1.5,
+    /** A hovered word lifts off the wall; keep it near `label` or the hover
+     *  will sit visibly off the cursor */
+    labelHover: 2,
+    food: 0.8,
+    snake: 1,
+    snakeHead: 1.15,
+    /** Sparks are in the air, so they ride well above everything */
+    spark: 2,
+  },
+  /** How much of its own light a block's sides lose (0 = sides as bright as
+   *  the face). Keep this high: a word whose sides stay bright reads as twice
+   *  its width once they come into view */
+  extrudeSideShade: 0.82,
+  /** Light the room throws on the sides, 0-255. A dark diode has no light of
+   *  its own to shade, so this is the only thing that gives it edges */
+  extrudeAmbient: 34,
+  /** Where the light is standing, in screen axes. Over the viewer's shoulder
+   *  by default, so the sides they can see are the lit ones */
+  extrudeLight: { x: 1, y: 0.5 },
 
   // --- Glow / bloom ---
   bloom: true,
-  bloomStrength: 0.12,
+  bloomStrength: 0.2,
   bloomSpread: 0.3,
   bloomBrightnessFloor: 50,
 };
