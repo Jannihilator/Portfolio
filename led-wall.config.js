@@ -6,6 +6,8 @@
 window.LED_WALL_CONFIG = {
   // --- Grid ---
   targetCellPx: 11,
+  /** Cells shrink to this on a wall too narrow to fit the longest label */
+  minCellPx: 5,
   cellGapRatio: 0.28,
   bg: "#050506",
   diodeInset: 0.08,

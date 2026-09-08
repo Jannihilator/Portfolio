@@ -112,6 +112,7 @@ function mergeConfig(overrides = {}) {
   const file = window.LED_WALL_CONFIG || {};
   return {
     targetCellPx: 11,
+    minCellPx: 5,
     cellGapRatio: 0.28,
     bg: "#050506",
     diodeInset: 0.08,
@@ -333,6 +334,19 @@ function createLedWall(canvas, options = {}) {
         if (inBounds(c, r)) letterBlock[idx(c, r)] = 1;
       }
     }
+  }
+
+  /** LEDs the longest registered word takes up, gaps between letters included */
+  function widestLabel() {
+    const metrics = fontMetrics(cfg.font);
+    const glyphW = metrics.w * Math.max(1, cfg.labelScale | 0);
+    const letterGap = Math.max(1, cfg.letterGap | 0);
+    let widest = 0;
+    for (const def of labelDefs) {
+      const n = [...def.text].length;
+      widest = Math.max(widest, n * glyphW + Math.max(0, n - 1) * letterGap);
+    }
+    return widest;
   }
 
   /** Empty LEDs between two boxes along their most separated axis */
@@ -1429,6 +1443,15 @@ function createLedWall(canvas, options = {}) {
 
   // --- Wiring -------------------------------------------------------------
 
+  function gapAt(size) {
+    return Math.max(1, Math.floor(size * cfg.cellGapRatio));
+  }
+
+  function colsAt(size, w) {
+    const g = gapAt(size);
+    return Math.floor((w + g) / (size + g));
+  }
+
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth || window.innerWidth;
@@ -1437,10 +1460,16 @@ function createLedWall(canvas, options = {}) {
     canvas.height = Math.floor(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    // A phone is narrower than the longest word is wide, and layoutLabels has
+    // nowhere to put it but off the edge. So the diodes give way before the
+    // words do: cells shrink until PROJECTS fits between its own margins.
+    const needCols = widestLabel() + 4;
     cellSize = cfg.targetCellPx;
-    gap = Math.max(1, Math.floor(cellSize * cfg.cellGapRatio));
+    while (cellSize > cfg.minCellPx && colsAt(cellSize, w) < needCols) cellSize--;
+
+    gap = gapAt(cellSize);
     pitch = cellSize + gap;
-    cols = Math.max(8, Math.floor((w + gap) / pitch));
+    cols = Math.max(8, colsAt(cellSize, w));
     rows = Math.max(8, Math.floor((h + gap) / pitch));
     cellCount = cols * rows;
 

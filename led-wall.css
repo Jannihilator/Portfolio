@@ -14,6 +14,9 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
+  /* iOS counts its collapsed toolbars into 100vh, which pushes the bottom
+     labels behind the browser chrome. dvh is the part actually on screen. */
+  height: 100dvh;
   background: #050506;
 }
 
@@ -421,22 +424,85 @@ body {
   margin: 2rem auto 0;
 }
 
-.skills-list {
+/* Skills: every group is a tower of bricks standing on its own plinth, all of
+   them on one floor, so how deep a stack runs is part of what it says */
+.skills-stacks {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1.5rem 0 0;
+  align-items: flex-end;
+  gap: 0.85rem;
+  margin: 2rem 0 0;
+}
+
+.skill-stack {
+  display: flex;
+  /* Reversed, so the plinth can be written as the group's heading and still
+     come out underneath the bricks it carries */
+  flex-direction: column-reverse;
+  flex: 1 1 6.5rem;
+  min-width: 0;
+}
+
+.skill-bricks {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0.4rem;
   padding: 0;
   list-style: none;
 }
 
-.skills-list li {
-  padding: 0.5em 0.8em;
-  border: 1px solid rgba(var(--accent-rgb), 0.4);
-  background: rgba(var(--accent-rgb), 0.12);
+.skill-bricks li {
+  --lean: 0px;
+  box-sizing: border-box;
+  /* Bricks share an edge instead of sitting apart, so a tower reads as one
+     stack rather than a column of loose chips */
+  margin-top: -2px;
+  padding: 0.6em 0.5em;
+  border: 2px solid rgba(var(--accent-rgb), 0.4);
+  background: rgba(var(--accent-rgb), 0.1);
   color: var(--accent);
-  font-size: 0.82rem;
+  font-size: 0.7rem;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  /* A long word breaks inside its brick rather than hanging off the tower */
+  overflow-wrap: break-word;
+  /* Nothing is quite square on the pile: it was stacked by hand */
+  transform: translateX(var(--lean));
+  transition: background-color 0.16s ease-out, border-color 0.16s ease-out,
+    transform 0.1s ease-out;
+}
+
+.skill-bricks li:nth-child(2n) {
+  --lean: 3px;
+}
+
+.skill-bricks li:nth-child(3n) {
+  --lean: -3px;
+}
+
+/* The pointer lifts one brick clear of the stack */
+.skill-bricks li:hover {
+  border-color: rgba(var(--accent-rgb), 0.85);
+  background: rgba(var(--accent-rgb), 0.22);
+  transform: translateX(var(--lean)) translateY(-3px);
+}
+
+#page .skill-plinth {
+  margin: 0;
+  padding: 0.8em 0.4em;
+  border: 2px solid rgba(232, 236, 242, 0.28);
+  background: rgba(232, 236, 242, 0.07);
+  font-family: "Press Start 2P", "Space Grotesk", monospace;
+  font-size: 0.5rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+#page.is-dark .skill-plinth {
+  color: #e8ecf2;
 }
 
 .contact-links {
@@ -628,6 +694,12 @@ body {
 
 /* The page takes the whole wall on a phone, so it has to earn its own margins */
 @media (max-width: 720px) {
+  /* The script gives it inset:0, but a fixed box measures iOS's large
+     viewport, so its last inch of copy would sit under the toolbar */
+  #page {
+    height: 100dvh;
+  }
+
   .page-body {
     padding: 0 1.15rem 1.75rem;
   }
@@ -643,6 +715,15 @@ body {
 
   .projects-section + .projects-section {
     margin-top: 2.25rem;
+  }
+
+  /* Four towers in a 2x2 block rather than a row that wraps wherever it
+     runs out of phone. Each row keeps its own floor. */
+  .skills-stacks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    gap: 1.1rem 0.6rem;
   }
 
   #hud {
