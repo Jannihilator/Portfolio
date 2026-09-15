@@ -8,7 +8,7 @@ window.LED_WALL_CONFIG = {
   targetCellPx: 11,
   /** Cells shrink to this on a wall too narrow to fit the longest label */
   minCellPx: 5,
-  cellGapRatio: 0.28,
+  cellGapRatio: 0.24,
   bg: "#050506",
   diodeInset: 0.08,
   offColor: { r: 12, g: 12, b: 14 },
@@ -25,6 +25,13 @@ window.LED_WALL_CONFIG = {
   labelHitPadding: 2,
   /** Clear LEDs kept between labels so snakes always have a lane through */
   labelMargin: 4,
+  /** Integer blow-up of the pixel-art face (1 = one sprite pixel per LED) */
+  portraitScale: 1,
+  /** Face palette — change these and reload. Black in the sprite stays unlit. */
+  portraitHair: { r: 33, g: 33, b: 33 },
+  portraitGlasses: { r: 69, g: 90, b: 100 },
+  portraitMouth: { r: 235, g: 89, b: 87 },
+  portraitShirt: { r: 189, g: 189, b: 189 },
   /** Resting label: white, but held back so the wall stays calm */
   labelColor: { r: 232, g: 236, b: 245 },
   labelAlpha: 0.8,
@@ -108,10 +115,14 @@ window.LED_WALL_CONFIG = {
   burstFlash: 3,
 
   // --- Page panel (clicking a label drives the middle of the wall to white) ---
-  /** LEDs of wall kept above and below the page */
+  /** LEDs of wall kept above and below the page. Floor — a bigger monitor
+   *  grows this so the page does not stretch with the wall. */
   panelBorderY: 3,
-  /** LEDs kept either side of it — the lane the snakes are left with */
+  /** LEDs kept either side of it — the lane the snakes are left with. Floor. */
   panelBorderX: 6,
+  /** How much of the extra wall (past a ~1280×800 laptop) the page may take.
+   *  0 = stay laptop-sized, 1 = grow with the monitor. */
+  panelGrow: 0.2,
   /** The color the middle settles on, and so the page background */
   panelColor: { r: 255, g: 255, b: 255 },
   /** The color a cell flares to on the way up, whatever fill it settles on */

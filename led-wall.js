@@ -108,6 +108,54 @@ function fontMetrics(name) {
   return { glyphs: GLYPHS_3X5, w: 3, h: 5 };
 }
 
+/**
+ * Pixel-art bust. Black is empty wall (unlit LEDs). Every row must be the
+ * same width.
+ */
+const PORTRAIT_PALETTE = {
+  ".": null,
+  /** Spiky hair */
+  H: { r: 33, g: 33, b: 33 },
+  /** Skin */
+  S: { r: 229, g: 170, b: 122 },
+  /** Black glasses */
+  G: { r: 38, g: 50, b: 56 },
+  /** Eyes */
+  E: { r: 58, g: 34, b: 24 },
+  /** Smile */
+  M: { r: 229, g: 115, b: 115 },
+  /** Light grey shirt */
+  C: { r: 189, g: 189, b: 189 },
+};
+
+const PORTRAIT_SPRITE = [
+  "..........H..H......",
+  "........H.H.H..H....",
+  ".......HHHHHHHH.....",
+  "......HHHHHHHHHH....",
+  ".....SSSHHHHSSSHH...",
+  "....SSSSSSSSSSSSHH..",
+  "....GGGGGSSGGGGGHH..",
+  "...GSSSSGGGSSSSGGGG.",
+  "...GSESSGSGSESSGSS..",
+  "...GGGGGSSGGGGGSSS..",
+  "....SSSSSSSSSSSSSS..",
+  "....SSSSSSSSSSSSS...",
+  ".....SSSSSMSSSSSS...",
+  ".....SSMMMMSSSSS....",
+  "......SSSSSSSSS.....",
+  "......CCSSSSSCCC....",
+  "....CCCCCCSCCCCCCC..",
+  "....CCCCCCCCCCCCCC..",
+];
+
+/**
+ * Rows of the sprite that are head rather than shoulders. The face is what the
+ * wall centers on, so the bust hanging below it must not drag the eyes off
+ * center. Kept near the original so the name still has a lane above the hair.
+ */
+const PORTRAIT_FACE_ROWS = 13;
+
 function mergeConfig(overrides = {}) {
   const file = window.LED_WALL_CONFIG || {};
   const defaults = {
@@ -122,6 +170,11 @@ function mergeConfig(overrides = {}) {
     letterGap: 1,
     labelHitPadding: 2,
     labelMargin: 4,
+    portraitScale: 1,
+    portraitHair: { r: 33, g: 33, b: 33 },
+    portraitGlasses: { r: 38, g: 50, b: 56 },
+    portraitMouth: { r: 229, g: 115, b: 115 },
+    portraitShirt: { r: 189, g: 189, b: 189 },
     labelColor: { r: 232, g: 236, b: 245 },
     labelAlpha: 0.8,
     labelHoverColor: { r: 255, g: 255, b: 255 },
@@ -160,8 +213,9 @@ function mergeConfig(overrides = {}) {
     burstLifeMs: 380,
     burstTrail: 0.35,
     burstFlash: 3,
-    panelBorderY: 4,
+    panelBorderY: 3,
     panelBorderX: 6,
+    panelGrow: 0.2,
     panelColor: { r: 255, g: 255, b: 255 },
     /** The color a cell flares to on the way up, whatever it settles on */
     panelIgniteColor: { r: 255, g: 255, b: 255 },
@@ -297,6 +351,10 @@ function createLedWall(canvas, options = {}) {
   let labelDefs = [];
   /** @type {Array<object>} */
   let labels = [];
+  /** @type {Array<object>} */
+  let mosaicDefs = [];
+  /** @type {Array<object>} */
+  let mosaics = [];
 
   // Breadth-first search scratch buffers (reused every step)
   let bfsStamp = new Int32Array(0);
@@ -305,6 +363,7 @@ function createLedWall(canvas, options = {}) {
   let bfsGen = 0;
 
   let hoverLabel = null;
+  let hoverMosaic = null;
   /** "closed" | "opening" | "open" | "closing" */
   const page = {
     state: "closed",
@@ -362,8 +421,29 @@ function createLedWall(canvas, options = {}) {
       href: opts.href || null,
       anchorX: opts.anchorX ?? 0.5,
       anchorY: opts.anchorY ?? 0.5,
+      clickable: opts.clickable !== false,
+      beside: opts.beside || null,
+      side: opts.side || "right",
     };
     labelDefs.push(def);
+    layoutLabels();
+    return def;
+  }
+
+  /**
+   * Stamp the pixel-art bust onto the wall. Snakes path around the lit cells
+   * the same way they do a word. `pageId` is which page a click opens; the
+   * face is its own button and does not share hover with that word. The
+   * anchor is where the face lands, not the top-left of the sprite.
+   */
+  function addMosaic(opts = {}) {
+    const def = {
+      id: opts.id || "portrait",
+      pageId: opts.pageId || opts.linkId || null,
+      anchorX: opts.anchorX ?? 0.5,
+      anchorY: opts.anchorY ?? 0.5,
+    };
+    mosaicDefs.push(def);
     layoutLabels();
     return def;
   }
@@ -371,6 +451,8 @@ function createLedWall(canvas, options = {}) {
   function clearLabels() {
     labelDefs = [];
     labels = [];
+    mosaicDefs = [];
+    mosaics = [];
     obstacle.fill(0);
     letterBlock.fill(0);
   }
@@ -433,9 +515,11 @@ function createLedWall(canvas, options = {}) {
    * wall the spacing is relaxed step by step rather than letting labels land
    * on top of each other.
    */
-  function findLabelSpot(wantX, wantY, textW, textH, placed, margin) {
-    const maxX = Math.max(2, cols - textW - 2);
-    const maxY = Math.max(2, rows - textH - 2);
+  function findLabelSpot(wantX, wantY, textW, textH, placed, margin, bounds) {
+    const minX = bounds.x0;
+    const minY = bounds.y0;
+    const maxX = Math.max(minX, bounds.x1 - textW + 1);
+    const maxY = Math.max(minY, bounds.y1 - textH + 1);
     const reach = Math.max(cols, rows);
 
     function collides(x, y, m) {
@@ -468,13 +552,96 @@ function createLedWall(canvas, options = {}) {
                 [-d, -d],
               ];
         for (const [dx, dy] of shifts) {
-          const x = clamp(wantX + dx, 2, maxX);
-          const y = clamp(wantY + dy, 2, maxY);
+          const x = clamp(wantX + dx, minX, maxX);
+          const y = clamp(wantY + dy, minY, maxY);
           if (!collides(x, y, m)) return { x, y };
         }
       }
     }
-    return { x: clamp(wantX, 2, maxX), y: clamp(wantY, 2, maxY) };
+    return { x: clamp(wantX, minX, maxX), y: clamp(wantY, minY, maxY) };
+  }
+
+  /**
+   * Words live in the same region the page will cover, so a big monitor that
+   * grows the snake lane also pulls the cluster into the middle.
+   */
+  function clusterBounds() {
+    const rect = computePanelRect();
+    return { x0: rect.c0, y0: rect.r0, x1: rect.c1, y1: rect.r1 };
+  }
+
+  /**
+   * The sprite as a grid of colors, each pixel blown up by `portraitScale` and
+   * the scale capped so the bust still leaves the words room around it.
+   */
+  function portraitInk(ch) {
+    if (ch === ".") return null;
+    if (ch === "H") return cfg.portraitHair || PORTRAIT_PALETTE.H;
+    if (ch === "G") return cfg.portraitGlasses || PORTRAIT_PALETTE.G;
+    if (ch === "M") return cfg.portraitMouth || PORTRAIT_PALETTE.M;
+    if (ch === "C") return cfg.portraitShirt || PORTRAIT_PALETTE.C;
+    return PORTRAIT_PALETTE[ch] || null;
+  }
+
+  function portraitSprite(bounds) {
+    const sw = PORTRAIT_SPRITE[0].length;
+    const sh = PORTRAIT_SPRITE.length;
+    const fitX = Math.floor(((bounds.x1 - bounds.x0 + 1) * 0.42) / sw);
+    const fitY = Math.floor(((bounds.y1 - bounds.y0 + 1) * 0.62) / sh);
+    const scale = Math.max(1, Math.min(cfg.portraitScale | 0, fitX, fitY));
+    const w = sw * scale;
+    const h = sh * scale;
+    const pixels = new Array(w * h).fill(null);
+
+    for (let y = 0; y < sh; y++) {
+      const row = PORTRAIT_SPRITE[y];
+      for (let x = 0; x < sw; x++) {
+        const col = portraitInk(row[x]);
+        if (!col) continue;
+        for (let sy = 0; sy < scale; sy++) {
+          for (let sx = 0; sx < scale; sx++) {
+            pixels[(y * scale + sy) * w + x * scale + sx] = col;
+          }
+        }
+      }
+    }
+
+    return {
+      pixels,
+      w,
+      h,
+      // Where the anchor should land: the middle of the head, so the shoulders
+      // hanging below it do not push the eyes off center
+      faceX: (sw * scale - 1) / 2,
+      faceY: (PORTRAIT_FACE_ROWS * scale - 1) / 2,
+    };
+  }
+
+  function wantSpot(def, w, h, boxes, bounds) {
+    if (def.beside) {
+      const host = boxes.find((b) => b.id === def.beside);
+      if (host) {
+        const gap = Math.max(cfg.labelMargin | 0, 2);
+        const hostH = host.y1 - host.y0 + 1;
+        const y = host.y0 + Math.round((hostH - h) / 2);
+        if (def.side === "left") {
+          return { x: host.x0 - gap - w, y };
+        }
+        if (def.side === "below") {
+          return {
+            x: host.x0 + Math.round((host.x1 - host.x0 + 1 - w) / 2),
+            y: host.y1 + gap + 1,
+          };
+        }
+        return { x: host.x1 + gap + 1, y };
+      }
+    }
+    const spanX = bounds.x1 - bounds.x0 + 1;
+    const spanY = bounds.y1 - bounds.y0 + 1;
+    return {
+      x: Math.round(bounds.x0 + def.anchorX * spanX - w / 2),
+      y: Math.round(bounds.y0 + def.anchorY * spanY - h / 2),
+    };
   }
 
   function layoutLabels() {
@@ -482,6 +649,7 @@ function createLedWall(canvas, options = {}) {
     obstacle.fill(0);
     letterBlock.fill(0);
     labels = [];
+    mosaics = [];
 
     const metrics = fontMetrics(cfg.font);
     const scale = Math.max(1, cfg.labelScale | 0);
@@ -491,22 +659,68 @@ function createLedWall(canvas, options = {}) {
     const pad = Math.max(0, cfg.labelHitPadding | 0);
     // Hit boxes need clearance too, or one hover would claim two labels
     const margin = Math.max(cfg.labelMargin | 0, pad * 2 + 1);
+    const bounds = clusterBounds();
     const boxes = [];
+
+    // The face goes down first and does not move: it is what the wall is
+    // centered on, and the words are the ones that step aside for it.
+    for (const def of mosaicDefs) {
+      const sprite = portraitSprite(bounds);
+      const spanX = bounds.x1 - bounds.x0 + 1;
+      const spanY = bounds.y1 - bounds.y0 + 1;
+      const spot = {
+        x: clamp(
+          Math.round(bounds.x0 + def.anchorX * spanX - sprite.faceX),
+          bounds.x0,
+          Math.max(bounds.x0, bounds.x1 - sprite.w + 1)
+        ),
+        y: clamp(
+          Math.round(bounds.y0 + def.anchorY * spanY - sprite.faceY),
+          bounds.y0,
+          Math.max(bounds.y0, bounds.y1 - sprite.h + 1)
+        ),
+      };
+      const box = {
+        id: def.id,
+        x0: spot.x,
+        y0: spot.y,
+        x1: spot.x + sprite.w - 1,
+        y1: spot.y + sprite.h - 1,
+      };
+      boxes.push(box);
+
+      const cells = [];
+      for (let y = 0; y < sprite.h; y++) {
+        for (let x = 0; x < sprite.w; x++) {
+          const px = sprite.pixels[y * sprite.w + x];
+          if (!px) continue;
+          const c = spot.x + x;
+          const r = spot.y + y;
+          if (!inBounds(c, r)) continue;
+          const i = idx(c, r);
+          obstacle[i] = 1;
+          letterBlock[i] = 1;
+          cells.push({ i, r: px.r, g: px.g, b: px.b });
+        }
+      }
+      mosaics.push({
+        id: def.id,
+        pageId: def.pageId,
+        cells,
+        box,
+        hit: new Set(cells.map((cell) => cell.i)),
+        halo: [],
+      });
+    }
 
     for (const def of labelDefs) {
       const chars = [...def.text];
       const textW = chars.length * glyphW + Math.max(0, chars.length - 1) * letterGap;
       const textH = glyphH;
-
-      const spot = findLabelSpot(
-        Math.round(def.anchorX * cols - textW / 2),
-        Math.round(def.anchorY * rows - textH / 2),
-        textW,
-        textH,
-        boxes,
-        margin
-      );
+      const want = wantSpot(def, textW, textH, boxes, bounds);
+      const spot = findLabelSpot(want.x, want.y, textW, textH, boxes, margin, bounds);
       const box = {
+        id: def.id,
         x0: spot.x,
         y0: spot.y,
         x1: spot.x + textW - 1,
@@ -523,25 +737,49 @@ function createLedWall(canvas, options = {}) {
         tx += glyphW + letterGap;
       }
 
-      labels.push({ id: def.id, text: def.text, href: def.href, cells, box });
+      labels.push({
+        id: def.id,
+        text: def.text,
+        href: def.href,
+        clickable: def.clickable !== false,
+        cells,
+        box,
+      });
     }
 
     // Grow each hover area into the room its neighbours actually left it
-    for (let n = 0; n < labels.length; n++) {
-      const box = boxes[n];
+    for (const label of labels) {
+      if (!label.clickable) {
+        label.hit = { ...label.box };
+        label.halo = [];
+        continue;
+      }
       let room = pad;
-      for (let m = 0; m < boxes.length; m++) {
-        if (m === n) continue;
-        room = Math.min(room, boxSeparation(box, boxes[m]) >> 1);
+      for (const other of boxes) {
+        if (other.id === label.id) continue;
+        room = Math.min(room, boxSeparation(label.box, other) >> 1);
       }
       const p = Math.max(0, room);
-      labels[n].hit = {
-        x0: box.x0 - p,
-        y0: box.y0 - p,
-        x1: box.x1 + p,
-        y1: box.y1 + p,
+      label.hit = {
+        x0: label.box.x0 - p,
+        y0: label.box.y0 - p,
+        x1: label.box.x1 + p,
+        y1: label.box.y1 + p,
       };
-      labels[n].halo = buildHalo(labels[n].cells, Math.max(1, p));
+      label.halo = buildHalo(label.cells, Math.max(1, p));
+    }
+
+    for (const mosaic of mosaics) {
+      if (!mosaic.pageId) continue;
+      let room = pad;
+      for (const other of boxes) {
+        if (other.id === mosaic.id) continue;
+        room = Math.min(room, boxSeparation(mosaic.box, other) >> 1);
+      }
+      mosaic.halo = buildHalo(
+        mosaic.cells.map((cell) => cell.i),
+        Math.max(1, Math.max(0, room))
+      );
     }
 
     // A label may have landed on top of dots that were already lying there
@@ -584,8 +822,21 @@ function createLedWall(canvas, options = {}) {
     return halo;
   }
 
+  function mosaicAt(c, r, i) {
+    for (const mosaic of mosaics) {
+      if (!mosaic.pageId) continue;
+      if (page.state !== "closed" && overlapsPanel(mosaic.box)) continue;
+      const b = mosaic.box;
+      if (c < b.x0 || c > b.x1 || r < b.y0 || r > b.y1) continue;
+      if (!mosaic.hit.has(i == null ? idx(c, r) : i)) continue;
+      return mosaic;
+    }
+    return null;
+  }
+
   function labelAt(c, r) {
     for (const label of labels) {
+      if (label.clickable === false) continue;
       // A word under the page is not there to be clicked
       if (page.state !== "closed" && overlapsPanel(label.box)) continue;
       const h = label.hit;
@@ -603,14 +854,29 @@ function createLedWall(canvas, options = {}) {
   function computePanelRect() {
     // A border of 0 is honoured, so a phone can take the whole wall. Anything
     // wider is still capped to what the wall can spare.
-    const bx = clamp(cfg.panelBorderX | 0, 0, Math.max(1, ((cols - 10) / 2) | 0));
-    const by = clamp(cfg.panelBorderY | 0, 0, Math.max(1, ((rows - 8) / 2) | 0));
+    const minBx = cfg.panelBorderX | 0;
+    const minBy = cfg.panelBorderY | 0;
+    const spareX = Math.max(1, ((cols - 10) / 2) | 0);
+    const spareY = Math.max(1, ((rows - 8) / 2) | 0);
+    const bx = scaledPanelBorder(minBx, spareX, cols * pitch, 1280);
+    const by = scaledPanelBorder(minBy, spareY, rows * pitch, 800);
     return {
       c0: bx,
       r0: by,
       c1: cols - 1 - bx,
       r1: rows - 1 - by,
     };
+  }
+
+  /**
+   * 6 and 3 look right on a laptop. Extra wall beyond that size mostly stays
+   * as snake lane, so the page does not become a billboard on a 4K.
+   */
+  function scaledPanelBorder(min, spare, wallPx, refPx) {
+    if (min <= 0) return 0;
+    const grow = cfg.panelGrow == null ? 0.2 : clamp(+cfg.panelGrow, 0, 1);
+    const extra = Math.round((Math.max(0, wallPx - refPx) * (1 - grow)) / 2 / Math.max(1, pitch));
+    return clamp(min + extra, 0, spare);
   }
 
   function overlapsPanel(box) {
@@ -716,6 +982,7 @@ function createLedWall(canvas, options = {}) {
     page.state = "opening";
     page.startedAt = timeMs;
     hoverLabel = null;
+    hoverMosaic = null;
     canvas.style.cursor = "default";
     // Snakes are shut out right away, so they walk themselves into the border
     // while the wave is still sweeping across the middle
@@ -1259,12 +1526,66 @@ function createLedWall(canvas, options = {}) {
     }
   }
 
+  function mosaicHovered(mosaic) {
+    return hoverMosaic === mosaic;
+  }
+
+  /**
+   * The bust sits up off the wall like a hovered word, and on hover it
+   * gets the same shine sweep and halo the buttons use.
+   */
+  function paintMosaic(mosaic, hovered) {
+    const rest = cfg.extrudeHeights.labelHover;
+    if (!hovered) {
+      for (const cell of mosaic.cells) {
+        writeCell(cell.i, cell.r, cell.g, cell.b, 1, 1, rest);
+      }
+      return;
+    }
+
+    const box = mosaic.box;
+    const span = Math.max(1, box.x1 - box.x0 + (box.y1 - box.y0));
+    const head = ((timeMs / 1000) * cfg.labelShineSpeed) % 1.45;
+    const lift = rest;
+    for (const cell of mosaic.cells) {
+      const u = (colOf(cell.i) - box.x0 + (rowOf(cell.i) - box.y0)) / span;
+      const d = (u - head) / 0.16;
+      const shine = Math.exp(-d * d);
+      writeCell(
+        cell.i,
+        mix(cell.r, 255, 0.22 * shine),
+        mix(cell.g, 255, 0.22 * shine),
+        mix(cell.b, 255, 0.22 * shine),
+        1,
+        1 + cfg.labelHoverGlow * 0.45 * shine,
+        lift + 0.35 * shine
+      );
+    }
+
+    if (cfg.labelHoverHalo <= 0) return;
+    const col = cfg.labelHoverColor;
+    for (const { i, strength } of mosaic.halo) {
+      writeCell(
+        i,
+        col.r,
+        col.g,
+        col.b,
+        cfg.labelHoverHalo * strength,
+        cfg.labelHoverGlow * 0.6 * strength,
+        cfg.extrudeHeights.wall
+      );
+    }
+  }
+
   function composeFrame() {
     lit.fill(0);
 
     // Labels are part of the map, so they sit under the sim. A word inside the
     // page area keeps burning: it is already white, so the sheet closes over
     // it rather than making it come up again.
+    for (const mosaic of mosaics) {
+      paintMosaic(mosaic, mosaicHovered(mosaic));
+    }
     for (const label of labels) {
       if (hoverLabel === label) {
         paintHoveredLabel(label);
@@ -1833,24 +2154,42 @@ function createLedWall(canvas, options = {}) {
    * Words are read at their resting height even while they are lifted, so the
    * hover cannot chase itself off the cursor.
    */
-  function labelFromPointer(clientX, clientY) {
+  function hitFromPointer(clientX, clientY) {
+    // The bust sits at hover height, so read it there first or the cursor
+    // would hit the wall behind the face
+    const raised = cellFromPointer(clientX, clientY, cfg.extrudeHeights.labelHover);
+    if (raised) {
+      const mosaic = mosaicAt(raised.c, raised.r, raised.i);
+      if (mosaic) return { mosaic };
+    }
     const cell = cellFromPointer(clientX, clientY, cfg.extrudeHeights.label);
-    return cell ? labelAt(cell.c, cell.r) : null;
+    if (!cell) return null;
+    const mosaic = mosaicAt(cell.c, cell.r, cell.i);
+    if (mosaic) return { mosaic };
+    const label = labelAt(cell.c, cell.r);
+    return label ? { label } : null;
   }
 
   function onPointerMove(e) {
-    hoverLabel = labelFromPointer(e.clientX, e.clientY);
-    canvas.style.cursor = hoverLabel ? "pointer" : "default";
+    const hit = hitFromPointer(e.clientX, e.clientY);
+    hoverMosaic = hit && hit.mosaic ? hit.mosaic : null;
+    hoverLabel = hit && hit.label ? hit.label : null;
+    canvas.style.cursor = hoverLabel || hoverMosaic ? "pointer" : "default";
   }
 
   function onPointerLeave() {
     hoverLabel = null;
+    hoverMosaic = null;
   }
 
   function onClick(e) {
-    const label = labelFromPointer(e.clientX, e.clientY);
-    if (label) {
-      onSelect(label);
+    const hit = hitFromPointer(e.clientX, e.clientY);
+    if (hit && hit.mosaic) {
+      onSelect({ id: hit.mosaic.pageId });
+      return;
+    }
+    if (hit && hit.label) {
+      onSelect(hit.label);
       return;
     }
     // Bare wall is aimed at down on the wall itself, not up where the words are
@@ -1926,6 +2265,7 @@ function createLedWall(canvas, options = {}) {
     pause,
     resume,
     addLabel,
+    addMosaic,
     clearLabels,
     openPanel,
     closePanel,

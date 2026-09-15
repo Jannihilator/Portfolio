@@ -17,7 +17,7 @@
 </head>
 <body>
   <div id="led-stage">
-    <canvas id="led-canvas" aria-label="Interactive LED snake wall"></canvas>
+    <canvas id="led-canvas" aria-label="Yen-Chun Huang, interactive LED snake wall"></canvas>
   </div>
 
   <article id="page" hidden>
@@ -500,12 +500,19 @@
       if (isMobile() && wall.panelState === "open") wall.pause();
     });
 
-    // Scattered across the wall so the snakes have a maze to negotiate
-    wall.addLabel("ABOUT", { id: "about", anchorX: 0.2, anchorY: 0.2 });
-    wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.66, anchorY: 0.34 });
-    wall.addLabel("SKILLS", { id: "skills", anchorX: 0.26, anchorY: 0.56 });
-    wall.addLabel("BLOGS", { id: "blog", anchorX: 0.72, anchorY: 0.72 });
-    wall.addLabel("CONTACT", { id: "contact", anchorX: 0.38, anchorY: 0.84 });
+    // The face is its own About button; the name is another. They open the
+    // same page but hover independently.
+    wall.addMosaic({
+      id: "portrait",
+      pageId: "about",
+      anchorX: 0.5,
+      anchorY: 0.5,
+    });
+    wall.addLabel("YEN-CHUN", { id: "about", anchorX: 0.22, anchorY: 0.2 });
+    wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.78, anchorY: 0.28 });
+    wall.addLabel("SKILLS", { id: "skills", anchorX: 0.2, anchorY: 0.62 });
+    wall.addLabel("BLOGS", { id: "blog", anchorX: 0.78, anchorY: 0.74 });
+    wall.addLabel("CONTACT", { id: "contact", anchorX: 0.38, anchorY: 0.86 });
     syncViewport();
     wall.start();
   </script>
