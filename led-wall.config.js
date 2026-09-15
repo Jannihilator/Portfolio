@@ -111,7 +111,7 @@ window.LED_WALL_CONFIG = {
   /** LEDs of wall kept above and below the page */
   panelBorderY: 3,
   /** LEDs kept either side of it — the lane the snakes are left with */
-  panelBorderX: 7,
+  panelBorderX: 6,
   /** The color the middle settles on, and so the page background */
   panelColor: { r: 255, g: 255, b: 255 },
   /** The color a cell flares to on the way up, whatever fill it settles on */

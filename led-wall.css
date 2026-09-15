@@ -249,9 +249,14 @@ body {
 }
 
 #page .projects-section h2 {
-  margin: 0 0 1.35rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid rgba(22, 24, 29, 0.15);
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--accent);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #16181d;
 }
 
 .projects-stack,
@@ -344,7 +349,11 @@ body {
   background: #0c0d10;
 }
 
-/* Two stills sit side by side on a wide card, one video fills it */
+/* Two stills or a still + video sit side by side on a wide card */
+.project-card--big .project-card-media {
+  flex-wrap: nowrap;
+}
+
 .project-card--big .project-thumb {
   flex: 1 1 12rem;
   min-width: 0;
@@ -641,7 +650,8 @@ body {
 }
 
 #page.is-dark .projects-section h2 {
-  border-bottom-color: rgba(232, 236, 242, 0.18);
+  border-bottom-color: var(--accent);
+  color: #f4f6f8;
 }
 
 /* Frames stay neutral until the pointer lands, so a grid of them reads as one
@@ -711,6 +721,10 @@ body {
   .projects-grid,
   .blogs-grid {
     grid-template-columns: 1fr;
+  }
+
+  .project-card--big .project-card-media {
+    flex-wrap: wrap;
   }
 
   .projects-section + .projects-section {

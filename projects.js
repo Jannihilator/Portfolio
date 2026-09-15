@@ -9,10 +9,24 @@ window.PORTFOLIO_PROJECTS = [
     layout: "stack",
     projects: [
       {
-        id: "rain-to-serene",
-        title: "Rain to Serene (In Progress)",
+        id: "star-fishing",
+        title: "Star Fishing (In Progress)",
         size: "big",
-        media: [{ type: "video", src: "./assets/rain-demo.mp4" }],
+        media: [
+          { type: "image", src: "./assets/star-fishing.png", alt: "Star Fishing" },
+          { type: "video", src: "./assets/star-fishing.mp4" },
+        ],
+        description: "",
+        stack: ["Shader", "Particles"],
+      },
+      {
+        id: "serainity",
+        title: "Serainity (In Progress)",
+        size: "big",
+        media: [
+          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
+          { type: "video", src: "./assets/rain-demo.mp4" },
+        ],
         description:
           "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
         stack: ["Shader", "Object Pooling"],
@@ -23,7 +37,10 @@ window.PORTFOLIO_PROJECTS = [
         id: "borderless",
         title: "Borderless",
         size: "big",
-        media: [{ type: "video", src: "./assets/borderless-website.mp4" }],
+        media: [
+          { type: "image", src: "./assets/borderless-phones.png", alt: "Borderless on four phones" },
+          { type: "video", src: "./assets/borderless-website.mp4" },
+        ],
         description:
           "Big Picture Studio is an interdisciplinary team innovating a new medium across 4 mobile phones by creating a 20-minute, cooperative puzzle-narrative seamlessly integrating film narrative, game design, and comic art storytelling.",
         stack: ["Networking", "Mobile", "Puzzle"],
@@ -254,12 +271,19 @@ window.PORTFOLIO_PROJECTS = [
     return null;
   }
 
-  function mediaHtml(items, extraClass) {
+  function featuredMedia(project) {
+    const items = project.media || [];
+    const video = items.find((item) => item.type === "video");
+    return video ? [video] : items;
+  }
+
+  function mediaHtml(items, extraClass, options) {
     if (!items || !items.length) return "";
     const bits = items
       .map((item) => {
         if (item.type === "video") {
-          return `<video class="${extraClass}" muted loop playsinline>
+          const autoplay = options && options.autoplay ? " autoplay" : "";
+          return `<video class="${extraClass}" muted loop playsinline${autoplay}>
             <source src="${escapeHtml(item.src)}" type="video/mp4" />
           </video>`;
         }
@@ -397,13 +421,16 @@ window.PORTFOLIO_PROJECTS = [
     container.innerHTML = `
       <div class="project-detail">
         <h1>${escapeHtml(project.title)}</h1>
-        ${project.iframe ? `<div class="project-embed" data-embed></div>` : mediaHtml(project.media, "project-detail-media")}
+        ${project.iframe ? `<div class="project-embed" data-embed></div>` : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true })}
         ${desc}
         ${stackHtml(project.stack)}
         ${linkHtml(project.href, "Project website")}
       </div>`;
     const host = container.querySelector("[data-embed]");
     if (host) mountEmbed(host, project.iframe, project.title);
+    container.querySelectorAll("video").forEach((video) => {
+      video.play().catch(() => {});
+    });
   }
 
   function stopMedia(root) {
