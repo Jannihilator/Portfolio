@@ -491,6 +491,8 @@
       const mobile = isMobile();
       wall.config.panelBorderX = mobile ? 0 : DESKTOP_BORDER.x;
       wall.config.panelBorderY = mobile ? 0 : DESKTOP_BORDER.y;
+      // Phone: the face is About. Keep the name off so it does not eat the wall.
+      aboutName.hidden = mobile;
     }
 
     mobileQuery.addEventListener("change", () => {
@@ -501,14 +503,19 @@
     });
 
     // The face is its own About button; the name is another. They open the
-    // same page but hover independently.
+    // same page but hover independently. On a phone the name is hidden and
+    // only the face remains.
     wall.addMosaic({
       id: "portrait",
       pageId: "about",
       anchorX: 0.5,
       anchorY: 0.5,
     });
-    wall.addLabel("YEN-CHUN", { id: "about", anchorX: 0.22, anchorY: 0.2 });
+    const aboutName = wall.addLabel("YEN-CHUN", {
+      id: "about",
+      anchorX: 0.22,
+      anchorY: 0.2,
+    });
     wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.78, anchorY: 0.28 });
     wall.addLabel("SKILLS", { id: "skills", anchorX: 0.2, anchorY: 0.62 });
     wall.addLabel("BLOGS", { id: "blog", anchorX: 0.78, anchorY: 0.74 });

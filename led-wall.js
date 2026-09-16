@@ -424,6 +424,7 @@ function createLedWall(canvas, options = {}) {
       clickable: opts.clickable !== false,
       beside: opts.beside || null,
       side: opts.side || "right",
+      hidden: !!opts.hidden,
     };
     labelDefs.push(def);
     layoutLabels();
@@ -495,6 +496,7 @@ function createLedWall(canvas, options = {}) {
     const letterGap = Math.max(1, cfg.letterGap | 0);
     let widest = 0;
     for (const def of labelDefs) {
+      if (def.hidden) continue;
       const n = [...def.text].length;
       widest = Math.max(widest, n * glyphW + Math.max(0, n - 1) * letterGap);
     }
@@ -714,6 +716,7 @@ function createLedWall(canvas, options = {}) {
     }
 
     for (const def of labelDefs) {
+      if (def.hidden) continue;
       const chars = [...def.text];
       const textW = chars.length * glyphW + Math.max(0, chars.length - 1) * letterGap;
       const textH = glyphH;
