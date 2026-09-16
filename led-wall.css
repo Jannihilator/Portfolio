@@ -689,6 +689,17 @@ body {
   margin-top: 1.5rem;
 }
 
+.about-contact {
+  margin-top: clamp(2.25rem, 5vw, 3.5rem);
+  padding-top: clamp(1.5rem, 3.5vw, 2.25rem);
+  border-top: 3px solid var(--accent);
+}
+
+#page .about-contact h2 {
+  margin: 0 0 0.75rem;
+  color: #16181d;
+}
+
 #hud {
   position: fixed;
   left: 1rem;

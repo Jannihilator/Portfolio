@@ -64,6 +64,49 @@
             rel="noopener noreferrer"
             >View Résumé</a
           >
+          <section class="about-contact">
+            <h2>Contact</h2>
+            <p>
+              Always up for talking about games, odd input devices, or a project you
+              want a hand with.
+            </p>
+            <ul class="contact-links">
+              <li>
+                <a href="mailto:yenchun.haung11@gmail.com">
+                  <i aria-hidden="true" class="fa-solid fa-envelope"></i>
+                  <span>Email</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer">
+                  <i aria-hidden="true" class="fa-brands fa-itch-io"></i>
+                  <span>itch.io</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.linkedin.com/in/yen-chun-huang"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <i aria-hidden="true" class="fa-brands fa-linkedin"></i>
+                  <span>LinkedIn</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer">
+                  <i aria-hidden="true" class="fa-brands fa-github"></i>
+                  <span>GitHub</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer">
+                  <i aria-hidden="true" class="fa-brands fa-medium"></i>
+                  <span>Medium</span>
+                </a>
+              </li>
+            </ul>
+          </section>
         </div>
       </div>
       <div class="page-body page-body--wide" data-view="projects" hidden>
@@ -234,49 +277,6 @@
           >All posts on Medium</a
         >
       </div>
-      <div class="page-body" data-view="contact" hidden>
-        <h1>Contact</h1>
-        <p>
-          Always up for talking about games, odd input devices, or a project you want
-          a hand with.
-        </p>
-        <ul class="contact-links">
-          <li>
-            <a href="mailto:yenchun.haung11@gmail.com">
-              <i aria-hidden="true" class="fa-solid fa-envelope"></i>
-              <span>Email</span>
-            </a>
-          </li>
-          <li>
-            <a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer">
-              <i aria-hidden="true" class="fa-brands fa-itch-io"></i>
-              <span>itch.io</span>
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://www.linkedin.com/in/yen-chun-huang"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <i aria-hidden="true" class="fa-brands fa-linkedin"></i>
-              <span>LinkedIn</span>
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer">
-              <i aria-hidden="true" class="fa-brands fa-github"></i>
-              <span>GitHub</span>
-            </a>
-          </li>
-          <li>
-            <a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer">
-              <i aria-hidden="true" class="fa-brands fa-medium"></i>
-              <span>Medium</span>
-            </a>
-          </li>
-        </ul>
-      </div>
     </div>
   </article>
 
@@ -299,7 +299,6 @@
       detail: pageEl.querySelector('[data-view="detail"]'),
       skills: pageEl.querySelector('[data-view="skills"]'),
       blogs: pageEl.querySelector('[data-view="blogs"]'),
-      contact: pageEl.querySelector('[data-view="contact"]'),
     };
 
     const mobileQuery = window.matchMedia("(max-width: 720px)");
@@ -314,7 +313,6 @@
       projects: "projects",
       skills: "skills",
       blog: "blogs",
-      contact: "contact",
     };
 
     /**
@@ -323,12 +321,11 @@
      * and Blinky off the snakes.
      */
     const VIEW_THEMES = {
-      about: { fill: { r: 255, g: 255, b: 255 }, accent: "#b78500", accentRgb: "250, 204, 21" },
+      about: { fill: { r: 250, g: 244, b: 228 }, accent: "#b78500", accentRgb: "250, 204, 21" },
       projects: { fill: { r: 30, g: 32, b: 38 }, accent: "#facc15", accentRgb: "250, 204, 21" },
       detail: { fill: { r: 30, g: 32, b: 38 }, accent: "#facc15", accentRgb: "250, 204, 21" },
       skills: { fill: { r: 14, g: 38, b: 46 }, accent: "#5fd8ec", accentRgb: "95, 216, 236" },
       blogs: { fill: { r: 30, g: 26, b: 50 }, accent: "#c3a6ff", accentRgb: "195, 166, 255" },
-      contact: { fill: { r: 46, g: 26, b: 30 }, accent: "#ff9d8a", accentRgb: "255, 157, 138" },
     };
 
     function themeFor(view) {
@@ -491,8 +488,6 @@
       const mobile = isMobile();
       wall.config.panelBorderX = mobile ? 0 : DESKTOP_BORDER.x;
       wall.config.panelBorderY = mobile ? 0 : DESKTOP_BORDER.y;
-      // Phone: the face is About. Keep the name off so it does not eat the wall.
-      aboutName.hidden = mobile;
     }
 
     mobileQuery.addEventListener("change", () => {
@@ -503,23 +498,17 @@
     });
 
     // The face is its own About button; the name is another. They open the
-    // same page but hover independently. On a phone the name is hidden and
-    // only the face remains.
+    // same page but hover independently.
     wall.addMosaic({
       id: "portrait",
       pageId: "about",
       anchorX: 0.5,
-      anchorY: 0.5,
+      anchorY: 0.45,
     });
-    const aboutName = wall.addLabel("YEN-CHUN", {
-      id: "about",
-      anchorX: 0.22,
-      anchorY: 0.2,
-    });
-    wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.78, anchorY: 0.28 });
-    wall.addLabel("SKILLS", { id: "skills", anchorX: 0.2, anchorY: 0.62 });
-    wall.addLabel("BLOGS", { id: "blog", anchorX: 0.78, anchorY: 0.74 });
-    wall.addLabel("CONTACT", { id: "contact", anchorX: 0.38, anchorY: 0.86 });
+    wall.addLabel("ABOUT", { id: "about", anchorX: 0.22, anchorY: 0.23 });
+    wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.78, anchorY: 0.31 });
+    wall.addLabel("SKILLS", { id: "skills", anchorX: 0.2, anchorY: 0.72 });
+    wall.addLabel("BLOGS", { id: "blog", anchorX: 0.78, anchorY: 0.85 });
     syncViewport();
     wall.start();
   </script>

@@ -25,11 +25,16 @@ window.LED_WALL_CONFIG = {
   labelHitPadding: 2,
   /** Clear LEDs kept between labels so snakes always have a lane through */
   labelMargin: 4,
+  /** LEDs kept between a word and the edge of the wall / page, so a phone
+   *  never parks PROJECTS on the bezel */
+  labelEdgePad: 3,
+  /** Pushes authored anchors out from center. 0 = as written, 1 = corners. */
+  labelSpread: 0.55,
   /** Integer blow-up of the pixel-art face (1 = one sprite pixel per LED) */
   portraitScale: 1,
   /** Face palette — change these and reload. Black in the sprite stays unlit. */
   portraitHair: { r: 33, g: 33, b: 33 },
-  portraitGlasses: { r: 69, g: 90, b: 100 },
+  portraitGlasses: { r: 48, g: 79, b: 254 },
   portraitMouth: { r: 235, g: 89, b: 87 },
   portraitShirt: { r: 189, g: 189, b: 189 },
   /** Resting label: white, but held back so the wall stays calm */
@@ -56,9 +61,9 @@ window.LED_WALL_CONFIG = {
     { r: 145, g: 218, b: 115 },
   ],
   /** LED steps per second */
-  snakeSpeed: 13,
+  snakeSpeed: 14,
   /** Per-snake speed jitter (0.15 = up to +/-15%) */
-  speedVariance: 0.3,
+  speedVariance: 0.5,
   /** Speed multiplier while a page is open, so the wall calms down to read */
   readingSpeedScale: 1,
   /** Segments a fresh snake starts with */
@@ -79,7 +84,7 @@ window.LED_WALL_CONFIG = {
   /** Chance per step to ignore the optimal path — slowest snake */
   wanderChanceSlow: 0.01,
   /** Chance per step to ignore the optimal path — fastest snake */
-  wanderChanceFast: 0.16,
+  wanderChanceFast: 0.14,
   /** Free LEDs a snake wants ahead of a step (capped by its own length) */
   safetySpace: 64,
 
@@ -115,14 +120,15 @@ window.LED_WALL_CONFIG = {
   burstFlash: 3,
 
   // --- Page panel (clicking a label drives the middle of the wall to white) ---
-  /** LEDs of wall kept above and below the page. Floor — a bigger monitor
-   *  grows this so the page does not stretch with the wall. */
-  panelBorderY: 3,
+  /** LEDs of wall kept above and below the page. Floor. */
+  panelBorderY: 4,
   /** LEDs kept either side of it — the lane the snakes are left with. Floor. */
   panelBorderX: 6,
   /** How much of the extra wall (past a ~1280×800 laptop) the page may take.
-   *  0 = stay laptop-sized, 1 = grow with the monitor. */
-  panelGrow: 0.2,
+   *  0 = stay laptop-sized, 1 = grow with the monitor. Width stays close to
+   *  laptop; height follows a taller screen. */
+  panelGrowX: 0.2,
+  panelGrowY: 1,
   /** The color the middle settles on, and so the page background */
   panelColor: { r: 255, g: 255, b: 255 },
   /** The color a cell flares to on the way up, whatever fill it settles on */

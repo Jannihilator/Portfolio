@@ -170,6 +170,8 @@ function mergeConfig(overrides = {}) {
     letterGap: 1,
     labelHitPadding: 2,
     labelMargin: 4,
+    labelEdgePad: 3,
+    labelSpread: 0.55,
     portraitScale: 1,
     portraitHair: { r: 33, g: 33, b: 33 },
     portraitGlasses: { r: 38, g: 50, b: 56 },
@@ -215,7 +217,8 @@ function mergeConfig(overrides = {}) {
     burstFlash: 3,
     panelBorderY: 3,
     panelBorderX: 6,
-    panelGrow: 0.2,
+    panelGrowX: 0.2,
+    panelGrowY: 1,
     panelColor: { r: 255, g: 255, b: 255 },
     /** The color a cell flares to on the way up, whatever it settles on */
     panelIgniteColor: { r: 255, g: 255, b: 255 },
@@ -424,7 +427,6 @@ function createLedWall(canvas, options = {}) {
       clickable: opts.clickable !== false,
       beside: opts.beside || null,
       side: opts.side || "right",
-      hidden: !!opts.hidden,
     };
     labelDefs.push(def);
     layoutLabels();
@@ -496,7 +498,6 @@ function createLedWall(canvas, options = {}) {
     const letterGap = Math.max(1, cfg.letterGap | 0);
     let widest = 0;
     for (const def of labelDefs) {
-      if (def.hidden) continue;
       const n = [...def.text].length;
       widest = Math.max(widest, n * glyphW + Math.max(0, n - 1) * letterGap);
     }
@@ -572,6 +573,30 @@ function createLedWall(canvas, options = {}) {
     return { x0: rect.c0, y0: rect.r0, x1: rect.c1, y1: rect.r1 };
   }
 
+  function insetRect(r, pad) {
+    if (pad <= 0) return r;
+    return {
+      x0: r.x0 + pad,
+      y0: r.y0 + pad,
+      x1: Math.max(r.x0 + pad, r.x1 - pad),
+      y1: Math.max(r.y0 + pad, r.y1 - pad),
+    };
+  }
+
+  /**
+   * Labels keep `labelEdgePad` empty LEDs off the rim of the page cluster, so
+   * a phone (where the page is the whole wall) never clips a word.
+   */
+  function labelBounds() {
+    return insetRect(clusterBounds(), Math.max(0, cfg.labelEdgePad | 0));
+  }
+
+  /** Authored anchors sit inward; this walks them toward the padded corners. */
+  function spreadAnchor(a) {
+    const spread = clamp(cfg.labelSpread == null ? 0.55 : +cfg.labelSpread, 0, 1);
+    return 0.5 + (a - 0.5) * (1 + spread);
+  }
+
   /**
    * The sprite as a grid of colors, each pixel blown up by `portraitScale` and
    * the scale capped so the bust still leaves the words room around it.
@@ -641,8 +666,8 @@ function createLedWall(canvas, options = {}) {
     const spanX = bounds.x1 - bounds.x0 + 1;
     const spanY = bounds.y1 - bounds.y0 + 1;
     return {
-      x: Math.round(bounds.x0 + def.anchorX * spanX - w / 2),
-      y: Math.round(bounds.y0 + def.anchorY * spanY - h / 2),
+      x: Math.round(bounds.x0 + spreadAnchor(def.anchorX) * spanX - w / 2),
+      y: Math.round(bounds.y0 + spreadAnchor(def.anchorY) * spanY - h / 2),
     };
   }
 
@@ -661,25 +686,26 @@ function createLedWall(canvas, options = {}) {
     const pad = Math.max(0, cfg.labelHitPadding | 0);
     // Hit boxes need clearance too, or one hover would claim two labels
     const margin = Math.max(cfg.labelMargin | 0, pad * 2 + 1);
-    const bounds = clusterBounds();
+    const cluster = clusterBounds();
+    const bounds = labelBounds();
     const boxes = [];
 
     // The face goes down first and does not move: it is what the wall is
     // centered on, and the words are the ones that step aside for it.
     for (const def of mosaicDefs) {
-      const sprite = portraitSprite(bounds);
-      const spanX = bounds.x1 - bounds.x0 + 1;
-      const spanY = bounds.y1 - bounds.y0 + 1;
+      const sprite = portraitSprite(cluster);
+      const spanX = cluster.x1 - cluster.x0 + 1;
+      const spanY = cluster.y1 - cluster.y0 + 1;
       const spot = {
         x: clamp(
-          Math.round(bounds.x0 + def.anchorX * spanX - sprite.faceX),
-          bounds.x0,
-          Math.max(bounds.x0, bounds.x1 - sprite.w + 1)
+          Math.round(cluster.x0 + def.anchorX * spanX - sprite.faceX),
+          cluster.x0,
+          Math.max(cluster.x0, cluster.x1 - sprite.w + 1)
         ),
         y: clamp(
-          Math.round(bounds.y0 + def.anchorY * spanY - sprite.faceY),
-          bounds.y0,
-          Math.max(bounds.y0, bounds.y1 - sprite.h + 1)
+          Math.round(cluster.y0 + def.anchorY * spanY - sprite.faceY),
+          cluster.y0,
+          Math.max(cluster.y0, cluster.y1 - sprite.h + 1)
         ),
       };
       const box = {
@@ -716,7 +742,6 @@ function createLedWall(canvas, options = {}) {
     }
 
     for (const def of labelDefs) {
-      if (def.hidden) continue;
       const chars = [...def.text];
       const textW = chars.length * glyphW + Math.max(0, chars.length - 1) * letterGap;
       const textH = glyphH;
@@ -861,8 +886,8 @@ function createLedWall(canvas, options = {}) {
     const minBy = cfg.panelBorderY | 0;
     const spareX = Math.max(1, ((cols - 10) / 2) | 0);
     const spareY = Math.max(1, ((rows - 8) / 2) | 0);
-    const bx = scaledPanelBorder(minBx, spareX, cols * pitch, 1280);
-    const by = scaledPanelBorder(minBy, spareY, rows * pitch, 800);
+    const bx = scaledPanelBorder(minBx, spareX, cols * pitch, 1280, panelGrowFor("X"));
+    const by = scaledPanelBorder(minBy, spareY, rows * pitch, 800, panelGrowFor("Y"));
     return {
       c0: bx,
       r0: by,
@@ -872,12 +897,19 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * 6 and 3 look right on a laptop. Extra wall beyond that size mostly stays
-   * as snake lane, so the page does not become a billboard on a 4K.
+   * 6 and 3 look right on a laptop. Extra *width* beyond that mostly stays as
+   * snake lane, so a 4K does not stretch the page into a billboard. Extra
+   * *height* can follow the monitor, so a tall screen just gets a taller page.
    */
-  function scaledPanelBorder(min, spare, wallPx, refPx) {
+  function panelGrowFor(axis) {
+    const keyed = axis === "Y" ? cfg.panelGrowY : cfg.panelGrowX;
+    const fallback = axis === "Y" ? 1 : 0.2;
+    const raw = keyed != null ? keyed : cfg.panelGrow;
+    return clamp(raw == null ? fallback : +raw, 0, 1);
+  }
+
+  function scaledPanelBorder(min, spare, wallPx, refPx, grow) {
     if (min <= 0) return 0;
-    const grow = cfg.panelGrow == null ? 0.2 : clamp(+cfg.panelGrow, 0, 1);
     const extra = Math.round((Math.max(0, wallPx - refPx) * (1 - grow)) / 2 / Math.max(1, pitch));
     return clamp(min + extra, 0, spare);
   }
@@ -2056,8 +2088,9 @@ function createLedWall(canvas, options = {}) {
 
     // A phone is narrower than the longest word is wide, and layoutLabels has
     // nowhere to put it but off the edge. So the diodes give way before the
-    // words do: cells shrink until PROJECTS fits between its own margins.
-    const needCols = widestLabel() + 4;
+    // words do: cells shrink until PROJECTS fits with its edge pad.
+    const edgePad = Math.max(2, cfg.labelEdgePad | 0);
+    const needCols = widestLabel() + 2 * edgePad;
     cellSize = cfg.targetCellPx;
     while (cellSize > cfg.minCellPx && colsAt(cellSize, w) < needCols) cellSize--;
 
