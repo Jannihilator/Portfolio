@@ -117,11 +117,11 @@ const PORTRAIT_PALETTE = {
   /** Spiky hair */
   H: { r: 33, g: 33, b: 33 },
   /** Skin */
-  S: { r: 229, g: 170, b: 122 },
+  S: { r: 214, g: 158, b: 122 },
   /** Black glasses */
   G: { r: 38, g: 50, b: 56 },
   /** Eyes */
-  E: { r: 58, g: 34, b: 24 },
+  E: { r: 74, g: 46, b: 43 },
   /** Smile */
   M: { r: 229, g: 115, b: 115 },
   /** Light grey shirt */
@@ -141,8 +141,8 @@ const PORTRAIT_SPRITE = [
   "...GGGGGSSGGGGGSSS..",
   "....SSSSSSSSSSSSSS..",
   "....SSSSSSSSSSSSS...",
-  ".....SSSSSMSSSSSS...",
-  ".....SSMMMMSSSSS....",
+  ".....SSSSSSSSSSSS...",
+  ".....SSSMMMSSSSS....",
   "......SSSSSSSSS.....",
   "......CCSSSSSCCC....",
   "....CCCCCCSCCCCCCC..",

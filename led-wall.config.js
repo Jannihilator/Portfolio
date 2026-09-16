@@ -33,10 +33,10 @@ window.LED_WALL_CONFIG = {
   /** Integer blow-up of the pixel-art face (1 = one sprite pixel per LED) */
   portraitScale: 1,
   /** Face palette — change these and reload. Black in the sprite stays unlit. */
-  portraitHair: { r: 33, g: 33, b: 33 },
-  portraitGlasses: { r: 48, g: 79, b: 254 },
-  portraitMouth: { r: 235, g: 89, b: 87 },
-  portraitShirt: { r: 189, g: 189, b: 189 },
+  portraitHair: { r: 28, g: 28, b: 28 },
+  portraitGlasses: { r: 40, g: 130, b: 235 },
+  portraitMouth: { r: 225, g: 90, b: 85 },
+  portraitShirt: { r: 127, g: 127, b: 127 },
   /** Resting label: white, but held back so the wall stays calm */
   labelColor: { r: 232, g: 236, b: 245 },
   labelAlpha: 0.8,
