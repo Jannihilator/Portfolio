@@ -11,7 +11,7 @@
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Source+Sans+3:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
   <link rel="stylesheet" href="led-wall.css" />
 </head>
@@ -45,18 +45,33 @@
             <h1>Yen Chun (James) Huang</h1>
           </header>
           <p>
-            I’m a game developer passionate about creating
-            <span class="highlight">innovative experiences</span>. With a background in
-            engineering and a love for board games, I bridge technical craft and
-            creative design.
+            I’m a game developer who likes making ideas happen. I come from
+            engineering and a love of board games, and I pay a lot of attention to
+            detail. What I like is making something, then watching how other people
+            react to it.
           </p>
           <p>
-            I hold myself to high standards of design, crafting balanced systems and
-            meaningful challenges that push both players and myself to improve. My work
-            explores new mechanics, from <span class="highlight">sensors</span> to
-            <span class="highlight">transformational design</span>, always aiming to
-            deliver novel experiences that surprise and inspire players.
+            I’m curious about new tech and new ways of interaction. A lot of the
+            time I want to be the first person to see something new actually happen,
+            so I take that work on myself. Breathing as an input, smart shoes,
+            a machine learning .io bot, audio combat, and a lot more fun stuff.
           </p>
+          <ul class="about-marks">
+            <li>
+              <span class="highlight">Mento-Issue</span> won the Pittsburgh
+              non-traditional award at Global Game Jam 2025.
+            </li>
+            <li>
+              <span class="highlight">Camp Movewell</span> was nominated for the 2026
+              Games for Change Awards, Best in Health &amp; Wellness.
+            </li>
+          </ul>
+          <figure class="about-g4c">
+            <img
+              src="./assets/g4c.jpeg"
+              alt="The Camp Movewell team at the 2026 Games for Change Awards"
+            />
+          </figure>
           <a
             class="pixel-btn page-resume"
             href="./assets/Resume.pdf"
@@ -280,12 +295,15 @@
     </div>
   </article>
 
+  <nav id="glance" aria-label="A few projects"></nav>
+
   <!-- <div id="hud">
     <span class="hint">Snakes chase the yellow dots · click on a word to open</span>
   </div> -->
 
   <script src="led-wall.config.js"></script>
   <script src="led-wall.js"></script>
+  <script src="contributions.js"></script>
   <script src="projects.js"></script>
   <script>
     const canvas = document.getElementById("led-canvas");
@@ -336,6 +354,51 @@
     let activeProject = null;
 
     PortfolioProjects.renderList(document.getElementById("projects-list"));
+
+    function escapeGlance(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    /** Three projects visible before anyone opens the wall. */
+    const GLANCE_IDS = ["mento-issue", "renushu", "star-fishing"];
+
+    /**
+     * "(In Progress)" sits in the title with no caption, so it reads quieter
+     * than an award line. On the strip it becomes a highlighted caption.
+     */
+    function glanceCopy(project, award) {
+      const title = String(project.title || "");
+      const progress = title.match(/^(.*?)\s*\(\s*in progress\s*\)\s*$/i);
+      if (!progress) return { title, note: award };
+      return { title: progress[1], note: award || "in development" };
+    }
+
+    function renderGlance() {
+      const root = document.getElementById("glance");
+      const awards =
+        (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.awards) || {};
+      root.innerHTML = GLANCE_IDS.map((id) => {
+        const project = PortfolioProjects.find(id);
+        if (!project) return "";
+        const shot = (project.media || []).find((item) => item.type === "image");
+        const copy = glanceCopy(project, awards[id] || "");
+        return `<button type="button" data-glance="${escapeGlance(id)}">
+          ${shot ? `<img src="${escapeGlance(shot.src)}" alt="" />` : ""}
+          <span>
+            <strong>${escapeGlance(copy.title)}</strong>
+            ${copy.note ? `<em>${escapeGlance(copy.note)}</em>` : ""}
+          </span>
+        </button>`;
+      }).join("");
+    }
+
+    renderGlance();
+
+    let pendingProject = null;
 
     // The wall lights its middle up and hands back the box the page goes in
     function placePage(rect) {
@@ -432,17 +495,35 @@
       },
       onPanelOpen(label, rect) {
         placePage(rect);
+        if (pendingProject) {
+          pageView = "detail";
+          activeProject = pendingProject;
+          PortfolioProjects.renderDetail(views.detail, pendingProject);
+          pendingProject = null;
+        }
         revealPage();
+        document.body.classList.add("panel-open");
         // On a phone the page covers the wall edge to edge, so there is
         // nothing left to animate behind it
         if (isMobile()) wall.pause();
       },
       onPanelClose() {
+        document.body.classList.remove("panel-open");
         hidePage();
         teardownDetail();
         pageView = "about";
       },
       onPanelResize: placePage,
+    });
+
+    document.getElementById("glance").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-glance]");
+      if (!button || wall.panelState !== "closed") return;
+      const project = PortfolioProjects.find(button.dataset.glance);
+      if (!project) return;
+      pendingProject = project;
+      pageView = "projects";
+      wall.openPanel({ id: "projects" }, themeFor("detail").fill);
     });
 
     views.projects.addEventListener("click", (event) => {
@@ -503,12 +584,13 @@
       id: "portrait",
       pageId: "about",
       anchorX: 0.5,
-      anchorY: 0.45,
+      anchorY: 0.34,
     });
-    wall.addLabel("ABOUT", { id: "about", anchorX: 0.22, anchorY: 0.23 });
-    wall.addLabel("PROJECTS", { id: "projects", anchorX: 0.78, anchorY: 0.31 });
-    wall.addLabel("SKILLS", { id: "skills", anchorX: 0.2, anchorY: 0.72 });
-    wall.addLabel("BLOGS", { id: "blog", anchorX: 0.78, anchorY: 0.85 });
+    // Two columns under the bust. Left edges line up, right edges line up.
+    wall.addLabel("ABOUT", { id: "about", under: "portrait", col: 0, row: 0, align: "left" });
+    wall.addLabel("PROJECTS", { id: "projects", under: "portrait", col: 1, row: 0, align: "right" });
+    wall.addLabel("SKILLS", { id: "skills", under: "portrait", col: 0, row: 1, align: "left" });
+    wall.addLabel("BLOGS", { id: "blog", under: "portrait", col: 1, row: 1, align: "right" });
     syncViewport();
     wall.start();
   </script>

@@ -91,9 +91,18 @@ body {
   box-sizing: border-box;
 }
 
+/* About runs a little wider than the other pages. The cap and the side
+   padding both follow the screen, so a phone stays inset and a wide panel
+   only gains a modest measure. */
+.page-body[data-view="about"] {
+  max-width: 48rem;
+  padding-inline: clamp(1.15rem, 3vw, 2.5rem);
+}
+
 .about {
   display: flow-root;
   margin-top: clamp(1rem, 3vw, 2rem);
+  font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
 }
 
 /* Portrait and name are one masthead, so the copy below keeps a single
@@ -156,9 +165,51 @@ body {
   color: #33383f;
 }
 
+#page .about p {
+  margin-bottom: 0.55rem;
+  line-height: 1.65;
+}
+
+#page .about-marks li {
+  margin-bottom: 0.35rem;
+  line-height: 1.65;
+}
+
 #page .lede {
   font-size: 1.15rem;
   color: #16181d;
+}
+
+.about-marks {
+  margin: 1.35rem 0 1.15rem;
+  padding: 0;
+  list-style: none;
+}
+
+.about-marks li {
+  margin: 0 0 0.65rem;
+  padding: 0;
+  color: #33383f;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.about-marks li:last-child {
+  margin-bottom: 0;
+}
+
+.about-g4c {
+  width: min(100%, 22rem);
+  margin: 1.1rem auto 1.5rem;
+}
+
+.about-g4c img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #16181d;
+  box-shadow: 3px 3px 0 #16181d;
 }
 
 /* The wall's own dot yellow, laid under the words like a marker */
@@ -357,6 +408,58 @@ body {
 .project-card--big .project-thumb {
   flex: 1 1 12rem;
   min-width: 0;
+}
+
+#page .project-award {
+  margin: 0.85rem 0 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.4;
+}
+
+.project-detail .project-award {
+  margin: 0 0 0.85rem;
+}
+
+.project-contributions {
+  margin: 0.75rem 0 0;
+}
+
+#page .project-contributions h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.project-contributions ul {
+  margin: 0;
+  padding: 0 0 0 1.05rem;
+}
+
+.project-contributions li {
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.project-contributions li + li {
+  margin-top: 0.22rem;
+}
+
+.project-detail .project-contributions {
+  margin: 0 0 1.15rem;
+}
+
+.project-detail .project-contributions li {
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 .project-stack {
@@ -681,8 +784,17 @@ body {
   color: var(--accent);
 }
 
+#page.is-dark .project-award {
+  color: var(--accent);
+}
+
+#page.is-dark .project-contributions h4,
 #page.is-dark .blog-date {
   color: #9aa1ad;
+}
+
+#page.is-dark .project-contributions li {
+  color: #c5cad3;
 }
 
 .page-resume {
@@ -713,6 +825,86 @@ body {
   color: rgba(232, 232, 232, 0.45);
 }
 
+/* A short row of work, sitting on the wall before any label is clicked */
+#glance {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* A short band of wall under the cards, so they are not flush with the edge */
+  bottom: 1.15rem;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.65rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(5, 5, 6, 0.94) 55%, rgba(5, 5, 6, 0));
+  pointer-events: none;
+}
+
+#glance button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: min(17.5rem, 31vw);
+  min-width: 0;
+  padding: 0.35rem 0.6rem 0.35rem 0.35rem;
+  border: 1px solid rgba(232, 236, 242, 0.18);
+  background: rgba(12, 13, 16, 0.88);
+  color: #e8ecf2;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+#glance button:hover,
+#glance button:focus-visible {
+  border-color: rgba(250, 204, 21, 0.7);
+}
+
+#glance button:focus-visible {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
+}
+
+#glance img {
+  flex: none;
+  width: 4.4rem;
+  height: 2.6rem;
+  object-fit: cover;
+  background: #0c0d10;
+}
+
+#glance span {
+  min-width: 0;
+}
+
+#glance strong,
+#glance em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#glance strong {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+#glance em {
+  margin-top: 0.12rem;
+  color: #facc15;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+body.panel-open #glance {
+  display: none;
+}
+
 /* The page takes the whole wall on a phone, so it has to earn its own margins */
 @media (max-width: 720px) {
   /* The script gives it inset:0, but a fixed box measures iOS's large
@@ -729,10 +921,27 @@ body {
     padding: 0.75rem 0.9rem 0.5rem;
   }
 
-  .projects-grid,
-  .blogs-grid {
-    grid-template-columns: 1fr;
-  }
+    .projects-grid,
+    .blogs-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #glance {
+      gap: 0.35rem;
+      padding-right: 0.45rem;
+      padding-left: 0.45rem;
+    }
+
+    #glance button {
+      width: auto;
+      flex: 1;
+      padding-right: 0.4rem;
+    }
+
+    #glance img {
+      width: 2.4rem;
+      height: 2.4rem;
+    }
 
   .project-card--big .project-card-media {
     flex-wrap: wrap;

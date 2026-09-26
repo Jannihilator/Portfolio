@@ -32,9 +32,11 @@ window.LED_WALL_CONFIG = {
   labelSpread: 0.55,
   /** Integer blow-up of the pixel-art face (1 = one sprite pixel per LED) */
   portraitScale: 1,
+  /** LED rows the portrait and the words under it sit above the bottom */
+  bottomGap: 3,
   /** Face palette — change these and reload. Black in the sprite stays unlit. */
   portraitHair: { r: 28, g: 28, b: 28 },
-  portraitGlasses: { r: 40, g: 130, b: 235 },
+  portraitGlasses: { r: 138, g: 154, b: 154 },
   portraitMouth: { r: 225, g: 90, b: 85 },
   portraitShirt: { r: 127, g: 127, b: 127 },
   /** Resting label: white, but held back so the wall stays calm */
@@ -51,17 +53,26 @@ window.LED_WALL_CONFIG = {
   labelShineSpeed: 0.7,
   /** How far the sweep dips the rest of the word (0 = flat, no shine) */
   labelShineStrength: 0.3,
+  /** Blue glare that crosses the glasses on its own, hover or not */
+  glassesFlareColor: { r: 170, g: 214, b: 255 },
+  /** How hard the glare peaks (0 = off, 1 = full blue) */
+  glassesFlareStrength: 1,
+  /** Seconds from one pass to the next */
+  glassesFlareEvery: 3.8,
+  /** Seconds the glare spends crossing the lenses */
+  glassesFlareTravel: 0.85,
 
   // --- Snakes ---
-  /** Pac-Man ghost palette: Blinky, Pinky, Inky, Clyde */
+  /** Blinky, Inky, then green. Green is last so a narrow window can drop it. */
   snakeColors: [
     { r: 255, g: 60, b: 48 },
-    { r: 255, g: 165, b: 230 },
     { r: 64, g: 230, b: 255 },
     { r: 145, g: 218, b: 115 },
   ],
+  /** Below this width the last snake (green) stays off the wall */
+  dropLastSnakeBelowPx: 480,
   /** LED steps per second */
-  snakeSpeed: 14,
+  snakeSpeed: 12,
   /** Per-snake speed jitter (0.15 = up to +/-15%) */
   speedVariance: 0.5,
   /** Speed multiplier while a page is open, so the wall calms down to read */

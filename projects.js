@@ -49,14 +49,14 @@ window.PORTFOLIO_PROJECTS = [
       },
       {
         id: "renushu",
-        title: "ReNushu",
+        title: "Camp Movewell",
         size: "big",
         media: [
-          { type: "image", src: "./assets/renushu-game.png", alt: "ReNushu gameplay" },
-          { type: "image", src: "./assets/renushu-pt.jpeg", alt: "ReNushu physical therapy" },
+          { type: "image", src: "./assets/renushu-game.png", alt: "Camp Movewell gameplay" },
+          { type: "image", src: "./assets/renushu-pt.jpeg", alt: "Camp Movewell physical therapy" },
         ],
         description:
-          "ReNUSHU at CMU’s Entertainment Technology Center partners with Magnes AG to build an exergame that makes physical therapy fun and measurable with NuShu smart shoes for gait sensing and haptic feedback. From rehab to play, from play to progress, every step is progress you can see and measure.",
+          "Camp Movewell, from the ReNUSHU team at CMU’s Entertainment Technology Center with Magnes AG, is an exergame that makes physical therapy fun and measurable with NuShu smart shoes for gait sensing and haptic feedback. From rehab to play, from play to progress, every step is progress you can see and measure.",
         stack: ["Local Networking", "Web", "Sensor"],
         href: "https://projects.etc.cmu.edu/renushu/",
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
@@ -302,6 +302,32 @@ window.PORTFOLIO_PROJECTS = [
       .join("")}</ul>`;
   }
 
+  function contributionLines(project) {
+    const data = window.PROJECT_CONTRIBUTIONS || {};
+    const lines = data[project.id];
+    if (!Array.isArray(lines)) return [];
+    return lines.map((line) => String(line).trim()).filter(Boolean);
+  }
+
+  function awardHtml(project) {
+    const awards = (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.awards) || {};
+    const award = awards[project.id];
+    if (!award || !String(award).trim()) return "";
+    return `<p class="project-award">${escapeHtml(String(award).trim())}</p>`;
+  }
+
+  function contributionsHtml(project) {
+    const lines = contributionLines(project);
+    if (!lines.length) return "";
+    const label =
+      (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.label) ||
+      "My contributions";
+    return `<div class="project-contributions">
+      <h4>${escapeHtml(label)}</h4>
+      <ul>${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+    </div>`;
+  }
+
   function linkHtml(href, label) {
     if (!href) return "";
     return `<a class="pixel-btn project-link" href="${escapeHtml(
@@ -399,7 +425,9 @@ window.PORTFOLIO_PROJECTS = [
               project.id
             )}" tabindex="0">
               ${mediaHtml(project.media, "project-thumb")}
+              ${awardHtml(project)}
               <h3>${escapeHtml(project.title)}</h3>
+              ${contributionsHtml(project)}
               ${stackHtml(project.stack)}
             </article>`;
           })
@@ -421,6 +449,8 @@ window.PORTFOLIO_PROJECTS = [
     container.innerHTML = `
       <div class="project-detail">
         <h1>${escapeHtml(project.title)}</h1>
+        ${awardHtml(project)}
+        ${contributionsHtml(project)}
         ${project.iframe ? `<div class="project-embed" data-embed></div>` : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true })}
         ${desc}
         ${stackHtml(project.stack)}

@@ -1,7 +1,7 @@
 /**
  * Retro LED wall — self-playing snake sim used as a navigation surface.
  *
- * Four snakes chase the nearest shared dot, but never at the cost of their
+ * The snakes chase the nearest shared dot, but never at the cost of their
  * own life: a step that boxes them in is refused even when it is the fast way
  * to food. Bumping into another snake kills the one that bumped, and its body
  * drops back onto the wall as dots that rot inward if nobody eats them, so the
@@ -173,6 +173,7 @@ function mergeConfig(overrides = {}) {
     labelEdgePad: 3,
     labelSpread: 0.55,
     portraitScale: 1,
+    bottomGap: 3,
     portraitHair: { r: 33, g: 33, b: 33 },
     portraitGlasses: { r: 38, g: 50, b: 56 },
     portraitMouth: { r: 229, g: 115, b: 115 },
@@ -185,12 +186,16 @@ function mergeConfig(overrides = {}) {
     labelHoverHalo: 0.22,
     labelShineSpeed: 0.9,
     labelShineStrength: 0.35,
+    glassesFlareColor: { r: 170, g: 214, b: 255 },
+    glassesFlareStrength: 0.92,
+    glassesFlareEvery: 3.8,
+    glassesFlareTravel: 0.85,
     snakeColors: [
       { r: 255, g: 60, b: 48 },
-      { r: 255, g: 165, b: 230 },
       { r: 64, g: 230, b: 255 },
-      { r: 255, g: 176, b: 72 },
+      { r: 145, g: 218, b: 115 },
     ],
+    dropLastSnakeBelowPx: 480,
     snakeSpeed: 13,
     speedVariance: 0.3,
     readingSpeedScale: 0.35,
@@ -414,8 +419,9 @@ function createLedWall(canvas, options = {}) {
   // --- Labels -------------------------------------------------------------
 
   /**
-   * Register a label. Position is a 0-1 anchor of its center on the wall, so
-   * items can be scattered rather than aligned in a column.
+   * Register a label. A 0-1 anchor places its center on the wall.
+   * `under` hangs it in a grid beneath a mosaic: col 0 is the left column,
+   * col 1 the right, and align "left" / "right" lines that column up.
    */
   function addLabel(text, opts = {}) {
     const def = {
@@ -427,6 +433,10 @@ function createLedWall(canvas, options = {}) {
       clickable: opts.clickable !== false,
       beside: opts.beside || null,
       side: opts.side || "right",
+      under: opts.under || null,
+      col: opts.col | 0,
+      row: opts.row | 0,
+      align: opts.align || null,
     };
     labelDefs.push(def);
     layoutLabels();
@@ -491,15 +501,42 @@ function createLedWall(canvas, options = {}) {
     }
   }
 
-  /** LEDs the longest registered word takes up, gaps between letters included */
+  function labelTextWidth(text, glyphW, letterGap) {
+    const n = [...text].length;
+    return n * glyphW + Math.max(0, n - 1) * letterGap;
+  }
+
+  /**
+   * LEDs the widest thing on the wall takes up. A single word, or the two
+   * columns under the portrait when those sit side by side.
+   */
   function widestLabel() {
     const metrics = fontMetrics(cfg.font);
     const glyphW = metrics.w * Math.max(1, cfg.labelScale | 0);
     const letterGap = Math.max(1, cfg.letterGap | 0);
     let widest = 0;
     for (const def of labelDefs) {
-      const n = [...def.text].length;
-      widest = Math.max(widest, n * glyphW + Math.max(0, n - 1) * letterGap);
+      widest = Math.max(widest, labelTextWidth(def.text, glyphW, letterGap));
+    }
+
+    const groups = new Map();
+    for (const def of labelDefs) {
+      if (!def.under) continue;
+      if (!groups.has(def.under)) groups.set(def.under, []);
+      groups.get(def.under).push(def);
+    }
+    const gutter = Math.max(2, cfg.labelMargin | 0);
+    for (const defs of groups.values()) {
+      const colIds = [...new Set(defs.map((d) => d.col))];
+      const words = colIds.reduce((sum, id) => {
+        const w = Math.max(
+          ...defs
+            .filter((d) => d.col === id)
+            .map((d) => labelTextWidth(d.text, glyphW, letterGap))
+        );
+        return sum + w;
+      }, 0);
+      widest = Math.max(widest, words + gutter * Math.max(0, colIds.length - 1));
     }
     return widest;
   }
@@ -604,7 +641,10 @@ function createLedWall(canvas, options = {}) {
   function portraitInk(ch) {
     if (ch === ".") return null;
     if (ch === "H") return cfg.portraitHair || PORTRAIT_PALETTE.H;
-    if (ch === "G") return cfg.portraitGlasses || PORTRAIT_PALETTE.G;
+    if (ch === "G") {
+      const col = cfg.portraitGlasses || PORTRAIT_PALETTE.G;
+      return { r: col.r, g: col.g, b: col.b, glasses: true };
+    }
     if (ch === "M") return cfg.portraitMouth || PORTRAIT_PALETTE.M;
     if (ch === "C") return cfg.portraitShirt || PORTRAIT_PALETTE.C;
     return PORTRAIT_PALETTE[ch] || null;
@@ -671,6 +711,101 @@ function createLedWall(canvas, options = {}) {
     };
   }
 
+  /**
+   * Rows the words under a mosaic need, including the gap beneath the bust.
+   * `room` is how many rows are free below the bust. When it is short the
+   * gaps tighten, but they never close, so the top row cannot climb into
+   * the portrait.
+   */
+  function underLayout(hostId, glyphH, room) {
+    const defs = labelDefs.filter((d) => d.under === hostId);
+    if (!defs.length) return null;
+    const rowCount = Math.max(...defs.map((d) => d.row)) + 1;
+    const minGap = 2;
+    const prefer = Math.max(minGap, cfg.labelMargin | 0);
+    // A little extra air under the shirt, so the face sits higher above About
+    const bustAir = 3;
+    const textH = rowCount * glyphH;
+    const between = Math.max(0, rowCount - 1);
+    let rowGap = prefer;
+    let bustGap = prefer + bustAir;
+    if (room != null) {
+      const need = () => textH + between * rowGap + bustGap;
+      if (need() > room) bustGap = Math.max(prefer, room - textH - between * rowGap);
+      if (need() > room && between) {
+        rowGap = Math.max(minGap, Math.floor((room - textH - bustGap) / between));
+      }
+      if (need() > room) bustGap = Math.max(minGap, room - textH - between * rowGap);
+    }
+    const blockH = textH + between * rowGap;
+    return { rowCount, rowGap, bustGap, blockH, span: bustGap + blockH };
+  }
+
+  /**
+   * A 2-column block centered under a mosaic. The left column shares a left
+   * edge, the right column shares a right edge, and both rows sit below the
+   * bust rather than out at the corners of the wall.
+   */
+  function layoutUnderMosaics(boxes, bounds, glyphW, glyphH, letterGap) {
+    const spots = new Map();
+    const groups = new Map();
+    for (const def of labelDefs) {
+      if (!def.under) continue;
+      if (!groups.has(def.under)) groups.set(def.under, []);
+      groups.get(def.under).push(def);
+    }
+
+    function textW(text) {
+      const n = [...text].length;
+      return n * glyphW + Math.max(0, n - 1) * letterGap;
+    }
+
+    for (const [hostId, defs] of groups) {
+      const host = boxes.find((b) => b.id === hostId);
+      if (!host) continue;
+
+      const colIds = [...new Set(defs.map((d) => d.col))].sort((a, b) => a - b);
+      const colW = colIds.map((id) =>
+        Math.max(...defs.filter((d) => d.col === id).map((d) => textW(d.text)))
+      );
+      const avail = bounds.x1 - bounds.x0 + 1;
+      let gutter = Math.max(6, (cfg.labelMargin | 0) * 2);
+      let blockW = colW.reduce((sum, w) => sum + w, 0) + gutter * Math.max(0, colIds.length - 1);
+      if (blockW > avail && colIds.length > 1) {
+        const words = colW.reduce((sum, w) => sum + w, 0);
+        gutter = Math.max(2, Math.floor((avail - words) / (colIds.length - 1)));
+        blockW = words + gutter * (colIds.length - 1);
+      }
+
+      const hostMid = (host.x0 + host.x1) / 2;
+      let originX = Math.round(hostMid - blockW / 2);
+      originX = clamp(originX, bounds.x0, Math.max(bounds.x0, bounds.x1 - blockW + 1));
+
+      const colX = [];
+      let x = originX;
+      for (let i = 0; i < colIds.length; i++) {
+        colX.push(x);
+        x += colW[i] + gutter;
+      }
+
+      const room = bounds.y1 - host.y1;
+      const stack = underLayout(hostId, glyphH, room);
+      const rowGap = stack.rowGap;
+      const originY = host.y1 + 1 + stack.bustGap;
+
+      for (const def of defs) {
+        const ci = colIds.indexOf(def.col);
+        const w = textW(def.text);
+        const alignRight = def.align === "right";
+        spots.set(def, {
+          x: alignRight ? colX[ci] + colW[ci] - w : colX[ci],
+          y: originY + def.row * (glyphH + rowGap),
+        });
+      }
+    }
+    return spots;
+  }
+
   function layoutLabels() {
     if (!cols || !rows) return;
     obstacle.fill(0);
@@ -690,23 +825,26 @@ function createLedWall(canvas, options = {}) {
     const bounds = labelBounds();
     const boxes = [];
 
-    // The face goes down first and does not move: it is what the wall is
-    // centered on, and the words are the ones that step aside for it.
+    // The face is centered on its anchor, then lifted so the words under it
+    // still fit with a gap. A short laptop would otherwise pull About and
+    // Projects up into the shirt.
     for (const def of mosaicDefs) {
       const sprite = portraitSprite(cluster);
       const spanX = cluster.x1 - cluster.x0 + 1;
       const spanY = cluster.y1 - cluster.y0 + 1;
+      const stack = underLayout(def.id, glyphH, null);
+      // Reserve a few rows under the words, so the bust, the buttons, and the
+      // project strip all sit up off the bottom edge of the screen
+      const lift = Math.max(0, cfg.bottomGap | 0);
+      let y = Math.round(cluster.y0 + def.anchorY * spanY - sprite.faceY) - lift;
+      if (stack) y = Math.min(y, bounds.y1 - lift - stack.span - (sprite.h - 1));
       const spot = {
         x: clamp(
           Math.round(cluster.x0 + def.anchorX * spanX - sprite.faceX),
           cluster.x0,
           Math.max(cluster.x0, cluster.x1 - sprite.w + 1)
         ),
-        y: clamp(
-          Math.round(cluster.y0 + def.anchorY * spanY - sprite.faceY),
-          cluster.y0,
-          Math.max(cluster.y0, cluster.y1 - sprite.h + 1)
-        ),
+        y: clamp(y, cluster.y0, Math.max(cluster.y0, cluster.y1 - sprite.h + 1)),
       };
       const box = {
         id: def.id,
@@ -728,7 +866,7 @@ function createLedWall(canvas, options = {}) {
           const i = idx(c, r);
           obstacle[i] = 1;
           letterBlock[i] = 1;
-          cells.push({ i, r: px.r, g: px.g, b: px.b });
+          cells.push({ i, r: px.r, g: px.g, b: px.b, glasses: !!px.glasses });
         }
       }
       mosaics.push({
@@ -741,12 +879,20 @@ function createLedWall(canvas, options = {}) {
       });
     }
 
+    const underSpots = layoutUnderMosaics(boxes, bounds, glyphW, glyphH, letterGap);
+
     for (const def of labelDefs) {
       const chars = [...def.text];
       const textW = chars.length * glyphW + Math.max(0, chars.length - 1) * letterGap;
       const textH = glyphH;
-      const want = wantSpot(def, textW, textH, boxes, bounds);
-      const spot = findLabelSpot(want.x, want.y, textW, textH, boxes, margin, bounds);
+      const pinned = underSpots.get(def);
+      const want = pinned || wantSpot(def, textW, textH, boxes, bounds);
+      const spot = pinned
+        ? {
+            x: clamp(want.x, bounds.x0, Math.max(bounds.x0, bounds.x1 - textW + 1)),
+            y: want.y,
+          }
+        : findLabelSpot(want.x, want.y, textW, textH, boxes, margin, bounds);
       const box = {
         id: def.id,
         x0: spot.x,
@@ -1464,11 +1610,21 @@ function createLedWall(canvas, options = {}) {
     updateSparks(dt);
   }
 
+  /** Pink is already out of the palette. A phone also drops the green one. */
+  function activeSnakeColors() {
+    const colors = cfg.snakeColors;
+    const narrow =
+      cfg.dropLastSnakeBelowPx > 0 &&
+      window.matchMedia(`(max-width: ${cfg.dropLastSnakeBelowPx}px)`).matches;
+    if (narrow && colors.length > 2) return colors.slice(0, -1);
+    return colors;
+  }
+
   function resetSim(now) {
     occupancy.fill(0);
     food.clear();
     sparks = [];
-    snakes = cfg.snakeColors.map((color, id) => ({
+    snakes = activeSnakeColors().map((color, id) => ({
       id,
       color,
       body: [],
@@ -1566,14 +1722,57 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
+   * Where the blue glare sits on the lenses, 0 when it is between passes.
+   * `head` runs from just off the right edge to just off the left.
+   */
+  function glassesFlare(cell, minX, span) {
+    if (!cell.glasses) return 0;
+    const period = Math.max(1.2, +cfg.glassesFlareEvery || 3.8);
+    const travel = Math.min(period * 0.6, Math.max(0.35, +cfg.glassesFlareTravel || 0.85));
+    const phase = (timeMs / 1000) % period;
+    if (phase >= travel) return 0;
+    const head = 1.1 - (phase / travel) * 1.2;
+    const u = (colOf(cell.i) - minX) / span;
+    const d = (u - head) / 0.2;
+    return Math.exp(-d * d);
+  }
+
+  function glassesSpan(mosaic) {
+    let minX = cols;
+    let maxX = 0;
+    for (const cell of mosaic.cells) {
+      if (!cell.glasses) continue;
+      const x = colOf(cell.i);
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+    }
+    if (minX > maxX) return null;
+    return { minX, span: Math.max(1, maxX - minX) };
+  }
+
+  /**
    * The bust sits up off the wall like a hovered word, and on hover it
-   * gets the same shine sweep and halo the buttons use.
+   * gets the same shine sweep and halo the buttons use. The glasses also
+   * throw a blue glare across the lenses every few seconds on their own.
    */
   function paintMosaic(mosaic, hovered) {
     const rest = cfg.extrudeHeights.labelHover;
+    const lenses = glassesSpan(mosaic);
+    const flare = cfg.glassesFlareColor || { r: 170, g: 214, b: 255 };
+    const peak = clamp(cfg.glassesFlareStrength == null ? 0.92 : +cfg.glassesFlareStrength, 0, 1);
     if (!hovered) {
       for (const cell of mosaic.cells) {
-        writeCell(cell.i, cell.r, cell.g, cell.b, 1, 1, rest);
+        const shine = lenses ? glassesFlare(cell, lenses.minX, lenses.span) : 0;
+        const k = shine * peak;
+        writeCell(
+          cell.i,
+          mix(cell.r, flare.r, k),
+          mix(cell.g, flare.g, k),
+          mix(cell.b, flare.b, k),
+          1,
+          1 + 2.6 * shine,
+          rest + 0.3 * shine
+        );
       }
       return;
     }
