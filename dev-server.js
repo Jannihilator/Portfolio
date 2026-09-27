@@ -24,6 +24,7 @@ const types = {
   ".svg": "image/svg+xml",
   ".ico": "image/x-icon",
   ".pdf": "application/pdf",
+  ".mp4": "video/mp4",
   ".woff2": "font/woff2",
 };
 

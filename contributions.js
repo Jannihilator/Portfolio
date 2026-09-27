@@ -16,9 +16,22 @@
  * awards: one short line per project, shown as a bar on the card.
  * Leave a project out of awards if it has none.
  * A nomination stays a nomination.
+ *
+ * personal: ids that show "Highlights" instead of "My contributions".
+ * Add an id when the project is yours alone. Leave team projects off this list.
  */
 window.PROJECT_CONTRIBUTIONS = {
   label: "My contributions",
+  personalLabel: "Highlights",
+
+  personal: [
+    "star-fishing",
+    "serainity",
+    "Qduel",
+    "pencil-shoot",
+    "slash-moji",
+    "ghost-hunt",
+  ],
 
   awards: {
     "mento-issue": "GGJ 2025 · Pittsburgh site award",
@@ -26,107 +39,106 @@ window.PROJECT_CONTRIBUTIONS = {
   },
 
   "star-fishing": [
-    "Shader work for the scene, still in progress",
-    "Particle effects",
-  ],
-
-  serainity: [
-    "Object pools for rain, ripples, splashes, and score popups",
-    "Water shader driven by a ping-pong wave simulation",
-    "Each lily pad gets its own procedural shader properties",
+    "Water shader with reflection probe",
+    "Incremental game design",
+    "Skill tree upgrade system based on scriptable objects",
   ],
 
   // The blurb describes the studio. Rewrite these as your part only.
   borderless: [
-    "Networking across the four phones",
-    "Mobile puzzle play inside the shared scene",
+    "Client server model networked over four phones",
+    "Cut animation lag from 3 seconds to 0.3 by clock-offset sync and a scheduled start",
+    "Implement swipe gesture for spacial awareness from research paper",
   ],
 
   renushu: [
-    "Local networking between the NuShu shoes and the game",
-    "Sensor input for gait, with haptic feedback",
+    "System design for input handling over bluetooth",
+    "WebSocket communication for web interface",
+    "Gamify physical therapy exercise with smart shoe sensors"
+  ],
+
+  serainity: [
+    "Object pooling for effects in large numbers",
+    "Water shader driven by a ping-pong wave simulation",
+    "Procedural asset generation for plants",
   ],
 
   xhaler: [
-    "Breathing patterns mapped onto in-game actions",
-    "VR prototypes for archery and diving",
+    "Mapped sensor data to defined game states",
+    "Process sensor input and calibrate to user preferences",
+    "Diegetic feedback design for indirect control",
   ],
 
   "wool-you-mask-it": [
-    "State machine for the herding animals",
-    "Mask abilities that change how those animals behave",
+    "Custom animal AI wander behavior for organic look ",
+    "Input handling for controller button combos",
+    "Two day Global Game Jam 2026 entry",
   ],
 
   "voice-in-the-void": [
-    "Two-day chat game where generosity decrypts alien messages",
-    "OpenAI calls that turn those messages into gifts",
+    "NPC conversation system with OpenAI API",
+    "Game progression based on player's own conversation",
   ],
 
   "moustache-twins": [
-    "Two-day co-op arcade: dodge, coordinate, rescue",
-    "Online leaderboard",
+    "Online leaderboard managed by Google Sheets",
   ],
 
   "mento-issue": [
-    "10-level puzzle platformer built in two days",
-    "Mentos and soda bottles are the only way up",
+    "Modular prefabs for easy level design",
+    "Rapid prototyping validating ideas and technical solutions",
   ],
 
   "no-sight-all-might": [
-    "You can attack only when the enemy is out of sight",
-    "Skill system and a boss fight in a 1-bit palette",
+    "Deck building elements and boss rush design"
   ],
 
   reefenge: [
-    "Bullet hell where you play the enemy fleet",
-    "Spend troops to take out the player ship",
+    "First ever game jam for GMTK 2023"
   ],
 
   "gpt-battle": [
-    "Shouted spells, transcribed from the mic",
-    "ChatGPT maps each line to a spell under a fixed rule set",
+    "Implemeted the fantasy of shout to cast spells via voice recognition and OpenAI API",
+    "Prompt crafting and game state integration",
     "Spell VFX in shaders and VFX Graph",
   ],
 
   "keep-your-head-up": [
-    "Two 3D Rudders: one player steers the head, the other tilts the map",
+    "3D rudders input handling",
   ],
 
   "bar-vr": [
-    "Custom grab and throw so bottle combat works past the headset's hand limits",
+    "Custom grab and throw beyond the default hand trackinglimits",
   ],
 
   "meow-spa": [
-    "Two players split the belt and the machines",
-    "The wash order is the coordination puzzle",
-    "Built for adaptive controllers",
+    "Visual effects including particles and realtime material changes"
   ],
 
   qduel: [
-    "Local 2-player area control on a Q*bert board",
-    "Enemy AI and vocal sound effects",
+    "Multiple enemy AI patterns and behaviors",
+    "Vocal sound effects",
   ],
 
   "virtual-gallery": [
-    "Visitors paint on the wall and ride the travelator",
-    "Browser gallery in JavaScript, HTML, and CSS",
+    "Three.js and WebGL enabling 3D gallery navigation in browser",
+    "Interactive elements including wall painting and record player",
   ],
 
   "hand-motion": [
     "MediaPipe tracking for gestures and for motion, not poses alone",
-    "Mid-air scrolling through web pages",
-    "Same tracker later became a face-shooting game",
+    "Collect data set for machine learning model training",
+    "Remote scrolling through web pages and games based on camera feed",
   ],
 
   "duel-zone": [
-    "Action cards sequenced for a territory, tech, or knockout win",
-    "Paper prototype of the full duel",
+    "Multiple victory conditions and balanced gameplay",
   ],
 
   // Tags only so far. Replace with what you actually built.
-  "pencil-shoot": ["Tile-map shooter in Unity"],
+  "pencil-shoot": ["2D Tile-map to draw levels"],
 
   "slash-moji": ["2D destruction in Unity"],
 
-  "ghost-hunt": ["Networked ghost hunt in Unity"],
+  "ghost-hunt": ["Unity Netcode for gameobject"],
 };

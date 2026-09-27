@@ -840,6 +840,9 @@ body {
   padding: 0.65rem 0.8rem calc(0.7rem + env(safe-area-inset-bottom));
   background: linear-gradient(to top, rgba(5, 5, 6, 0.94) 55%, rgba(5, 5, 6, 0));
   pointer-events: none;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 0.8, 0.24, 1);
 }
 
 #glance button {
@@ -901,8 +904,21 @@ body {
   font-weight: 600;
 }
 
-body.panel-open #glance {
-  display: none;
+/* Leaves with the wall lighting up, instead of vanishing once the page is in */
+body.glance-away #glance {
+  opacity: 0;
+  transform: translateY(1.15rem);
+  pointer-events: none;
+}
+
+body.glance-away #glance button {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #glance {
+    transition: none;
+  }
 }
 
 /* The page takes the whole wall on a phone, so it has to earn its own margins */
@@ -926,16 +942,38 @@ body.panel-open #glance {
       grid-template-columns: 1fr;
     }
 
+    /* One card is wide enough for its own words. The row scrolls, and the
+       middle card is what the script parks in the center, so the neighbors
+       show as a sliver on each side. */
     #glance {
-      gap: 0.35rem;
-      padding-right: 0.45rem;
-      padding-left: 0.45rem;
+      justify-content: flex-start;
+      gap: 0.55rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      pointer-events: auto;
+    }
+
+    #glance::-webkit-scrollbar {
+      display: none;
     }
 
     #glance button {
-      width: auto;
-      flex: 1;
-      padding-right: 0.4rem;
+      width: max-content;
+      max-width: none;
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+    }
+
+    #glance span {
+      min-width: max-content;
+    }
+
+    #glance strong,
+    #glance em {
+      overflow: visible;
+      text-overflow: clip;
     }
 
     #glance img {

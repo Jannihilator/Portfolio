@@ -30,6 +30,10 @@ window.LED_WALL_CONFIG = {
   labelEdgePad: 3,
   /** Pushes authored anchors out from center. 0 = as written, 1 = corners. */
   labelSpread: 0.55,
+  /** Below this width the face sits at the top and the four words stack in
+   *  one left-aligned column. Cells may shrink a little so that column
+   *  still fits above the project strip. */
+  stackLabelsBelowPx: 720,
   /** Integer blow-up of the pixel-art face (1 = one sprite pixel per LED) */
   portraitScale: 1,
   /** LED rows the portrait and the words under it sit above the bottom */
@@ -63,17 +67,21 @@ window.LED_WALL_CONFIG = {
   glassesFlareTravel: 0.85,
 
   // --- Snakes ---
-  /** Blinky, Inky, then green. Green is last so a narrow window can drop it. */
+  /** A jade green, the wall's cyan, then a hot magenta. The last one is the hectic snake. */
   snakeColors: [
-    { r: 255, g: 60, b: 48 },
-    { r: 64, g: 230, b: 255 },
-    { r: 145, g: 218, b: 115 },
+    { r: 80, g: 206, b: 124 },
+    { r: 64, g: 214, b: 232 },
+    { r: 255, g: 97, b: 176 },
   ],
-  /** Below this width the last snake (green) stays off the wall */
+  /** Below this width the green snake stays off. Cyan runs slow, red at the middle speed. */
   dropLastSnakeBelowPx: 480,
-  /** LED steps per second */
-  snakeSpeed: 12,
-  /** Per-snake speed jitter (0.15 = up to +/-15%) */
+  /** LED steps per second at targetCellPx. Smaller diodes step faster so the pace on screen stays the same. */
+  snakeSpeed: 10,
+  /**
+   * How much faster the hectic snake is than snakeSpeed (0.5 = 50% faster).
+   * Fixed by color: the first snake stays at snakeSpeed, the last one is
+   * always the hectic one. A snake does not speed up and slow down.
+   */
   speedVariance: 0.5,
   /** Speed multiplier while a page is open, so the wall calms down to read */
   readingSpeedScale: 1,
@@ -89,18 +97,24 @@ window.LED_WALL_CONFIG = {
   tailFade: 0.45,
   /**
    * Staying alive always beats reaching a dot: every snake refuses a step
-   * into a pocket it cannot fit inside. Speed only decides how much it
-   * wanders off the optimal path while it is safe to do so.
+   * into a pocket it cannot fit inside. The last snake is the hectic one:
+   * fastest, and the most likely to leave the shortest path. The first
+   * snake keeps snakeSpeed and almost always takes it.
    */
-  /** Chance per step to ignore the optimal path — slowest snake */
-  wanderChanceSlow: 0.01,
-  /** Chance per step to ignore the optimal path — fastest snake */
-  wanderChanceFast: 0.14,
+  /** Chance per step to ignore the optimal path — first snake */
+  wanderChanceSlow: 0,
+  /** Chance per step to ignore the optimal path — hectic (last) snake */
+  wanderChanceFast: 0.12,
   /** Free LEDs a snake wants ahead of a step (capped by its own length) */
   safetySpace: 64,
 
   // --- Food (mutual dots) ---
-  foodColor: { r: 250, g: 204, b: 21 },
+  /** Each new dot picks the orange, or a warmer gold kept close to it */
+  foodColors: [
+    { r: 255, g: 126, b: 13 },
+    { r: 255, g: 156, b: 14 },
+  ],
+  foodColor: { r: 255, g: 126, b: 13 },
   /** Dots kept on the wall while nobody is dying */
   foodTarget: 26,
   /** Milliseconds between top-up dots */

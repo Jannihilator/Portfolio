@@ -172,6 +172,8 @@ function mergeConfig(overrides = {}) {
     labelMargin: 4,
     labelEdgePad: 3,
     labelSpread: 0.55,
+    /** Phone layout: portrait on top, four labels in one left-aligned column */
+    stackLabelsBelowPx: 720,
     portraitScale: 1,
     bottomGap: 3,
     portraitHair: { r: 33, g: 33, b: 33 },
@@ -191,9 +193,9 @@ function mergeConfig(overrides = {}) {
     glassesFlareEvery: 3.8,
     glassesFlareTravel: 0.85,
     snakeColors: [
-      { r: 255, g: 60, b: 48 },
-      { r: 64, g: 230, b: 255 },
-      { r: 145, g: 218, b: 115 },
+      { r: 80, g: 206, b: 124 },
+      { r: 64, g: 214, b: 232 },
+      { r: 255, g: 72, b: 164 },
     ],
     dropLastSnakeBelowPx: 480,
     snakeSpeed: 13,
@@ -207,6 +209,10 @@ function mergeConfig(overrides = {}) {
     wanderChanceSlow: 0.01,
     wanderChanceFast: 0.2,
     safetySpace: 64,
+    foodColors: [
+      { r: 255, g: 126, b: 13 },
+      { r: 255, g: 156, b: 14 },
+    ],
     foodColor: { r: 250, g: 204, b: 21 },
     foodTarget: 26,
     foodSpawnMs: 420,
@@ -507,8 +513,18 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
+   * A phone is too narrow for two columns. The face goes to the top and the
+   * four words stack, sharing one left edge.
+   */
+  function mobileStack() {
+    const px = cfg.stackLabelsBelowPx | 0;
+    return px > 0 && window.matchMedia(`(max-width: ${px}px)`).matches;
+  }
+
+  /**
    * LEDs the widest thing on the wall takes up. A single word, or the two
-   * columns under the portrait when those sit side by side.
+   * columns under the portrait when those sit side by side. A phone stacks
+   * the words, so only the longest one counts.
    */
   function widestLabel() {
     const metrics = fontMetrics(cfg.font);
@@ -518,6 +534,7 @@ function createLedWall(canvas, options = {}) {
     for (const def of labelDefs) {
       widest = Math.max(widest, labelTextWidth(def.text, glyphW, letterGap));
     }
+    if (mobileStack()) return widest;
 
     const groups = new Map();
     for (const def of labelDefs) {
@@ -624,8 +641,19 @@ function createLedWall(canvas, options = {}) {
    * Labels keep `labelEdgePad` empty LEDs off the rim of the page cluster, so
    * a phone (where the page is the whole wall) never clips a word.
    */
+  /**
+   * Pixels from the bottom of a phone up to the top of the project strip.
+   * The phone stack ends there. The ordinary edge pad and bottom gap are not
+   * added again, or Blogs sits a canyon above the cards.
+   */
+  const MOBILE_GLANCE_PX = 200;
+
   function labelBounds() {
-    return insetRect(clusterBounds(), Math.max(0, cfg.labelEdgePad | 0));
+    const rect = insetRect(clusterBounds(), Math.max(0, cfg.labelEdgePad | 0));
+    if (!mobileStack()) return rect;
+    const reserve = Math.ceil(MOBILE_GLANCE_PX / Math.max(1, pitch));
+    const cluster = clusterBounds();
+    return { ...rect, y1: Math.max(rect.y0, cluster.y1 - reserve) };
   }
 
   /** Authored anchors sit inward; this walks them toward the padded corners. */
@@ -720,7 +748,9 @@ function createLedWall(canvas, options = {}) {
   function underLayout(hostId, glyphH, room) {
     const defs = labelDefs.filter((d) => d.under === hostId);
     if (!defs.length) return null;
-    const rowCount = Math.max(...defs.map((d) => d.row)) + 1;
+    const rowCount = mobileStack()
+      ? defs.length
+      : Math.max(...defs.map((d) => d.row)) + 1;
     const minGap = 2;
     const prefer = Math.max(minGap, cfg.labelMargin | 0);
     // A little extra air under the shirt, so the face sits higher above About
@@ -763,6 +793,31 @@ function createLedWall(canvas, options = {}) {
     for (const [hostId, defs] of groups) {
       const host = boxes.find((b) => b.id === hostId);
       if (!host) continue;
+
+      // One column, every word on its own row, sharing the column's left edge.
+      // Order is the reading order of the desktop grid: row, then column.
+      if (mobileStack()) {
+        const ordered = [...defs].sort((a, b) => a.row - b.row || a.col - b.col);
+        const width = Math.max(...ordered.map((d) => textW(d.text)));
+        const avail = bounds.x1 - bounds.x0 + 1;
+        const blockW = Math.min(width, Math.max(1, avail));
+        const hostMid = (host.x0 + host.x1) / 2;
+        const originX = clamp(
+          Math.round(hostMid - blockW / 2),
+          bounds.x0,
+          Math.max(bounds.x0, bounds.x1 - blockW + 1)
+        );
+        const room = bounds.y1 - host.y1;
+        const stack = underLayout(hostId, glyphH, room);
+        const originY = host.y1 + 1 + stack.bustGap;
+        ordered.forEach((def, i) => {
+          spots.set(def, {
+            x: originX,
+            y: originY + i * (glyphH + stack.rowGap),
+          });
+        });
+        continue;
+      }
 
       const colIds = [...new Set(defs.map((d) => d.col))].sort((a, b) => a - b);
       const colW = colIds.map((id) =>
@@ -834,10 +889,19 @@ function createLedWall(canvas, options = {}) {
       const spanY = cluster.y1 - cluster.y0 + 1;
       const stack = underLayout(def.id, glyphH, null);
       // Reserve a few rows under the words, so the bust, the buttons, and the
-      // project strip all sit up off the bottom edge of the screen
+      // project strip all sit up off the bottom edge of the screen.
+      // On a phone the face stays above the four words, and that whole stack
+      // ends at the project strip. Parking it on the top pad left a canyon
+      // between Blogs and the cards.
       const lift = Math.max(0, cfg.bottomGap | 0);
-      let y = Math.round(cluster.y0 + def.anchorY * spanY - sprite.faceY) - lift;
-      if (stack) y = Math.min(y, bounds.y1 - lift - stack.span - (sprite.h - 1));
+      const stacked = mobileStack();
+      let y;
+      if (stacked && stack) {
+        y = Math.max(bounds.y0, bounds.y1 - stack.span - (sprite.h - 1));
+      } else {
+        y = Math.round(cluster.y0 + def.anchorY * spanY - sprite.faceY) - lift;
+        if (stack) y = Math.min(y, bounds.y1 - lift - stack.span - (sprite.h - 1));
+      }
       const spot = {
         x: clamp(
           Math.round(cluster.x0 + def.anchorX * spanX - sprite.faceX),
@@ -1232,11 +1296,17 @@ function createLedWall(canvas, options = {}) {
     return -1;
   }
 
+  function pickFoodColor() {
+    const palette =
+      cfg.foodColors && cfg.foodColors.length ? cfg.foodColors : [cfg.foodColor];
+    return palette[(Math.random() * palette.length) | 0];
+  }
+
   /** `expiresAt` of 0 means the dot waits forever to be eaten */
-  function addFood(i, expiresAt = 0) {
+  function addFood(i, expiresAt = 0, color) {
     if (i < 0 || blocked(i) || letterBlock[i]) return;
     if (food.size >= cfg.foodMax) return;
-    food.set(i, expiresAt);
+    food.set(i, { expiresAt, color: color || pickFoodColor() });
   }
 
   // --- Click bursts -------------------------------------------------------
@@ -1265,6 +1335,7 @@ function createLedWall(canvas, options = {}) {
         vr: Math.sin(angle) * speed,
         age: 0,
         life: (cfg.burstLifeMs / 1000) * (0.7 + Math.random() * 0.6),
+        color: pickFoodColor(),
       });
     }
   }
@@ -1298,7 +1369,7 @@ function createLedWall(canvas, options = {}) {
     // A cell with a snake on it will do if nothing clear is within reach: the
     // dot just waits under the body until a head comes back over it
     const i = settleCell(c, r, false);
-    addFood(i >= 0 ? i : settleCell(c, r, true));
+    addFood(i >= 0 ? i : settleCell(c, r, true), 0, s.color);
   }
 
   function updateSparks(dt) {
@@ -1581,15 +1652,24 @@ function createLedWall(canvas, options = {}) {
     const target = page.state === "closed" ? 1 : clamp(cfg.readingSpeedScale, 0.05, 1);
     speedScale += (target - speedScale) * Math.min(1, dt * 3);
 
+    // Speed is authored in LEDs per second at the laptop diode size. A narrow
+    // wall shrinks those diodes to fit the words, so a phone would crawl at
+    // the same step rate. Scale the rate with the diode so the snakes cross
+    // the glass at the same pace on every screen.
+    const refPitch =
+      cfg.targetCellPx + Math.max(1, Math.floor(cfg.targetCellPx * cfg.cellGapRatio));
+    const pixelScale = refPitch / Math.max(1, pitch);
+
     for (const snake of snakes) {
       if (!snake.alive) {
         if (now - snake.deadAt >= cfg.respawnMs) spawnSnake(snake, now);
         continue;
       }
-      snake.accum += dt * snake.speed * speedScale;
-      // Cap catch-up so a stalled tab does not fast-forward the whole board
+      snake.accum += dt * snake.speed * speedScale * pixelScale;
+      // A slow frame may owe several LEDs. Spend them, but stop short of
+      // pathfinding a hitch all the way across the board.
       let steps = 0;
-      while (snake.accum >= 1 && steps < 3) {
+      while (snake.accum >= 1 && steps < 12) {
         snake.accum -= 1;
         steps++;
         stepSnake(snake, now);
@@ -1598,8 +1678,8 @@ function createLedWall(canvas, options = {}) {
       if (snake.accum > 1) snake.accum = 0;
     }
 
-    for (const [i, expiresAt] of food) {
-      if (expiresAt && now >= expiresAt) food.delete(i);
+    for (const [i, dot] of food) {
+      if (dot.expiresAt && now >= dot.expiresAt) food.delete(i);
     }
 
     if (food.size < cfg.foodTarget && now - lastFoodAt >= cfg.foodSpawnMs) {
@@ -1610,45 +1690,53 @@ function createLedWall(canvas, options = {}) {
     updateSparks(dt);
   }
 
-  /** Pink is already out of the palette. A phone also drops the green one. */
-  function activeSnakeColors() {
+  /**
+   * Desktop keeps palette order: green slow, cyan in the middle, red hectic.
+   * A phone drops the green one. Cyan takes the slow speed and red the
+   * middle speed. Wander stays with the color, so only the pace changes.
+   */
+  function activeSnakeSlots() {
     const colors = cfg.snakeColors;
     const narrow =
       cfg.dropLastSnakeBelowPx > 0 &&
       window.matchMedia(`(max-width: ${cfg.dropLastSnakeBelowPx}px)`).matches;
-    if (narrow && colors.length > 2) return colors.slice(0, -1);
-    return colors;
+    const count = Math.max(1, colors.length);
+    const pace = (index) => (count <= 1 ? 0 : index / (count - 1));
+
+    if (narrow && colors.length > 2) {
+      return [
+        { color: colors[1], speedT: pace(0), wanderT: pace(1) },
+        { color: colors[2], speedT: pace(1), wanderT: pace(2) },
+      ];
+    }
+    return colors.map((color, index) => ({
+      color,
+      speedT: pace(index),
+      wanderT: pace(index),
+    }));
   }
 
   function resetSim(now) {
     occupancy.fill(0);
     food.clear();
     sparks = [];
-    snakes = activeSnakeColors().map((color, id) => ({
-      id,
-      color,
-      body: [],
-      grow: 0,
-      accum: 0,
-      alive: false,
-      deadAt: 0,
-      wanderChance: cfg.wanderChanceSlow,
-      speed:
-        cfg.snakeSpeed *
-        (1 + (Math.random() * 2 - 1) * cfg.speedVariance),
-    }));
-
-    // Temperament follows speed: the fastest snake strays furthest from the
-    // optimal path, the slowest one walks it almost every step. Neither one
-    // ever trades its life for a dot.
-    const speeds = snakes.map((s) => s.speed);
-    const slowest = Math.min(...speeds);
-    const spread = Math.max(...speeds) - slowest;
-    for (const snake of snakes) {
-      const t = spread > 0 ? (snake.speed - slowest) / spread : 0;
-      snake.wanderChance =
-        cfg.wanderChanceSlow + (cfg.wanderChanceFast - cfg.wanderChanceSlow) * t;
-    }
+    // Pace is fixed for the layout in front of you. Nothing here is re-rolled,
+    // so a snake does not speed up and slow down over a run.
+    snakes = activeSnakeSlots().map(({ color, speedT, wanderT }, id) => {
+      return {
+        id,
+        color,
+        body: [],
+        grow: 0,
+        accum: 0,
+        alive: false,
+        deadAt: 0,
+        wanderChance:
+          cfg.wanderChanceSlow +
+          (cfg.wanderChanceFast - cfg.wanderChanceSlow) * wanderT,
+        speed: cfg.snakeSpeed * (1 + cfg.speedVariance * speedT),
+      };
+    });
 
     for (const snake of snakes) spawnSnake(snake, now);
     for (let n = 0; n < cfg.foodTarget; n++) addFood(randomDotCell());
@@ -1831,13 +1919,13 @@ function createLedWall(canvas, options = {}) {
       }
     }
 
-    const fc = cfg.foodColor;
     const fadeMs = Math.max(1, cfg.corpseFadeMs);
-    for (const [i, expiresAt] of food) {
+    for (const [i, dot] of food) {
       const twinkle = 0.82 + 0.18 * Math.sin(timeMs * 0.004 + i * 0.7);
       // Dots on the clock dim away over their last stretch
-      const life = expiresAt ? clamp((expiresAt - timeMs) / fadeMs, 0, 1) : 1;
+      const life = dot.expiresAt ? clamp((dot.expiresAt - timeMs) / fadeMs, 0, 1) : 1;
       // The twinkle bobs the dot as well as brightening it
+      const fc = dot.color;
       writeCell(i, fc.r, fc.g, fc.b, twinkle * life, 1, cfg.extrudeHeights.food * twinkle);
     }
 
@@ -1869,8 +1957,9 @@ function createLedWall(canvas, options = {}) {
     // wall, and they are only in the air for a moment
     for (const s of sparks) {
       const t = clamp(s.age / s.life, 0, 1);
-      // White-hot at the pop, cooling into the dot yellow it lands as
+      // White-hot at the pop, cooling into the orange or gold it lands as
       const heat = (1 - t) * (1 - t);
+      const fc = s.color || cfg.foodColor;
       const sr = mix(fc.r, 255, heat * 0.7);
       const sg = mix(fc.g, 255, heat * 0.7);
       const sb = mix(fc.b, 255, heat * 0.7);
@@ -2277,6 +2366,32 @@ function createLedWall(canvas, options = {}) {
     return Math.floor((w + g) / (size + g));
   }
 
+  function rowsAt(size, h) {
+    const g = gapAt(size);
+    return Math.floor((h + g) / (size + g));
+  }
+
+  /**
+   * LED rows the phone stack needs, top pad through the last word. `rowGap`
+   * and `bustGap` are the gaps to budget for. The project strip is not
+   * included; the caller adds it, since its height in rows depends on the
+   * diode size.
+   */
+  function mobileContentRows(rowGap, bustGap) {
+    const metrics = fontMetrics(cfg.font);
+    const glyphH = metrics.h * Math.max(1, cfg.labelScale | 0);
+    const rowCount = Math.max(
+      1,
+      labelDefs.filter((d) => d.under).length || labelDefs.length
+    );
+    const portraitH = mosaicDefs.length
+      ? PORTRAIT_SPRITE.length * Math.max(1, cfg.portraitScale | 0)
+      : 0;
+    const text = rowCount * glyphH + Math.max(0, rowCount - 1) * rowGap;
+    const pad = Math.max(0, cfg.labelEdgePad | 0);
+    return pad + portraitH + bustGap + text + pad;
+  }
+
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth || window.innerWidth;
@@ -2285,13 +2400,38 @@ function createLedWall(canvas, options = {}) {
     canvas.height = Math.floor(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // A phone is narrower than the longest word is wide, and layoutLabels has
-    // nowhere to put it but off the edge. So the diodes give way before the
-    // words do: cells shrink until PROJECTS fits with its edge pad.
+    // A phone is narrower than the longest word is wide, and the stacked
+    // column is taller than a laptop's two rows. Diodes give way before the
+    // words do: cells shrink until PROJECTS fits with its edge pad and, on a
+    // phone, until the face and the four rows still clear the project strip.
+    // Preferred gaps win when they fit; otherwise the largest size that
+    // still holds the minimum gaps.
     const edgePad = Math.max(2, cfg.labelEdgePad | 0);
     const needCols = widestLabel() + 2 * edgePad;
-    cellSize = cfg.targetCellPx;
-    while (cellSize > cfg.minCellPx && colsAt(cellSize, w) < needCols) cellSize--;
+    const stacked = mobileStack();
+    const preferGap = Math.max(2, cfg.labelMargin | 0);
+    const softRows = stacked ? mobileContentRows(preferGap, preferGap + 3) : 0;
+    const hardRows = stacked ? mobileContentRows(2, 2) : 0;
+
+    function fitsHeight(size, contentRows) {
+      const pitch = size + gapAt(size);
+      const glanceRows = Math.ceil(MOBILE_GLANCE_PX / pitch);
+      return rowsAt(size, h) >= contentRows + glanceRows;
+    }
+
+    cellSize = cfg.minCellPx;
+    for (let size = cfg.targetCellPx; size >= cfg.minCellPx; size--) {
+      if (colsAt(size, w) < needCols) continue;
+      if (!stacked) {
+        cellSize = size;
+        break;
+      }
+      if (fitsHeight(size, softRows)) {
+        cellSize = size;
+        break;
+      }
+      if (cellSize === cfg.minCellPx && fitsHeight(size, hardRows)) cellSize = size;
+    }
 
     gap = gapAt(cellSize);
     pitch = cellSize + gap;
@@ -2439,7 +2579,10 @@ function createLedWall(canvas, options = {}) {
 
   function frame(now) {
     if (!lastNow) lastNow = now;
-    const dt = Math.min(0.05, (now - lastNow) / 1000);
+    // Real seconds since the last paint. The cap only swallows a stalled
+    // tab: a slow device's normal frame is still counted in full, or the
+    // snakes run under speed there.
+    const dt = Math.min(0.25, Math.max(0, (now - lastNow) / 1000));
     lastNow = now;
     timeMs = now;
     updatePanel();

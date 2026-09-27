@@ -319,7 +319,9 @@
       blogs: pageEl.querySelector('[data-view="blogs"]'),
     };
 
-    const mobileQuery = window.matchMedia("(max-width: 720px)");
+    const stackBelow =
+      (window.LED_WALL_CONFIG && window.LED_WALL_CONFIG.stackLabelsBelowPx) || 720;
+    const mobileQuery = window.matchMedia(`(max-width: ${stackBelow}px)`);
 
     function isMobile() {
       return mobileQuery.matches;
@@ -352,6 +354,9 @@
 
     let pageView = "about";
     let activeProject = null;
+    /** List scroll to put back after a card opens a detail. */
+    let projectsScrollTop = 0;
+    let keepProjectsScroll = false;
 
     PortfolioProjects.renderList(document.getElementById("projects-list"));
 
@@ -367,12 +372,12 @@
     const GLANCE_IDS = ["mento-issue", "renushu", "star-fishing"];
 
     /**
-     * "(In Progress)" sits in the title with no caption, so it reads quieter
+     * "(In Development)" sits in the title with no caption, so it reads quieter
      * than an award line. On the strip it becomes a highlighted caption.
      */
     function glanceCopy(project, award) {
       const title = String(project.title || "");
-      const progress = title.match(/^(.*?)\s*\(\s*in progress\s*\)\s*$/i);
+      const progress = title.match(/^(.*?)\s*\(\s*in (?:progress|development)\s*\)\s*$/i);
       if (!progress) return { title, note: award };
       return { title: progress[1], note: award || "in development" };
     }
@@ -394,11 +399,44 @@
           </span>
         </button>`;
       }).join("");
+      centerGlance();
+    }
+
+    /**
+     * On a phone the strip is a scroller. Camp Movewell is the middle card,
+     * so it starts centered and the cards beside it peek in. A later resize
+     * that only changes height (the mobile toolbar) leaves a scroll the
+     * reader already made where it is.
+     */
+    let glanceCenteredWidth = -1;
+    function centerGlance(force) {
+      const root = document.getElementById("glance");
+      const width = root.clientWidth;
+      if (!force && width === glanceCenteredWidth) return;
+      glanceCenteredWidth = width;
+      const buttons = [...root.querySelectorAll("button")];
+      const middle = buttons[Math.floor((buttons.length - 1) / 2)];
+      if (!middle || !isMobile()) {
+        root.scrollLeft = 0;
+        return;
+      }
+      const rootBox = root.getBoundingClientRect();
+      const box = middle.getBoundingClientRect();
+      root.scrollLeft += box.left - rootBox.left - (rootBox.width - box.width) / 2;
     }
 
     renderGlance();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => centerGlance(true));
+    }
 
     let pendingProject = null;
+
+    /** The strip eases off as soon as a page starts opening, and back on close */
+    function setGlanceAway(away) {
+      document.body.classList.toggle("glance-away", away);
+      document.getElementById("glance").toggleAttribute("inert", away);
+    }
 
     // The wall lights its middle up and hands back the box the page goes in
     function placePage(rect) {
@@ -470,8 +508,21 @@
       requestAnimationFrame(() => pageEl.classList.add("is-open"));
     }
 
+    function scrollProjectIntoView(projectId) {
+      if (!projectId) return;
+      const card = views.projects.querySelector(
+        `[data-project-id="${CSS.escape(projectId)}"]`
+      );
+      if (!card) return;
+      const top =
+        card.getBoundingClientRect().top - pageInner.getBoundingClientRect().top;
+      pageInner.scrollTop += top;
+    }
+
     function openProject(project) {
       if (!project || wall.panelState !== "open") return;
+      projectsScrollTop = pageInner.scrollTop;
+      keepProjectsScroll = true;
       activeProject = project;
       PortfolioProjects.renderDetail(views.detail, project);
       showView("detail");
@@ -480,9 +531,15 @@
 
     function backToProjects() {
       if (wall.panelState !== "open" || pageView !== "detail") return;
+      const projectId = activeProject && activeProject.id;
       teardownDetail();
       showView("projects");
-      pageInner.scrollTop = 0;
+      if (keepProjectsScroll) {
+        pageInner.scrollTop = projectsScrollTop;
+        keepProjectsScroll = false;
+        return;
+      }
+      scrollProjectIntoView(projectId);
     }
 
     const wall = createLedWall(canvas, {
@@ -491,7 +548,7 @@
         if (!view) return;
         pageView = view;
         activeProject = null;
-        wall.openPanel(label, themeFor(view).fill);
+        if (wall.openPanel(label, themeFor(view).fill)) setGlanceAway(true);
       },
       onPanelOpen(label, rect) {
         placePage(rect);
@@ -509,21 +566,35 @@
       },
       onPanelClose() {
         document.body.classList.remove("panel-open");
+        setGlanceAway(false);
         hidePage();
         teardownDetail();
         pageView = "about";
+        projectsScrollTop = 0;
+        keepProjectsScroll = false;
       },
       onPanelResize: placePage,
     });
 
+    let glanceStartX = 0;
+    let glanceMoved = false;
+    document.getElementById("glance").addEventListener("pointerdown", (event) => {
+      glanceStartX = event.clientX;
+      glanceMoved = false;
+    });
+    document.getElementById("glance").addEventListener("pointermove", (event) => {
+      if (Math.abs(event.clientX - glanceStartX) > 8) glanceMoved = true;
+    });
+
     document.getElementById("glance").addEventListener("click", (event) => {
+      if (glanceMoved) return;
       const button = event.target.closest("[data-glance]");
       if (!button || wall.panelState !== "closed") return;
       const project = PortfolioProjects.find(button.dataset.glance);
       if (!project) return;
       pendingProject = project;
       pageView = "projects";
-      wall.openPanel({ id: "projects" }, themeFor("detail").fill);
+      if (wall.openPanel({ id: "projects" }, themeFor("detail").fill)) setGlanceAway(true);
     });
 
     views.projects.addEventListener("click", (event) => {
@@ -575,8 +646,10 @@
       syncViewport();
       if (!isMobile()) wall.resume();
       wall.resize();
+      centerGlance();
       if (isMobile() && wall.panelState === "open") wall.pause();
     });
+    window.addEventListener("resize", () => centerGlance());
 
     // The face is its own About button; the name is another. They open the
     // same page but hover independently.
@@ -586,7 +659,8 @@
       anchorX: 0.5,
       anchorY: 0.34,
     });
-    // Two columns under the bust. Left edges line up, right edges line up.
+    // Desktop: two columns under the bust. Left edges line up, right edges
+    // line up. A phone stacks these four words in one left-aligned column.
     wall.addLabel("ABOUT", { id: "about", under: "portrait", col: 0, row: 0, align: "left" });
     wall.addLabel("PROJECTS", { id: "projects", under: "portrait", col: 1, row: 0, align: "right" });
     wall.addLabel("SKILLS", { id: "skills", under: "portrait", col: 0, row: 1, align: "left" });

@@ -5,33 +5,19 @@
 window.PORTFOLIO_PROJECTS = [
   {
     id: "recent",
-    title: "Recent Projects",
+    title: "Notable Projects",
     layout: "stack",
     projects: [
       {
         id: "star-fishing",
-        title: "Star Fishing (In Progress)",
+        title: "Star Fishing (In Development)",
         size: "big",
         media: [
           { type: "image", src: "./assets/star-fishing.png", alt: "Star Fishing" },
           { type: "video", src: "./assets/star-fishing.mp4" },
         ],
         description: "",
-        stack: ["Shader", "Particles"],
-      },
-      {
-        id: "serainity",
-        title: "Serainity (In Progress)",
-        size: "big",
-        media: [
-          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
-          { type: "video", src: "./assets/rain-demo.mp4" },
-        ],
-        description:
-          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
-        stack: ["Shader", "Object Pooling"],
-        iframe:
-          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
+        stack: ["Shader", "Upgrade / Ability System", "Skill Tree"],
       },
       {
         id: "borderless",
@@ -60,6 +46,20 @@ window.PORTFOLIO_PROJECTS = [
         stack: ["Local Networking", "Web", "Sensor"],
         href: "https://projects.etc.cmu.edu/renushu/",
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
+      },
+      {
+        id: "serainity",
+        title: "Serainity (In Development)",
+        size: "big",
+        media: [
+          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
+          { type: "video", src: "./assets/rain-demo.mp4" },
+        ],
+        description:
+          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
+        stack: ["Shader", "Object Pooling"],
+        iframe:
+          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
       },
       {
         id: "xhaler",
@@ -112,7 +112,10 @@ window.PORTFOLIO_PROJECTS = [
       {
         id: "mento-issue",
         title: "Mento-Issue",
-        media: [{ type: "image", src: "./assets/mento.png", alt: "Mento-Issue" }],
+        media: [
+          { type: "image", src: "./assets/mento.png", alt: "Mento-Issue" },
+          { type: "video", src: "./assets/MentoIssueDemo.mp4" },
+        ],
         description:
           'A Global Game Jam 2025 submission for the theme "Bubble," created in two days. It\'s a puzzle platformer with 10 levels, where players use Mentos and soda bottles to strategically elevate themselves. The game won the Pittsburgh site non-traditional award for its creative approach.',
         stack: ["Unity", "Level Design"],
@@ -277,6 +280,14 @@ window.PORTFOLIO_PROJECTS = [
     return video ? [video] : items;
   }
 
+  /** Wide cards show still and clip together. A grid card stays on the still. */
+  function cardMedia(project) {
+    const items = project.media || [];
+    if (project.size === "big") return items;
+    const stills = items.filter((item) => item.type !== "video");
+    return stills.length ? stills : items;
+  }
+
   function mediaHtml(items, extraClass, options) {
     if (!items || !items.length) return "";
     const bits = items
@@ -319,9 +330,11 @@ window.PORTFOLIO_PROJECTS = [
   function contributionsHtml(project) {
     const lines = contributionLines(project);
     if (!lines.length) return "";
-    const label =
-      (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.label) ||
-      "My contributions";
+    const data = window.PROJECT_CONTRIBUTIONS || {};
+    const personal = Array.isArray(data.personal) ? data.personal : [];
+    const label = personal.includes(project.id)
+      ? data.personalLabel || "Highlights"
+      : data.label || "My contributions";
     return `<div class="project-contributions">
       <h4>${escapeHtml(label)}</h4>
       <ul>${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
@@ -424,7 +437,7 @@ window.PORTFOLIO_PROJECTS = [
             return `<article class="project-card${sizeClass}" data-project-id="${escapeHtml(
               project.id
             )}" tabindex="0">
-              ${mediaHtml(project.media, "project-thumb")}
+              ${mediaHtml(cardMedia(project), "project-thumb")}
               ${awardHtml(project)}
               <h3>${escapeHtml(project.title)}</h3>
               ${contributionsHtml(project)}
