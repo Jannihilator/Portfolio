@@ -117,7 +117,7 @@ const PORTRAIT_PALETTE = {
   /** Spiky hair */
   H: { r: 33, g: 33, b: 33 },
   /** Skin */
-  S: { r: 228, g: 164, b: 112 },
+  S: { r: 230, g: 161, b: 115 },
   /** Black glasses */
   G: { r: 38, g: 50, b: 56 },
   /** Eyes */
@@ -179,7 +179,7 @@ function mergeConfig(overrides = {}) {
     portraitScale: 1,
     bottomGap: 3,
     portraitHair: { r: 33, g: 33, b: 33 },
-    portraitSkin: { r: 228, g: 164, b: 112 },
+    portraitSkin: { r: 230, g: 161, b: 115 },
     portraitGlasses: { r: 38, g: 50, b: 56 },
     portraitMouth: { r: 229, g: 115, b: 115 },
     portraitShirt: { r: 189, g: 189, b: 189 },
@@ -390,6 +390,8 @@ function createLedWall(canvas, options = {}) {
 
   let hoverLabel = null;
   let hoverMosaic = null;
+  /** When the cursor landed on the portrait, so the glasses flare starts then */
+  let hoverMosaicAt = 0;
   /** "closed" | "opening" | "open" | "closing" */
   const page = {
     state: "closed",
@@ -1112,19 +1114,6 @@ function createLedWall(canvas, options = {}) {
         y1: label.box.y1 + p,
       };
       label.halo = buildHalo(label.cells, Math.max(1, p));
-    }
-
-    for (const mosaic of mosaics) {
-      if (!mosaic.pageId) continue;
-      let room = pad;
-      for (const other of boxes) {
-        if (other.id === mosaic.id) continue;
-        room = Math.min(room, boxSeparation(mosaic.box, other) >> 1);
-      }
-      mosaic.halo = buildHalo(
-        mosaic.cells.map((cell) => cell.i),
-        Math.max(1, Math.max(0, room))
-      );
     }
 
     banHairPockets(hairCells);
@@ -2368,13 +2357,14 @@ function createLedWall(canvas, options = {}) {
   /**
    * Where the blue glare sits on the lenses, 0 when it is between passes.
    * `head` runs from just off the right edge to just off the left.
+   * `since` is when the hover started, so the first pass begins with the cursor.
    */
-  function glassesFlare(cell, minX, span) {
+  function glassesFlare(cell, minX, span, since) {
     if (!cell.glasses) return 0;
     const period = Math.max(1.2, +cfg.glassesFlareEvery || 3.8);
     const travel = Math.min(period * 0.6, Math.max(0.35, +cfg.glassesFlareTravel || 0.85));
-    const phase = (timeMs / 1000) % period;
-    if (phase >= travel) return 0;
+    const phase = ((timeMs - since) / 1000) % period;
+    if (phase < 0 || phase >= travel) return 0;
     const head = 1.1 - (phase / travel) * 1.2;
     const u = (colOf(cell.i) - minX) / span;
     const d = (u - head) / 0.2;
@@ -2395,62 +2385,25 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * The bust sits up off the wall like a hovered word, and on hover it
-   * gets the same shine sweep and halo the buttons use. The glasses also
-   * throw a blue glare across the lenses every few seconds on their own.
+   * The bust stays at the same height as a resting word. Hover does not
+   * lift it; the glasses throw a blue glare across the lenses instead.
    */
   function paintMosaic(mosaic, hovered) {
-    const rest = cfg.extrudeHeights.labelHover;
-    const lenses = glassesSpan(mosaic);
+    const rest = cfg.extrudeHeights.label;
+    const lenses = hovered ? glassesSpan(mosaic) : null;
     const flare = cfg.glassesFlareColor || { r: 170, g: 214, b: 255 };
     const peak = clamp(cfg.glassesFlareStrength == null ? 0.92 : +cfg.glassesFlareStrength, 0, 1);
-    if (!hovered) {
-      for (const cell of mosaic.cells) {
-        const shine = lenses ? glassesFlare(cell, lenses.minX, lenses.span) : 0;
-        const k = shine * peak;
-        writeCell(
-          cell.i,
-          mix(cell.r, flare.r, k),
-          mix(cell.g, flare.g, k),
-          mix(cell.b, flare.b, k),
-          boardAlpha,
-          1 + 2.6 * shine,
-          rest + 0.3 * shine
-        );
-      }
-      return;
-    }
-
-    const box = mosaic.box;
-    const span = Math.max(1, box.x1 - box.x0 + (box.y1 - box.y0));
-    const head = ((timeMs / 1000) * cfg.labelShineSpeed) % 1.45;
-    const lift = rest;
     for (const cell of mosaic.cells) {
-      const u = (colOf(cell.i) - box.x0 + (rowOf(cell.i) - box.y0)) / span;
-      const d = (u - head) / 0.16;
-      const shine = Math.exp(-d * d);
+      const shine = lenses ? glassesFlare(cell, lenses.minX, lenses.span, hoverMosaicAt) : 0;
+      const k = shine * peak;
       writeCell(
         cell.i,
-        mix(cell.r, 255, 0.22 * shine),
-        mix(cell.g, 255, 0.22 * shine),
-        mix(cell.b, 255, 0.22 * shine),
+        mix(cell.r, flare.r, k),
+        mix(cell.g, flare.g, k),
+        mix(cell.b, flare.b, k),
         boardAlpha,
-        1 + cfg.labelHoverGlow * 0.45 * shine,
-        lift + 0.35 * shine
-      );
-    }
-
-    if (cfg.labelHoverHalo <= 0) return;
-    const col = cfg.labelHoverColor;
-    for (const { i, strength } of mosaic.halo) {
-      writeCell(
-        i,
-        col.r,
-        col.g,
-        col.b,
-        cfg.labelHoverHalo * strength * boardAlpha,
-        cfg.labelHoverGlow * 0.6 * strength,
-        cfg.extrudeHeights.wall
+        1 + 2.6 * shine,
+        rest
       );
     }
   }
@@ -3109,17 +3062,10 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * Words are read at their resting height even while they are lifted, so the
-   * hover cannot chase itself off the cursor.
+   * Words and the portrait are read at their resting height even while a
+   * word is lifted, so the hover cannot chase itself off the cursor.
    */
   function hitFromPointer(clientX, clientY) {
-    // The bust sits at hover height, so read it there first or the cursor
-    // would hit the wall behind the face
-    const raised = cellFromPointer(clientX, clientY, cfg.extrudeHeights.labelHover);
-    if (raised) {
-      const mosaic = mosaicAt(raised.c, raised.r, raised.i);
-      if (mosaic) return { mosaic };
-    }
     const cell = cellFromPointer(clientX, clientY, cfg.extrudeHeights.label);
     if (!cell) return null;
     const mosaic = mosaicAt(cell.c, cell.r, cell.i);
@@ -3136,7 +3082,9 @@ function createLedWall(canvas, options = {}) {
       return;
     }
     const hit = hitFromPointer(e.clientX, e.clientY);
-    hoverMosaic = hit && hit.mosaic ? hit.mosaic : null;
+    const nextMosaic = hit && hit.mosaic ? hit.mosaic : null;
+    if (nextMosaic !== hoverMosaic) hoverMosaicAt = timeMs;
+    hoverMosaic = nextMosaic;
     hoverLabel = hit && hit.label ? hit.label : null;
     canvas.style.cursor = hoverLabel || hoverMosaic ? "pointer" : "default";
   }

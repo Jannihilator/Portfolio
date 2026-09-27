@@ -46,8 +46,8 @@ window.LED_WALL_CONFIG = {
   bottomGap: 3,
   /** Face palette — change these and reload. Black in the sprite stays unlit. */
   portraitHair: { r: 28, g: 28, b: 28 },
-  /** Warm medium skin — brighter than the old tan, still golden */
-  portraitSkin: { r: 228, g: 164, b: 112 },
+  /** Warm medium skin, halfway between the gold and the peach */
+  portraitSkin: { r: 230, g: 161, b: 115 },
   portraitGlasses: { r: 138, g: 154, b: 154 },
   portraitMouth: { r: 225, g: 90, b: 85 },
   /** CMU red, pulled back a little so it isn't neon */
@@ -68,7 +68,7 @@ window.LED_WALL_CONFIG = {
   labelShineSpeed: 0.7,
   /** How far the sweep dips the rest of the word (0 = flat, no shine) */
   labelShineStrength: 0.3,
-  /** Blue glare that crosses the glasses on its own, hover or not */
+  /** Blue glare that crosses the glasses while the portrait is hovered */
   glassesFlareColor: { r: 170, g: 214, b: 255 },
   /** How hard the glare peaks (0 = off, 1 = full blue) */
   glassesFlareStrength: 1,
