@@ -46,11 +46,14 @@ window.LED_WALL_CONFIG = {
   bottomGap: 3,
   /** Face palette — change these and reload. Black in the sprite stays unlit. */
   portraitHair: { r: 28, g: 28, b: 28 },
+  /** Warm medium skin — brighter than the old tan, still golden */
+  portraitSkin: { r: 228, g: 164, b: 112 },
   portraitGlasses: { r: 138, g: 154, b: 154 },
   portraitMouth: { r: 225, g: 90, b: 85 },
-  portraitShirt: { r: 28, g: 96, b: 78 },
-  /** Cream V on the pine shirt */
-  portraitCollar: { r: 228, g: 216, b: 186 },
+  /** CMU red, pulled back a little so it isn't neon */
+  portraitShirt: { r: 184, g: 36, b: 60 },
+  /** Warm off-white V, off the red and the skin */
+  portraitCollar: { r: 226, g: 216, b: 200 },
   /** Resting label: white, but held back so the wall stays calm */
   labelColor: { r: 232, g: 236, b: 245 },
   labelAlpha: 0.8,
@@ -75,15 +78,15 @@ window.LED_WALL_CONFIG = {
   glassesFlareTravel: 0.85,
 
   // --- Snakes ---
-  /** A lemon, the wall's cyan, then a soft magenta. The last one is the hectic snake. */
+  /** A lemon, the wall's cyan, then a pink kept off the red shirt. The last one is the hectic snake. */
   snakeColors: [
     { r: 244, g: 208, b: 64 },
     { r: 64, g: 214, b: 232 },
-    { r: 255, g: 126, b: 190 },
+    { r: 255, g: 164, b: 224 },
   ],
-  /** Below this width the lemon snake stays off. Cyan runs slow, magenta at the middle speed. */
+  /** Below this width the lemon snake stays off. Cyan runs slow, pink at the middle speed. */
   dropLastSnakeBelowPx: 480,
-  /** LED steps per second at targetCellPx. Smaller diodes step faster so the pace on screen stays the same. */
+  /** LED steps per second, counted in cells. A denser phone grid keeps this same rate. */
   snakeSpeed: 10,
   /**
    * How much faster the hectic snake is than snakeSpeed (0.5 = 50% faster).

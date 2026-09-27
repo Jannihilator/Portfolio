@@ -117,7 +117,7 @@ const PORTRAIT_PALETTE = {
   /** Spiky hair */
   H: { r: 33, g: 33, b: 33 },
   /** Skin */
-  S: { r: 214, g: 158, b: 122 },
+  S: { r: 228, g: 164, b: 112 },
   /** Black glasses */
   G: { r: 38, g: 50, b: 56 },
   /** Eyes */
@@ -179,6 +179,7 @@ function mergeConfig(overrides = {}) {
     portraitScale: 1,
     bottomGap: 3,
     portraitHair: { r: 33, g: 33, b: 33 },
+    portraitSkin: { r: 228, g: 164, b: 112 },
     portraitGlasses: { r: 38, g: 50, b: 56 },
     portraitMouth: { r: 229, g: 115, b: 115 },
     portraitShirt: { r: 189, g: 189, b: 189 },
@@ -198,7 +199,7 @@ function mergeConfig(overrides = {}) {
     snakeColors: [
       { r: 244, g: 208, b: 64 },
       { r: 64, g: 214, b: 232 },
-      { r: 255, g: 126, b: 190 },
+      { r: 255, g: 164, b: 224 },
     ],
     dropLastSnakeBelowPx: 480,
     snakeSpeed: 13,
@@ -712,6 +713,7 @@ function createLedWall(canvas, options = {}) {
       const col = cfg.portraitHair || PORTRAIT_PALETTE.H;
       return { r: col.r, g: col.g, b: col.b, hair: true };
     }
+    if (ch === "S") return cfg.portraitSkin || PORTRAIT_PALETTE.S;
     if (ch === "G") {
       const col = cfg.portraitGlasses || PORTRAIT_PALETTE.G;
       return { r: col.r, g: col.g, b: col.b, glasses: true };
@@ -1720,11 +1722,11 @@ function createLedWall(canvas, options = {}) {
   }
 
   function wallStepsPerSec(snake) {
-    // Speed is authored in LEDs per second at the laptop diode size. A narrow
-    // wall shrinks those diodes to fit the words, so a phone would crawl at
-    // the same step rate. Scale the rate with the diode so the snakes cross
-    // the glass at the same pace on every screen.
-    return snake.speed * speedScale * ledStepScale();
+    // Authored in LEDs per second. A phone shrinks the diodes and fits more
+    // of them on the glass. Speeding the step rate up to hold a pixel pace
+    // makes the snakes race past the letters, which stay the same number of
+    // cells. The rate stays in cells on every screen.
+    return snake.speed * speedScale;
   }
 
   function spendSnakeSteps(snake, dt, now, stepsPerSec) {
@@ -1813,12 +1815,6 @@ function createLedWall(canvas, options = {}) {
     }
   }
 
-  function ledStepScale() {
-    const refPitch =
-      cfg.targetCellPx + Math.max(1, Math.floor(cfg.targetCellPx * cfg.cellGapRatio));
-    return refPitch / Math.max(1, pitch);
-  }
-
   function updateSim(dt, now) {
     // Reading mode: the wall keeps playing around the page, but slowly enough
     // that it is movement in the corner of the eye rather than a distraction
@@ -1842,8 +1838,8 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * Desktop keeps palette order: lemon slow, cyan in the middle, magenta hectic.
-   * A phone drops the lemon one. Cyan takes the slow speed and magenta the
+   * Desktop keeps palette order: lemon slow, cyan in the middle, pink hectic.
+   * A phone drops the lemon one. Cyan takes the slow speed and pink the
    * middle speed. Wander stays with the color, so only the pace changes.
    */
   function activeSnakeSlots() {
