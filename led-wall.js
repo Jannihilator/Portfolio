@@ -124,8 +124,10 @@ const PORTRAIT_PALETTE = {
   E: { r: 74, g: 46, b: 43 },
   /** Smile */
   M: { r: 229, g: 115, b: 115 },
-  /** Light grey shirt */
+  /** Shirt */
   C: { r: 189, g: 189, b: 189 },
+  /** Collar, the V under the chin */
+  V: { r: 228, g: 220, b: 206 },
 };
 
 const PORTRAIT_SPRITE = [
@@ -144,9 +146,9 @@ const PORTRAIT_SPRITE = [
   ".....SSSSSSSSSSSS...",
   ".....SSSMMMSSSSS....",
   "......SSSSSSSSS.....",
-  "......CCSSSSSCCC....",
-  "....CCCCCCSCCCCCCC..",
-  "....CCCCCCCCCCCCCC..",
+  "......CVVSSSVVCC....",
+  "....CCCCVVVVVCCCCC..",
+  "....CCCCCCVCCCCCCC..",
 ];
 
 /**
@@ -180,6 +182,7 @@ function mergeConfig(overrides = {}) {
     portraitGlasses: { r: 38, g: 50, b: 56 },
     portraitMouth: { r: 229, g: 115, b: 115 },
     portraitShirt: { r: 189, g: 189, b: 189 },
+    portraitCollar: { r: 228, g: 220, b: 206 },
     labelColor: { r: 232, g: 236, b: 245 },
     labelAlpha: 0.8,
     labelHoverColor: { r: 255, g: 255, b: 255 },
@@ -193,9 +196,9 @@ function mergeConfig(overrides = {}) {
     glassesFlareEvery: 3.8,
     glassesFlareTravel: 0.85,
     snakeColors: [
-      { r: 80, g: 206, b: 124 },
+      { r: 244, g: 208, b: 64 },
       { r: 64, g: 214, b: 232 },
-      { r: 255, g: 72, b: 164 },
+      { r: 255, g: 126, b: 190 },
     ],
     dropLastSnakeBelowPx: 480,
     snakeSpeed: 13,
@@ -271,6 +274,14 @@ function mergeConfig(overrides = {}) {
     ...(file.extrudeHeights || {}),
     ...(overrides.extrudeHeights || {}),
   };
+  const looks = cfg.shirtLooks;
+  if (looks && looks.length) {
+    const len = looks.length;
+    const n = ((cfg.shirtLook | 0) % len + len) % len;
+    const look = looks[n];
+    if (look && look.shirt) cfg.portraitShirt = look.shirt;
+    if (look && look.collar) cfg.portraitCollar = look.collar;
+  }
   return cfg;
 }
 
@@ -394,6 +405,35 @@ function createLedWall(canvas, options = {}) {
   let timeMs = 0;
   /** Set while the sim is stopped, e.g. a phone page covering the whole wall */
   let paused = false;
+
+  const introNameEl = options.introName || null;
+  /** "run" while the name is the whole screen, "fade" as the wall comes up, "done" after */
+  let introPhase = introNameEl ? "run" : "done";
+  /** 0 hides the diode field and the words. The cyan snake stays solid either way. */
+  let boardAlpha = introNameEl ? 0 : 1;
+  let introArmed = !introNameEl;
+  let introEaten = 0;
+  let introStartedAt = 0;
+  let introFadeStart = 0;
+  let introProgress = 0;
+  /** @type {Array<{el: HTMLElement, col: number}>} */
+  let introLetters = [];
+  let introRun = { c0: 0, c1: 0, r: 0 };
+  /** The cyan snake that walks the title. It stays solid while the rest arrives. */
+  let introCyanId = -1;
+  /** Once the title line is finished, the cyan snake uses the wall's own movement. */
+  let introCruise = false;
+  /** Steps per second the cyan snake is taking. Eased down to the wall pace. */
+  let introPace = 0;
+  let introEasing = false;
+  /** Other snakes and the food field fade in after the name has left. */
+  let introHanded = false;
+  let introCastAlpha = 1;
+  const INTRO_FADE_MS = 520;
+  /** The title stays up at least this long, then the crossfade can start. */
+  const INTRO_MIN_MS = 3500;
+  /** The board is up by this time, even if a video is still coming in. */
+  const INTRO_MAX_MS = 4500;
 
   const DIRS = [
     [1, 0],
@@ -646,7 +686,7 @@ function createLedWall(canvas, options = {}) {
    * The phone stack ends there. The ordinary edge pad and bottom gap are not
    * added again, or Blogs sits a canyon above the cards.
    */
-  const MOBILE_GLANCE_PX = 200;
+  const MOBILE_GLANCE_PX = 170;
 
   function labelBounds() {
     const rect = insetRect(clusterBounds(), Math.max(0, cfg.labelEdgePad | 0));
@@ -668,13 +708,17 @@ function createLedWall(canvas, options = {}) {
    */
   function portraitInk(ch) {
     if (ch === ".") return null;
-    if (ch === "H") return cfg.portraitHair || PORTRAIT_PALETTE.H;
+    if (ch === "H") {
+      const col = cfg.portraitHair || PORTRAIT_PALETTE.H;
+      return { r: col.r, g: col.g, b: col.b, hair: true };
+    }
     if (ch === "G") {
       const col = cfg.portraitGlasses || PORTRAIT_PALETTE.G;
       return { r: col.r, g: col.g, b: col.b, glasses: true };
     }
     if (ch === "M") return cfg.portraitMouth || PORTRAIT_PALETTE.M;
     if (ch === "C") return cfg.portraitShirt || PORTRAIT_PALETTE.C;
+    if (ch === "V") return cfg.portraitCollar || PORTRAIT_PALETTE.V;
     return PORTRAIT_PALETTE[ch] || null;
   }
 
@@ -861,6 +905,65 @@ function createLedWall(canvas, options = {}) {
     return spots;
   }
 
+  /**
+   * Gaps in the hair are pockets a cell or two deep. Stepping in, a snake's
+   * own head plugs the way back out, so it never goes in and a dot left there
+   * is never eaten. The cells stay open. Dots just stop landing in them.
+   */
+  function banHairPockets(hairCells) {
+    if (!hairCells.length) return;
+    const pocketDepth = 4;
+    const near = new Uint8Array(cellCount);
+    let q = hairCells;
+    for (const i of q) near[i] = 1;
+    for (let d = 0; d < pocketDepth; d++) {
+      const next = [];
+      for (const i of q) {
+        const c = colOf(i);
+        const r = rowOf(i);
+        for (const [dx, dy] of DIRS) {
+          const nc = c + dx;
+          const nr = r + dy;
+          if (!inBounds(nc, nr)) continue;
+          const ni = idx(nc, nr);
+          if (near[ni] || blocked(ni)) continue;
+          near[ni] = 1;
+          next.push(ni);
+        }
+      }
+      q = next;
+      if (!q.length) break;
+    }
+
+    const open = new Uint8Array(cellCount);
+    for (let i = 0; i < cellCount; i++) {
+      if (near[i] && !blocked(i)) open[i] = 1;
+    }
+
+    for (let pass = 0; pass < pocketDepth; pass++) {
+      const peel = [];
+      for (let i = 0; i < cellCount; i++) {
+        if (!open[i]) continue;
+        let ways = 0;
+        const c = colOf(i);
+        const r = rowOf(i);
+        for (const [dx, dy] of DIRS) {
+          const nc = c + dx;
+          const nr = r + dy;
+          if (!inBounds(nc, nr)) continue;
+          const ni = idx(nc, nr);
+          if (open[ni] || (!near[ni] && !blocked(ni))) ways++;
+        }
+        if (ways <= 1) peel.push(i);
+      }
+      if (!peel.length) break;
+      for (const i of peel) {
+        open[i] = 0;
+        letterBlock[i] = 1;
+      }
+    }
+  }
+
   function layoutLabels() {
     if (!cols || !rows) return;
     obstacle.fill(0);
@@ -879,6 +982,7 @@ function createLedWall(canvas, options = {}) {
     const cluster = clusterBounds();
     const bounds = labelBounds();
     const boxes = [];
+    const hairCells = [];
 
     // The face is centered on its anchor, then lifted so the words under it
     // still fit with a gap. A short laptop would otherwise pull About and
@@ -931,6 +1035,7 @@ function createLedWall(canvas, options = {}) {
           obstacle[i] = 1;
           letterBlock[i] = 1;
           cells.push({ i, r: px.r, g: px.g, b: px.b, glasses: !!px.glasses });
+          if (px.hair) hairCells.push(i);
         }
       }
       mosaics.push({
@@ -1019,6 +1124,8 @@ function createLedWall(canvas, options = {}) {
         Math.max(1, Math.max(0, room))
       );
     }
+
+    banHairPockets(hairCells);
 
     // A label may have landed on top of dots that were already lying there
     for (const i of food.keys()) {
@@ -1612,6 +1719,66 @@ function createLedWall(canvas, options = {}) {
     return roomiestStep(snake, safe);
   }
 
+  function wallStepsPerSec(snake) {
+    // Speed is authored in LEDs per second at the laptop diode size. A narrow
+    // wall shrinks those diodes to fit the words, so a phone would crawl at
+    // the same step rate. Scale the rate with the diode so the snakes cross
+    // the glass at the same pace on every screen.
+    return snake.speed * speedScale * ledStepScale();
+  }
+
+  function spendSnakeSteps(snake, dt, now, stepsPerSec) {
+    if (!snake.alive) {
+      if (now - snake.deadAt >= cfg.respawnMs) spawnSnake(snake, now);
+      return;
+    }
+    snake.accum += dt * stepsPerSec;
+    let steps = 0;
+    while (snake.accum >= 1 && steps < 12) {
+      snake.accum -= 1;
+      steps++;
+      stepSnake(snake, now);
+      if (!snake.alive) break;
+    }
+    if (snake.accum > 1) snake.accum = 0;
+  }
+
+  function advanceSnake(snake, dt, now) {
+    spendSnakeSteps(snake, dt, now, wallStepsPerSec(snake));
+  }
+
+  /** Column where Huang starts. The last word is the brake into the wall pace. */
+  function huangStartCol() {
+    const letter = introLetters[7];
+    return letter ? letter.col : introRun.c1;
+  }
+
+  /**
+   * The title line on a large screen is faster than the wall. Ease that pace
+   * down once the snake reaches Huang, so the last word is already slowing.
+   */
+  function easeIntroPace(snake, dt) {
+    const target = wallStepsPerSec(snake);
+    if (!(introPace > 0)) introPace = target;
+    const blend = 1 - Math.exp(-dt / 0.6);
+    introPace += (target - introPace) * blend;
+    if (Math.abs(introPace - target) < 0.4) {
+      introPace = target;
+      introEasing = false;
+    }
+  }
+
+  function easeCyan(snake, dt, now) {
+    const target = wallStepsPerSec(snake);
+    if (!(introPace > 0)) {
+      introEasing = false;
+      spendSnakeSteps(snake, dt, now, target);
+      return;
+    }
+    easeIntroPace(snake, dt);
+    spendSnakeSteps(snake, dt, now, introPace > 0 ? introPace : target);
+  }
+
   function stepSnake(snake, now) {
     const options = safeNeighbours(snake);
     const next = chooseStep(snake, options);
@@ -1646,36 +1813,20 @@ function createLedWall(canvas, options = {}) {
     }
   }
 
+  function ledStepScale() {
+    const refPitch =
+      cfg.targetCellPx + Math.max(1, Math.floor(cfg.targetCellPx * cfg.cellGapRatio));
+    return refPitch / Math.max(1, pitch);
+  }
+
   function updateSim(dt, now) {
     // Reading mode: the wall keeps playing around the page, but slowly enough
     // that it is movement in the corner of the eye rather than a distraction
     const target = page.state === "closed" ? 1 : clamp(cfg.readingSpeedScale, 0.05, 1);
     speedScale += (target - speedScale) * Math.min(1, dt * 3);
-
-    // Speed is authored in LEDs per second at the laptop diode size. A narrow
-    // wall shrinks those diodes to fit the words, so a phone would crawl at
-    // the same step rate. Scale the rate with the diode so the snakes cross
-    // the glass at the same pace on every screen.
-    const refPitch =
-      cfg.targetCellPx + Math.max(1, Math.floor(cfg.targetCellPx * cfg.cellGapRatio));
-    const pixelScale = refPitch / Math.max(1, pitch);
-
     for (const snake of snakes) {
-      if (!snake.alive) {
-        if (now - snake.deadAt >= cfg.respawnMs) spawnSnake(snake, now);
-        continue;
-      }
-      snake.accum += dt * snake.speed * speedScale * pixelScale;
-      // A slow frame may owe several LEDs. Spend them, but stop short of
-      // pathfinding a hitch all the way across the board.
-      let steps = 0;
-      while (snake.accum >= 1 && steps < 12) {
-        snake.accum -= 1;
-        steps++;
-        stepSnake(snake, now);
-        if (!snake.alive) break;
-      }
-      if (snake.accum > 1) snake.accum = 0;
+      if (introEasing && snake.id === introCyanId) easeCyan(snake, dt, now);
+      else advanceSnake(snake, dt, now);
     }
 
     for (const [i, dot] of food) {
@@ -1691,8 +1842,8 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * Desktop keeps palette order: green slow, cyan in the middle, red hectic.
-   * A phone drops the green one. Cyan takes the slow speed and red the
+   * Desktop keeps palette order: lemon slow, cyan in the middle, magenta hectic.
+   * A phone drops the lemon one. Cyan takes the slow speed and magenta the
    * middle speed. Wander stays with the color, so only the pace changes.
    */
   function activeSnakeSlots() {
@@ -1714,6 +1865,415 @@ function createLedWall(canvas, options = {}) {
       speedT: pace(index),
       wanderT: pace(index),
     }));
+  }
+
+  function snakeRecord(id, slot) {
+    return {
+      id,
+      color: slot.color,
+      body: [],
+      grow: 0,
+      accum: 0,
+      alive: false,
+      deadAt: 0,
+      wanderChance:
+        cfg.wanderChanceSlow + (cfg.wanderChanceFast - cfg.wanderChanceSlow) * slot.wanderT,
+      speed: cfg.snakeSpeed * (1 + cfg.speedVariance * slot.speedT),
+    };
+  }
+
+  /** The loading line follows the same cyan the wall keeps, including on a phone
+   *  where that snake is the slow one and the green one stays off. */
+  function cyanSlotIndex(slots) {
+    const cyan = cfg.snakeColors[Math.min(1, cfg.snakeColors.length - 1)];
+    const index = slots.findIndex((slot) => slot.color === cyan);
+    return index < 0 ? 0 : index;
+  }
+
+  function loadProgress() {
+    let n = 1;
+    if (typeof options.getLoadProgress === "function") {
+      n = Number(options.getLoadProgress());
+      if (!Number.isFinite(n)) n = 1;
+    }
+    if (introStartedAt && timeMs - introStartedAt > INTRO_MAX_MS - INTRO_FADE_MS) n = 1;
+    introProgress = Math.max(introProgress, clamp(n, 0, 1));
+    return introProgress;
+  }
+
+  function introCanEat() {
+    if (!introLetters.length || introEaten >= introLetters.length) return true;
+    return loadProgress() + 1e-4 >= (introEaten + 1) / introLetters.length;
+  }
+
+  function introReady(snake) {
+    return (
+      introLetters.length > 0 &&
+      introEaten >= introLetters.length &&
+      snake &&
+      snake.grow <= 0 &&
+      loadProgress() >= 1
+    );
+  }
+
+  function clearSpan(r) {
+    let best = null;
+    let start = -1;
+    for (let c = 0; c <= cols; c++) {
+      const open = c < cols && !obstacle[idx(c, r)] && !letterBlock[idx(c, r)];
+      if (open && start < 0) start = c;
+      if (!open && start >= 0) {
+        const len = c - start;
+        if (!best || len > best.len) best = { c0: start, c1: c - 1, len };
+        start = -1;
+      }
+    }
+    return best;
+  }
+
+  /**
+   * The row under the title has to stay empty after the wall comes up, or the
+   * cyan snake would be sitting inside the portrait. Prefer the open row
+   * closest to where the title wants to rest.
+   */
+  function introRowNear(desired, c0, c1) {
+    let best = null;
+    let bestDist = Infinity;
+    const glanceRows = Math.ceil(170 / Math.max(1, pitch));
+    for (let r = 1; r < rows - glanceRows; r++) {
+      const span = clearSpan(r);
+      if (!span || span.c0 > c0 || span.c1 < c1) continue;
+      const dist = Math.abs(r - desired);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = { r, c0: span.c0, c1: span.c1, len: span.len };
+      }
+    }
+    return best;
+  }
+
+  function hideBoot() {
+    const boot = document.getElementById("boot");
+    if (!boot) return;
+    boot.style.opacity = "0";
+    boot.classList.add("is-gone");
+  }
+
+  function clearGlanceFade() {
+    const glance = document.getElementById("glance");
+    if (!glance) return;
+    glance.style.opacity = "";
+    glance.style.transform = "";
+  }
+
+  /** Slow at both ends, so a fade starts and finishes without a step. */
+  function fadeEase(t) {
+    const x = clamp(t, 0, 1);
+    return x * x * x * (x * (x * 6 - 15) + 10);
+  }
+
+  function abandonIntro(now) {
+    introPhase = "done";
+    boardAlpha = 1;
+    introCastAlpha = 1;
+    introHanded = true;
+    introArmed = true;
+    hideBoot();
+    document.body.classList.remove("is-booting");
+    clearGlanceFade();
+    resetSim(now || performance.now());
+  }
+
+  /**
+   * The wall is already up and the name is gone. Bring in the other snakes
+   * and the food field, still transparent, so they can ease on instead of popping.
+   */
+  function handoffIntro(now) {
+    if (introHanded) return;
+    introHanded = true;
+    const slots = activeSnakeSlots();
+    const cyan = snakes.find((snake) => snake.id === introCyanId && snake.body && snake.body.length) || null;
+    food.clear();
+    snakes = slots.map((slot, id) => {
+      if (cyan && id === cyan.id) {
+        cyan.alive = true;
+        cyan.grow = 0;
+        return cyan;
+      }
+      return snakeRecord(id, slot);
+    });
+    for (const snake of snakes) {
+      if (snake.alive) continue;
+      spawnSnake(snake, now);
+    }
+    for (let n = 0; n < cfg.foodTarget; n++) addFood(randomDotCell());
+    lastFoodAt = now;
+    introCastAlpha = 0;
+  }
+
+  function startIntroFade(now) {
+    if (introPhase !== "run") return;
+    introPhase = "fade";
+    introFadeStart = now;
+    introHanded = false;
+    introCastAlpha = 1;
+    introEasing = true;
+  }
+
+  function advanceIntroFade(now) {
+    const t = clamp((now - introFadeStart) / INTRO_FADE_MS, 0, 1);
+    // One crossfade: the name leaves as the diodes come up.
+    const e = fadeEase(t);
+    boardAlpha = e;
+    const boot = document.getElementById("boot");
+    if (boot) boot.style.opacity = String(1 - e);
+
+    const glance = document.getElementById("glance");
+    if (glance) {
+      glance.style.opacity = String(e);
+      glance.style.transform = `translateY(${(1 - e) * 8}px)`;
+    }
+
+    // The other snakes arrive with the wall, once the name is on its way out.
+    if (t >= 0.4) handoffIntro(now);
+    if (introHanded) introCastAlpha = fadeEase((t - 0.4) / 0.6);
+
+    if (t >= 1) {
+      introPhase = "done";
+      boardAlpha = 1;
+      introCastAlpha = 1;
+      hideBoot();
+      document.body.classList.remove("is-booting");
+      clearGlanceFade();
+    }
+  }
+
+  /**
+   * A title card: the name is large, tracked out, and centered on the page.
+   * Pellets sit on the open row under the letters, which is the line the cyan
+   * snake keeps when the wall fades in.
+   */
+  function layoutIntro() {
+    if (introPhase !== "run" || !introNameEl) return;
+    const spans = [...introNameEl.querySelectorAll("[data-letter]")];
+    if (!spans.length) {
+      abandonIntro(timeMs || performance.now());
+      return;
+    }
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const boot = document.getElementById("boot");
+    const bootRect = boot ? boot.getBoundingClientRect() : canvasRect;
+    const viewW = canvasRect.width || window.innerWidth;
+    const viewH = canvasRect.height || window.innerHeight;
+
+    introNameEl.style.transform = "translateX(-50%)";
+    introNameEl.style.left = `${canvasRect.left - bootRect.left + viewW / 2}px`;
+    introNameEl.style.top = "0px";
+
+    const maxW = viewW * 0.92;
+    let size = Math.min(viewH * 0.28, 248);
+    introNameEl.style.fontSize = `${size}px`;
+    let box = introNameEl.getBoundingClientRect();
+    if (box.width > 8 && box.width > maxW) {
+      size *= maxW / box.width;
+      introNameEl.style.fontSize = `${size}px`;
+      box = introNameEl.getBoundingClientRect();
+    }
+    if (box.height > viewH * 0.34 && box.height > 8) {
+      size *= (viewH * 0.34) / box.height;
+      introNameEl.style.fontSize = `${size}px`;
+      box = introNameEl.getBoundingClientRect();
+    }
+    const titleScale = clamp(cfg.introTitleScale == null ? 0.86 : +cfg.introTitleScale, 0.5, 1.25);
+    size *= titleScale;
+    introNameEl.style.fontSize = `${size}px`;
+    box = introNameEl.getBoundingClientRect();
+    if (box.width > viewW * 0.96 && box.width > 8) {
+      size *= (viewW * 0.96) / box.width;
+      introNameEl.style.fontSize = `${size}px`;
+      box = introNameEl.getBoundingClientRect();
+    }
+    if (box.width < 8) return;
+
+    const gapPx = Math.max(10, cellSize * 0.85);
+    let top = (viewH - box.height) / 2;
+    introNameEl.style.top = `${canvasRect.top - bootRect.top + top}px`;
+    box = introNameEl.getBoundingClientRect();
+
+    const placedGuess = [];
+    let prev = -1;
+    for (const el of spans) {
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - canvasRect.left - offsetX;
+      let col = Math.round((x - cellSize / 2) / pitch);
+      col = clamp(col, 0, cols - 1);
+      if (col <= prev) col = Math.min(cols - 1, prev + 1);
+      prev = col;
+      placedGuess.push(col);
+    }
+    const padL = Math.max((cfg.startLength | 0) + 2, 4);
+    const wantC0 = Math.max(0, placedGuess[0] - padL);
+    const wantC1 = Math.min(cols - 1, placedGuess[placedGuess.length - 1] + 2);
+    const y = box.bottom + gapPx - canvasRect.top - offsetY;
+    const desired = clamp(Math.round(y / pitch), 1, rows - 2);
+    const lane = introRowNear(desired, wantC0, wantC1);
+    if (!lane) {
+      abandonIntro(timeMs || performance.now());
+      return;
+    }
+
+    const pelletTop = offsetY + lane.r * pitch;
+    top += pelletTop - (box.bottom - canvasRect.top + gapPx);
+    const minTop = 12;
+    const maxTop = Math.max(minTop, viewH - box.height - 12);
+    top = clamp(top, minTop, maxTop);
+    introNameEl.style.top = `${canvasRect.top - bootRect.top + top}px`;
+    box = introNameEl.getBoundingClientRect();
+
+    const placed = [];
+    prev = -1;
+    for (const el of spans) {
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - canvasRect.left - offsetX;
+      let col = Math.round((x - cellSize / 2) / pitch);
+      col = clamp(col, lane.c0, lane.c1);
+      if (col <= prev) col = Math.min(lane.c1, prev + 1);
+      prev = col;
+      placed.push({ el, col });
+    }
+    if (placed.length < 2) return;
+
+    introLetters = placed;
+    introRun = { c0: lane.c0, c1: lane.c1, r: lane.r };
+    introCruise = false;
+    introPace = 0;
+    introEasing = false;
+
+    const slots = activeSnakeSlots();
+    const id = cyanSlotIndex(slots);
+    const slot = slots[id];
+    const nextCol = introEaten < placed.length ? placed[introEaten].col : placed[placed.length - 1].col;
+    const approach = introEaten === 0 ? 3 : 0;
+    let headCol = nextCol - 1 - approach;
+    if (introEaten < placed.length) headCol = Math.min(headCol, placed[introEaten].col - 1);
+    headCol = clamp(headCol, lane.c0, lane.c1);
+    const grown = (cfg.startLength | 0) + introEaten * (cfg.growPerFood | 0);
+    let length = Math.min(cfg.maxLength, Math.max(1, grown), headCol - lane.c0 + 1);
+    length = Math.max(1, length);
+
+    introCyanId = id;
+    const snake = snakeRecord(id, slot);
+    snake.alive = true;
+    snake.body = [];
+    for (let n = 0; n < length; n++) snake.body.push(idx(headCol - n, lane.r));
+    snakes = [snake];
+
+    food.clear();
+    sparks = [];
+    occupancy.fill(0);
+    const fed = new Set();
+    for (let i = introEaten; i < placed.length; i++) {
+      const cell = idx(placed[i].col, lane.r);
+      if (snake.body.includes(cell) || fed.has(cell)) continue;
+      fed.add(cell);
+      addFood(cell);
+    }
+    for (const cell of snake.body) occupancy[cell] = id + 1;
+    placed.forEach((letter, i) => letter.el.classList.toggle("is-lit", i < introEaten));
+    introNameEl.classList.toggle("is-ready", introArmed);
+  }
+
+  function stepIntroSnake(snake) {
+    const head = snake.body[0];
+    if (head == null) return false;
+    const nc = colOf(head) + 1;
+    const r = rowOf(head);
+    if (nc > introRun.c1 || !inBounds(nc, r)) return false;
+    const ni = idx(nc, r);
+    if (obstacle[ni] || letterBlock[ni]) return false;
+    if (occupancy[ni] && occupancy[ni] !== snake.id + 1) return false;
+
+    const next = introLetters[introEaten];
+    if (next && nc === next.col && !introCanEat()) return false;
+
+    const ate = food.delete(ni);
+    if (ate) {
+      const stepsAfter = Math.max(0, introRun.c1 - nc);
+      const maxFinal = Math.min(cfg.maxLength, nc + stepsAfter + 1);
+      const room = maxFinal - (snake.body.length + snake.grow);
+      if (room > 0) snake.grow += Math.min(cfg.growPerFood | 0, room);
+    }
+
+    snake.body.unshift(ni);
+    occupancy[ni] = snake.id + 1;
+    if (snake.grow > 0) snake.grow--;
+    else {
+      const tail = snake.body.pop();
+      if (tail != null && occupancy[tail] === snake.id + 1) occupancy[tail] = 0;
+    }
+
+    while (introEaten < introLetters.length && introLetters[introEaten].col <= nc) {
+      introLetters[introEaten].el.classList.add("is-lit");
+      introEaten++;
+    }
+    return true;
+  }
+
+  function updateIntro(dt, now) {
+    if (!introArmed) return;
+    if (!introStartedAt) introStartedAt = now;
+    const snake = snakes[0];
+    if (!snake || !snake.alive || !snake.body.length) return;
+    // Past five seconds the page should be the wall, whether or not the
+    // last video byte has landed.
+    if (now - introStartedAt >= INTRO_MAX_MS - INTRO_FADE_MS) {
+      for (const letter of introLetters) letter.el.classList.add("is-lit");
+      introEaten = introLetters.length;
+      snake.grow = 0;
+      startIntroFade(now);
+      return;
+    }
+    if (introReady(snake)) introCruise = true;
+    if (introCruise) {
+      introEasing = introPace > wallStepsPerSec(snake) + 0.4;
+      easeCyan(snake, dt, now);
+      if (now - introStartedAt >= INTRO_MIN_MS) startIntroFade(now);
+      return;
+    }
+
+    // Spread the crossing over the minimum, so a cached load still reads
+    // as a title instead of a dash to the wall. Huang is where that pace
+    // starts coming back down.
+    const headCol = colOf(snake.body[0]);
+    if (!introEasing && headCol >= huangStartCol()) introEasing = true;
+    if (introEasing) {
+      easeIntroPace(snake, dt);
+    } else {
+      const remainMs = INTRO_MIN_MS - (now - introStartedAt);
+      const cellsLeft = Math.max(1, introRun.c1 - headCol + snake.grow);
+      const stepsPerSec =
+        remainMs > 160 ? cellsLeft / (remainMs / 1000) : wallStepsPerSec(snake) * 3;
+      introPace = clamp(stepsPerSec, 6, 48);
+    }
+    snake.accum += dt * introPace;
+    let steps = 0;
+    while (snake.accum >= 1 && steps < 12) {
+      if (!stepIntroSnake(snake)) {
+        snake.accum = 0;
+        if (loadProgress() >= 1) {
+          while (introEaten < introLetters.length) {
+            introLetters[introEaten].el.classList.add("is-lit");
+            introEaten++;
+          }
+          snake.grow = 0;
+        }
+        break;
+      }
+      snake.accum -= 1;
+      steps++;
+      if (introEaten >= introLetters.length && snake.grow <= 0) break;
+    }
   }
 
   function resetSim(now) {
@@ -1857,7 +2417,7 @@ function createLedWall(canvas, options = {}) {
           mix(cell.r, flare.r, k),
           mix(cell.g, flare.g, k),
           mix(cell.b, flare.b, k),
-          1,
+          boardAlpha,
           1 + 2.6 * shine,
           rest + 0.3 * shine
         );
@@ -1878,7 +2438,7 @@ function createLedWall(canvas, options = {}) {
         mix(cell.r, 255, 0.22 * shine),
         mix(cell.g, 255, 0.22 * shine),
         mix(cell.b, 255, 0.22 * shine),
-        1,
+        boardAlpha,
         1 + cfg.labelHoverGlow * 0.45 * shine,
         lift + 0.35 * shine
       );
@@ -1892,7 +2452,7 @@ function createLedWall(canvas, options = {}) {
         col.r,
         col.g,
         col.b,
-        cfg.labelHoverHalo * strength,
+        cfg.labelHoverHalo * strength * boardAlpha,
         cfg.labelHoverGlow * 0.6 * strength,
         cfg.extrudeHeights.wall
       );
@@ -1904,18 +2464,21 @@ function createLedWall(canvas, options = {}) {
 
     // Labels are part of the map, so they sit under the sim. A word inside the
     // page area keeps burning: it is already white, so the sheet closes over
-    // it rather than making it come up again.
-    for (const mosaic of mosaics) {
-      paintMosaic(mosaic, mosaicHovered(mosaic));
-    }
-    for (const label of labels) {
-      if (hoverLabel === label) {
-        paintHoveredLabel(label);
-        continue;
+    // it rather than making it come up again. During the loading line the
+    // board is still down, so only the snake and its pellets are drawn.
+    if (boardAlpha > 0.001) {
+      for (const mosaic of mosaics) {
+        paintMosaic(mosaic, mosaicHovered(mosaic));
       }
-      const col = cfg.labelColor;
-      for (const i of label.cells) {
-        writeCell(i, col.r, col.g, col.b, cfg.labelAlpha, 1, cfg.extrudeHeights.label);
+      for (const label of labels) {
+        if (hoverLabel === label) {
+          paintHoveredLabel(label);
+          continue;
+        }
+        const col = cfg.labelColor;
+        for (const i of label.cells) {
+          writeCell(i, col.r, col.g, col.b, cfg.labelAlpha * boardAlpha, 1, cfg.extrudeHeights.label);
+        }
       }
     }
 
@@ -1926,7 +2489,8 @@ function createLedWall(canvas, options = {}) {
       const life = dot.expiresAt ? clamp((dot.expiresAt - timeMs) / fadeMs, 0, 1) : 1;
       // The twinkle bobs the dot as well as brightening it
       const fc = dot.color;
-      writeCell(i, fc.r, fc.g, fc.b, twinkle * life, 1, cfg.extrudeHeights.food * twinkle);
+      const arriving = introHanded ? introCastAlpha : 1;
+      writeCell(i, fc.r, fc.g, fc.b, twinkle * life * arriving, 1, cfg.extrudeHeights.food * twinkle);
     }
 
     for (const snake of snakes) {
@@ -1935,7 +2499,8 @@ function createLedWall(canvas, options = {}) {
       const col = snake.color;
       for (let n = 0; n < len; n++) {
         const t = len === 1 ? 0 : n / (len - 1);
-        const a = 1 - (1 - cfg.tailFade) * t;
+        const cast = introHanded && snake.id !== introCyanId ? introCastAlpha : 1;
+        const a = (1 - (1 - cfg.tailFade) * t) * cast;
         const head = n === 0;
         // The body sinks back toward the wall along its length, so a snake
         // reads as a ridge with its head standing highest
@@ -2179,6 +2744,7 @@ function createLedWall(canvas, options = {}) {
     const h = canvas.clientHeight || window.innerHeight;
     ctx.fillStyle = cfg.bg;
     ctx.fillRect(0, 0, w, h);
+    if (introPhase === "run" && !introArmed) return;
 
     composeFrame();
 
@@ -2206,7 +2772,16 @@ function createLedWall(canvas, options = {}) {
       drawPanelGlow();
     }
 
-    if (wallSheet && wallSheet.width) ctx.drawImage(wallSheet, 0, 0, w, h);
+    if (wallSheet && wallSheet.width && boardAlpha > 0.001) {
+      if (boardAlpha < 0.999) {
+        ctx.save();
+        ctx.globalAlpha = boardAlpha;
+        ctx.drawImage(wallSheet, 0, 0, w, h);
+        ctx.restore();
+      } else {
+        ctx.drawImage(wallSheet, 0, 0, w, h);
+      }
+    }
 
     // Back to front, so the block nearest the viewer is the one in front.
     // Height is not the key: a block's sides only ever sweep away from the
@@ -2499,7 +3074,19 @@ function createLedWall(canvas, options = {}) {
       paintPanelMask(true);
     }
 
-    resetSim(timeMs || performance.now());
+    if (introPhase === "run") layoutIntro();
+    else {
+      if (introPhase === "fade") {
+        introPhase = "done";
+        boardAlpha = 1;
+        introCastAlpha = 1;
+        introHanded = true;
+        hideBoot();
+        document.body.classList.remove("is-booting");
+        clearGlanceFade();
+      }
+      resetSim(timeMs || performance.now());
+    }
     if (page.state !== "closed") onPanelResize(panelPixelRect());
     // Nothing is going to come along and repaint a stopped wall
     if (paused) draw();
@@ -2546,6 +3133,12 @@ function createLedWall(canvas, options = {}) {
   }
 
   function onPointerMove(e) {
+    if (introPhase !== "done") {
+      hoverLabel = null;
+      hoverMosaic = null;
+      canvas.style.cursor = "default";
+      return;
+    }
     const hit = hitFromPointer(e.clientX, e.clientY);
     hoverMosaic = hit && hit.mosaic ? hit.mosaic : null;
     hoverLabel = hit && hit.label ? hit.label : null;
@@ -2558,6 +3151,7 @@ function createLedWall(canvas, options = {}) {
   }
 
   function onClick(e) {
+    if (introPhase !== "done") return;
     const hit = hitFromPointer(e.clientX, e.clientY);
     if (hit && hit.mosaic) {
       onSelect({ id: hit.mosaic.pageId });
@@ -2586,7 +3180,12 @@ function createLedWall(canvas, options = {}) {
     lastNow = now;
     timeMs = now;
     updatePanel();
-    updateSim(dt, now);
+    if (introPhase === "run") updateIntro(dt, now);
+    else if (introPhase === "fade") {
+      advanceIntroFade(now);
+      const cyan = snakes.find((snake) => snake.id === introCyanId);
+      if (cyan) easeCyan(cyan, dt, now);
+    } else updateSim(dt, now);
     draw();
     // A pause raised inside this frame has to land here, or the tail of the
     // frame would re-arm the loop it just stopped
@@ -2624,6 +3223,16 @@ function createLedWall(canvas, options = {}) {
     canvas.addEventListener("click", onClick);
     canvas.addEventListener("contextmenu", (e) => e.preventDefault());
     window.addEventListener("resize", resize);
+    if (introPhase === "run" && document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (introPhase !== "run") return;
+        introArmed = true;
+        layoutIntro();
+      });
+    } else if (introPhase === "run") {
+      introArmed = true;
+      layoutIntro();
+    }
     raf = requestAnimationFrame(frame);
   }
 

@@ -11,6 +11,12 @@ window.LED_WALL_CONFIG = {
   cellGapRatio: 0.24,
   bg: "#050506",
   diodeInset: 0.08,
+
+  // --- Loading title ---
+  /** Size of the name before the wall. 1 is the full title; turn it down for
+   *  smaller type. The space between letters and between the three words
+   *  follows this, so this is the only number to change. */
+  introTitleScale: 0.66,
   offColor: { r: 12, g: 12, b: 14 },
 
   // --- Labels (they are the map: snakes must path around them, and dots
@@ -42,7 +48,9 @@ window.LED_WALL_CONFIG = {
   portraitHair: { r: 28, g: 28, b: 28 },
   portraitGlasses: { r: 138, g: 154, b: 154 },
   portraitMouth: { r: 225, g: 90, b: 85 },
-  portraitShirt: { r: 127, g: 127, b: 127 },
+  portraitShirt: { r: 28, g: 96, b: 78 },
+  /** Cream V on the pine shirt */
+  portraitCollar: { r: 228, g: 216, b: 186 },
   /** Resting label: white, but held back so the wall stays calm */
   labelColor: { r: 232, g: 236, b: 245 },
   labelAlpha: 0.8,
@@ -67,13 +75,13 @@ window.LED_WALL_CONFIG = {
   glassesFlareTravel: 0.85,
 
   // --- Snakes ---
-  /** A jade green, the wall's cyan, then a hot magenta. The last one is the hectic snake. */
+  /** A lemon, the wall's cyan, then a soft magenta. The last one is the hectic snake. */
   snakeColors: [
-    { r: 80, g: 206, b: 124 },
+    { r: 244, g: 208, b: 64 },
     { r: 64, g: 214, b: 232 },
-    { r: 255, g: 97, b: 176 },
+    { r: 255, g: 126, b: 190 },
   ],
-  /** Below this width the green snake stays off. Cyan runs slow, red at the middle speed. */
+  /** Below this width the lemon snake stays off. Cyan runs slow, magenta at the middle speed. */
   dropLastSnakeBelowPx: 480,
   /** LED steps per second at targetCellPx. Smaller diodes step faster so the pace on screen stays the same. */
   snakeSpeed: 10,
@@ -86,9 +94,9 @@ window.LED_WALL_CONFIG = {
   /** Speed multiplier while a page is open, so the wall calms down to read */
   readingSpeedScale: 1,
   /** Segments a fresh snake starts with */
-  startLength: 5,
+  startLength: 4,
   /** Segments gained per dot */
-  growPerFood: 3,
+  growPerFood: 2,
   /** Snakes stop growing here so no one dominates the wall */
   maxLength: 80,
   /** Delay before a dead snake comes back */

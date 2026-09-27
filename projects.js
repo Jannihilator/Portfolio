@@ -40,6 +40,12 @@ window.PORTFOLIO_PROJECTS = [
         media: [
           { type: "image", src: "./assets/renushu-game.png", alt: "Camp Movewell gameplay" },
           { type: "image", src: "./assets/renushu-pt.jpeg", alt: "Camp Movewell physical therapy" },
+          {
+            type: "image",
+            src: "./assets/g4c.jpeg",
+            alt: "The Camp Movewell team at the 2026 Games for Change Awards",
+            detailOnly: true,
+          },
         ],
         description:
           "Camp Movewell, from the ReNUSHU team at CMU’s Entertainment Technology Center with Magnes AG, is an exergame that makes physical therapy fun and measurable with NuShu smart shoes for gait sensing and haptic feedback. From rehab to play, from play to progress, every step is progress you can see and measure.",
@@ -274,18 +280,146 @@ window.PORTFOLIO_PROJECTS = [
     return null;
   }
 
+  function cardItems(project) {
+    return (project.media || []).filter((item) => !item.detailOnly);
+  }
+
   function featuredMedia(project) {
-    const items = project.media || [];
+    const items = cardItems(project);
     const video = items.find((item) => item.type === "video");
     return video ? [video] : items;
   }
 
   /** Wide cards show still and clip together. A grid card stays on the still. */
   function cardMedia(project) {
-    const items = project.media || [];
+    const items = cardItems(project);
     if (project.size === "big") return items;
     const stills = items.filter((item) => item.type !== "video");
     return stills.length ? stills : items;
+  }
+
+  function detailPhotoHtml(project) {
+    const photos = (project.media || []).filter((item) => item.detailOnly && item.type === "image");
+    return photos
+      .map(
+        (item) => `<figure class="project-detail-photo">
+          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt || "")}" />
+        </figure>`
+      )
+      .join("");
+  }
+
+  /**
+   * Clips live under a hidden panel, so a <video> there does not download
+   * until the panel opens. Fetch them during the wall instead, and point the
+   * elements at those bytes.
+   */
+  const preloadedVideo = new Map();
+  /** Original URL when the early fetch was skipped or failed, so the clip still plays. */
+  const videoFallback = new Set();
+  let preloadActive = true;
+  /** Bytes in flight for the loading line. Each clip weighs the same, so one
+   *  finished file is a quarter of the way whether it was the short one or not. */
+  const videoLoads = new Map();
+
+  function eachVideoSrc(visit) {
+    const seen = new Set();
+    for (const section of projects) {
+      for (const project of section.projects) {
+        for (const item of project.media || []) {
+          if (item.type !== "video" || seen.has(item.src)) continue;
+          seen.add(item.src);
+          visit(item.src);
+        }
+      }
+    }
+  }
+
+  function videoViewOpen(video) {
+    const page = document.getElementById("page");
+    if (!page || page.hidden) return false;
+    const body = video.closest("[data-view]");
+    return Boolean(body && !body.hidden);
+  }
+
+  function usePreloadedVideo(src, url) {
+    document.querySelectorAll("video[data-video]").forEach((video) => {
+      if (video.dataset.video !== src) return;
+      const source = video.querySelector("source");
+      if (!source || source.getAttribute("src") === url) return;
+      if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return;
+      source.setAttribute("src", url);
+      video.load();
+      if (videoViewOpen(video)) video.play().catch(() => {});
+    });
+  }
+
+  function keepNetworkSrc(src) {
+    videoFallback.add(src);
+    usePreloadedVideo(src, src);
+  }
+
+  function finishVideoLoad(src) {
+    const slot = videoLoads.get(src);
+    if (slot) slot.done = true;
+  }
+
+  /** 0 until the first byte, 1 when every clip has landed or been given up on. */
+  function videoLoadProgress() {
+    if (videoLoads.size === 0) return 1;
+    let sum = 0;
+    for (const item of videoLoads.values()) {
+      if (item.done) sum += 1;
+      else if (item.total > 0) sum += Math.min(1, item.loaded / item.total);
+    }
+    return sum / videoLoads.size;
+  }
+
+  async function readVideo(src, res) {
+    if (!res.ok || !res.body || !res.body.getReader) {
+      keepNetworkSrc(src);
+      finishVideoLoad(src);
+      return;
+    }
+    const slot = videoLoads.get(src);
+    const total = Number(res.headers.get("content-length")) || 0;
+    if (slot) slot.total = total;
+    const reader = res.body.getReader();
+    const chunks = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      if (slot) slot.loaded += value.byteLength;
+    }
+    const blob = new Blob(chunks, { type: "video/mp4" });
+    if (!blob.size) {
+      keepNetworkSrc(src);
+      finishVideoLoad(src);
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    preloadedVideo.set(src, url);
+    usePreloadedVideo(src, url);
+    if (slot && slot.total > 0) slot.loaded = slot.total;
+    finishVideoLoad(src);
+  }
+
+  function preloadProjectVideos() {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn && (conn.saveData || conn.effectiveType === "slow-2g" || conn.effectiveType === "2g")) {
+      preloadActive = false;
+      return;
+    }
+    eachVideoSrc((src) => {
+      videoLoads.set(src, { loaded: 0, total: 0, done: false });
+      fetch(src, { priority: "low" })
+        .then((res) => readVideo(src, res))
+        .catch(() => {
+          keepNetworkSrc(src);
+          finishVideoLoad(src);
+        });
+    });
   }
 
   function mediaHtml(items, extraClass, options) {
@@ -294,8 +428,13 @@ window.PORTFOLIO_PROJECTS = [
       .map((item) => {
         if (item.type === "video") {
           const autoplay = options && options.autoplay ? " autoplay" : "";
-          return `<video class="${extraClass}" muted loop playsinline${autoplay}>
-            <source src="${escapeHtml(item.src)}" type="video/mp4" />
+          let direct = preloadedVideo.get(item.src) || "";
+          if (!direct && (!preloadActive || videoFallback.has(item.src))) direct = item.src;
+          const srcAttr = direct ? ` src="${escapeHtml(direct)}"` : "";
+          return `<video class="${extraClass}" muted loop playsinline preload="auto" data-video="${escapeHtml(
+            item.src
+          )}"${autoplay}>
+            <source${srcAttr} data-src="${escapeHtml(item.src)}" type="video/mp4" />
           </video>`;
         }
         return `<img class="${extraClass}" src="${escapeHtml(item.src)}" alt="${escapeHtml(
@@ -465,6 +604,7 @@ window.PORTFOLIO_PROJECTS = [
         ${awardHtml(project)}
         ${contributionsHtml(project)}
         ${project.iframe ? `<div class="project-embed" data-embed></div>` : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true })}
+        ${detailPhotoHtml(project)}
         ${desc}
         ${stackHtml(project.stack)}
         ${linkHtml(project.href, "Project website")}
@@ -492,5 +632,8 @@ window.PORTFOLIO_PROJECTS = [
     renderList,
     renderDetail,
     stopMedia,
+    loadProgress: videoLoadProgress,
   };
+
+  preloadProjectVideos();
 })(window.PORTFOLIO_PROJECTS);

@@ -11,11 +11,11 @@
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Source+Sans+3:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Press+Start+2P&family=Source+Sans+3:wght@400;600&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
   <link rel="stylesheet" href="led-wall.css" />
 </head>
-<body>
+<body class="is-booting">
   <div id="led-stage">
     <canvas id="led-canvas" aria-label="Yen-Chun Huang, interactive LED snake wall"></canvas>
   </div>
@@ -45,16 +45,15 @@
             <h1>Yen Chun (James) Huang</h1>
           </header>
           <p>
-            I’m a game developer who likes making ideas happen. I come from
-            engineering and a love of board games, and I pay a lot of attention to
-            detail. What I like is making something, then watching how other people
-            react to it.
+            I’m a game developer who likes making ideas happen. With engineering
+            behind me and a love of board games, I pay a lot of attention to detail.
+            What I like is making something, then watching how other people react to it.
           </p>
           <p>
-            I’m curious about new tech and new ways of interaction. A lot of the
+            I'm constantly fascinated by new tech and new ways of interaction. A lot of the
             time I want to be the first person to see something new actually happen,
             so I take that work on myself. Breathing as an input, smart shoes,
-            a machine learning .io bot, audio combat, and a lot more fun stuff.
+            a machine learning .io game bot, combat with audio inputs, and a lot more fun stuff.
           </p>
           <ul class="about-marks">
             <li>
@@ -66,12 +65,6 @@
               Games for Change Awards, Best in Health &amp; Wellness.
             </li>
           </ul>
-          <figure class="about-g4c">
-            <img
-              src="./assets/g4c.jpeg"
-              alt="The Camp Movewell team at the 2026 Games for Change Awards"
-            />
-          </figure>
           <a
             class="pixel-btn page-resume"
             href="./assets/Resume.pdf"
@@ -296,6 +289,12 @@
   </article>
 
   <nav id="glance" aria-label="A few projects"></nav>
+
+  <div id="boot" role="status" aria-label="Loading">
+    <h1 id="boot-name">
+      <span data-letter>Y</span><span data-letter>e</span><span data-letter>n</span><span class="boot-gap" aria-hidden="true"></span><span data-letter>C</span><span data-letter>h</span><span data-letter>u</span><span data-letter>n</span><span class="boot-gap" aria-hidden="true"></span><span data-letter>H</span><span data-letter>u</span><span data-letter>a</span><span data-letter>n</span><span data-letter>g</span>
+    </h1>
+  </div>
 
   <!-- <div id="hud">
     <span class="hint">Snakes chase the yellow dots · click on a word to open</span>
@@ -543,6 +542,11 @@
     }
 
     const wall = createLedWall(canvas, {
+      introName: document.getElementById("boot-name"),
+      getLoadProgress: () =>
+        window.PortfolioProjects && PortfolioProjects.loadProgress
+          ? PortfolioProjects.loadProgress()
+          : 1,
       onSelect(label) {
         const view = LABEL_VIEWS[label.id];
         if (!view) return;

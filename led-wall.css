@@ -199,19 +199,6 @@ body {
   margin-bottom: 0;
 }
 
-.about-g4c {
-  width: min(100%, 22rem);
-  margin: 1.1rem auto 1.5rem;
-}
-
-.about-g4c img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 2px solid #16181d;
-  box-shadow: 3px 3px 0 #16181d;
-}
-
 /* The wall's own dot yellow, laid under the words like a marker */
 #page .highlight {
   color: #16181d;
@@ -700,6 +687,24 @@ body {
   margin-bottom: 1rem;
 }
 
+.project-detail-photo {
+  width: min(100%, 18rem);
+  margin: 0 0 1.25rem;
+}
+
+.project-detail-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #16181d;
+  box-shadow: 3px 3px 0 #16181d;
+}
+
+#page.is-dark .project-detail-photo img {
+  border-color: #e8ecf2;
+  box-shadow: 3px 3px 0 #e8ecf2;
+}
+
 /* Dark fill: used when a project is open so the video sits on a darker sheet */
 #page.is-dark {
   color: #e8ecf2;
@@ -826,6 +831,66 @@ body {
 }
 
 /* A short row of work, sitting on the wall before any label is clicked */
+body.is-booting #glance,
+body.is-booting #glance button {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+/* The name on the loading line. Size comes from introTitleScale in
+   led-wall.config.js; letter-spacing and the word gaps are ems, so they
+   follow that size. Letters start dim and turn on as the cyan snake takes
+   the pellet under each one. The snake itself is drawn by the wall. */
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+#boot.is-gone {
+  display: none;
+}
+
+body.is-booting #boot-name {
+  visibility: hidden;
+}
+
+body.is-booting #boot-name.is-ready {
+  visibility: visible;
+}
+
+#boot-name {
+  position: absolute;
+  margin: 0;
+  white-space: nowrap;
+  font-family: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  line-height: 0.82;
+  user-select: none;
+}
+
+#boot-name [data-letter] {
+  display: inline-block;
+  color: rgba(232, 224, 208, 0.42);
+  transition: color 0.28s ease, text-shadow 0.45s ease;
+}
+
+#boot-name [data-letter].is-lit {
+  color: #f7f1e4;
+  text-shadow:
+    0 0 16px rgba(247, 241, 228, 0.55),
+    0 0 36px rgba(100, 214, 228, 0.32);
+}
+
+.boot-gap {
+  display: inline-block;
+  width: 1.15em;
+}
+
 #glance {
   position: fixed;
   left: 0;
