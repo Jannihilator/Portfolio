@@ -47,7 +47,7 @@ window.PROJECT_CONTRIBUTIONS = {
   // The blurb describes the studio. Rewrite these as your part only.
   borderless: [
     "Client server model networked over four phones",
-    "Cut animation lag from 3 seconds to 0.3 by clock-offset sync and a scheduled start",
+    "Cut animation lag from 3s to under 30ms by clock-offset sync and a scheduled start",
     "Implement swipe gesture for spacial awareness from research paper",
   ],
 
