@@ -14,10 +14,101 @@ window.PORTFOLIO_PROJECTS = [
         size: "big",
         media: [
           { type: "image", src: "./assets/star-fishing.png", alt: "Star Fishing" },
-          { type: "video", src: "./assets/star-fishing.mp4" },
+          { type: "video", src: "./assets/Shooting_Star_Medias/demo.mp4" },
         ],
-        description: "",
+        description:
+          "A game about fishing for shooting stars and collecting constellations.",
         stack: ["Shader", "Upgrade / Ability System", "Skill Tree"],
+        beats: [
+          {
+            blocks: [
+              {
+                type: "text",
+                text: "I started with the sky. Adding foreground water, fog and reflection to bring it to life.",
+              },
+              {
+                type: "row",
+                cols: 3,
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/just_sky.mp4",
+                    poster: "./assets/Shooting_Star_Medias/posters/just_sky.jpg",
+                    caption: "Sky only",
+                    note: "Flat sky with no focal point.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/water_no_fog.mp4",
+                    caption: "Water shader",
+                    note: "Adding foreground water shader with waves and glints.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/fog_reflection.mp4",
+                    caption: "Fog and reflection",
+                    note: "The cut looks fake, adding fog and a blurred edge blend sky and water.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            blocks: [
+              {
+                type: "text",
+                text: "I made the first stars with a particle system, however colliders on particles are bot the best way to tell if you hit one, so each star became a prefab with a trail and its own particles. I also wanted an avatar for the player to project their actions into the game for better immersiveness, so I added a fishing boat to the foreground.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/prefab.mp4",
+                    caption: "Prefab",
+                    note: "A collider on a particle is a bad hit test, so each star is a prefab with a trail and its own particles.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/fishing_particles.mp4",
+                    poster: "./assets/Shooting_Star_Medias/posters/fishing_particles.jpg",
+                    caption: "Boat",
+                    note: "A boat as a focal point. However the shooting stars lies disconnected in the background layer.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            blocks: [
+              {
+                type: "text",
+                text: "Using 2D stars as the interactable layer, it offers clarity and allows for different rarity and looks. Which will be used as our main progression of the game to collect rare stars and complete constellation. In addition, I don't want catching to be too easy, so the spin aims on a timed click and the line flings out along the tangent. Problem is you end up staring at the spin instead of the sky, so I changed it to a mouse drag and swing making the rod cast out and waits until a star is close, fully portrays the star fishing fantasy.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/spin_cast.mp4",
+                    poster: "./assets/Shooting_Star_Medias/posters/spin_cast.png",
+                    caption: "Spin cast",
+                    note: "A timed click flings the line along the tangent. Harder on purpose, so windup, homing, and guiding lines fit, but you stop watching the sky.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Shooting_Star_Medias/lay_cast.mp4",
+                    poster: "./assets/Shooting_Star_Medias/posters/lay_cast.png",
+                    caption: "Lay cast",
+                    note: "You swing the mouse out and the rod waits until a star is close. Closer to real fishing, where you sit and wait.",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         id: "borderless",
@@ -296,6 +387,96 @@ window.PORTFOLIO_PROJECTS = [
     if (project.size === "big") return items;
     const stills = items.filter((item) => item.type !== "video");
     return stills.length ? stills : items;
+  }
+
+  function passCaption(block) {
+    return block.caption ? `<figcaption>${escapeHtml(block.caption)}</figcaption>` : "";
+  }
+
+  function passNote(block) {
+    return block.note ? `<p class="pass-note">${escapeHtml(block.note)}</p>` : "";
+  }
+
+  function passBox(media, block) {
+    return `<div class="pass-box">${media}${passNote(block)}</div>`;
+  }
+
+  function passVideoHtml(block) {
+    const poster = block.poster ? ` poster="${escapeHtml(block.poster)}"` : "";
+    const media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster} src="${escapeHtml(
+      block.src
+    )}"></video>`;
+    return `<figure class="pass">
+      ${passCaption(block)}
+      ${passBox(media, block)}
+    </figure>`;
+  }
+
+  function passItemHtml(block) {
+    if (block.type === "image") {
+      const media = `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt || "")}" />`;
+      return `<figure class="pass">
+        ${passCaption(block)}
+        ${passBox(media, block)}
+      </figure>`;
+    }
+    return passVideoHtml(block);
+  }
+
+  function beatBlockHtml(block) {
+    if (block.type === "text") return `<p>${escapeHtml(block.text)}</p>`;
+    if (block.type === "row") {
+      const cols = block.cols === 2 || block.cols === 3 ? ` cols-${block.cols}` : "";
+      return `<div class="pass-row${cols}">${(block.items || []).map(passItemHtml).join("")}</div>`;
+    }
+    return "";
+  }
+
+  function beatsHtml(project) {
+    if (!Array.isArray(project.beats) || !project.beats.length) return "";
+    return project.beats
+      .map((beat) => {
+        const heading = beat.heading ? `<h2>${escapeHtml(beat.heading)}</h2>` : "";
+        const blocks = (beat.blocks || []).map(beatBlockHtml).join("");
+        return `<section class="beat">${heading}${blocks}</section>`;
+      })
+      .join("");
+  }
+
+  /** Loops the passes you can see. Offscreen clips stay paused, and a
+   *  reduced-motion setting leaves them stopped with controls. */
+  let beatObserver = null;
+
+  function bindBeatPlayers(root) {
+    if (beatObserver) {
+      beatObserver.disconnect();
+      beatObserver = null;
+    }
+    const videos = [...root.querySelectorAll("video.beat-video")];
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      videos.forEach((video) => {
+        video.removeAttribute("autoplay");
+        video.controls = true;
+        video.pause();
+      });
+      return;
+    }
+    if (!("IntersectionObserver" in window)) {
+      videos.forEach((video) => video.play().catch(() => {}));
+      return;
+    }
+    beatObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (entry.isIntersecting) video.play().catch(() => {});
+          else video.pause();
+        });
+      },
+      { threshold: 0.35 }
+    );
+    videos.forEach((video) => beatObserver.observe(video));
   }
 
   function detailPhotoHtml(project) {
@@ -598,25 +779,39 @@ window.PORTFOLIO_PROJECTS = [
       return;
     }
     const desc = project.description ? `<p>${escapeHtml(project.description)}</p>` : "";
+    const beats = beatsHtml(project);
+    const hero = beats
+      ? ""
+      : project.iframe
+        ? `<div class="project-embed" data-embed></div>`
+        : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true });
     container.innerHTML = `
       <div class="project-detail">
         <h1>${escapeHtml(project.title)}</h1>
+        ${stackHtml(project.stack)}
         ${awardHtml(project)}
         ${contributionsHtml(project)}
-        ${project.iframe ? `<div class="project-embed" data-embed></div>` : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true })}
-        ${detailPhotoHtml(project)}
         ${desc}
-        ${stackHtml(project.stack)}
+        ${beats}
+        ${hero}
+        ${detailPhotoHtml(project)}
         ${linkHtml(project.href, "Project website")}
       </div>`;
     const host = container.querySelector("[data-embed]");
     if (host) mountEmbed(host, project.iframe, project.title);
-    container.querySelectorAll("video").forEach((video) => {
-      video.play().catch(() => {});
-    });
+    if (beats) bindBeatPlayers(container);
+    else {
+      container.querySelectorAll("video").forEach((video) => {
+        video.play().catch(() => {});
+      });
+    }
   }
 
   function stopMedia(root) {
+    if (beatObserver) {
+      beatObserver.disconnect();
+      beatObserver = null;
+    }
     if (!root) return;
     root.querySelectorAll("video").forEach((video) => {
       video.pause();

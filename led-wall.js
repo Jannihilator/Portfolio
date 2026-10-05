@@ -199,9 +199,8 @@ function mergeConfig(overrides = {}) {
     snakeColors: [
       { r: 244, g: 208, b: 64 },
       { r: 64, g: 214, b: 232 },
-      { r: 255, g: 164, b: 224 },
     ],
-    dropLastSnakeBelowPx: 480,
+    dropLastSnakeBelowPx: 720,
     snakeSpeed: 13,
     speedVariance: 0.3,
     readingSpeedScale: 0.35,
@@ -1827,29 +1826,19 @@ function createLedWall(canvas, options = {}) {
   }
 
   /**
-   * Desktop keeps palette order: lemon slow, cyan in the middle, pink hectic.
-   * A phone drops the lemon one. Cyan takes the slow speed and pink the
-   * middle speed. Wander stays with the color, so only the pace changes.
+   * Desktop keeps lemon and cyan. A phone drops the lemon snake and leaves
+   * cyan. Cyan stays off the hectic pace the pink snake used to take.
    */
   function activeSnakeSlots() {
     const colors = cfg.snakeColors;
     const narrow =
       cfg.dropLastSnakeBelowPx > 0 &&
       window.matchMedia(`(max-width: ${cfg.dropLastSnakeBelowPx}px)`).matches;
-    const count = Math.max(1, colors.length);
-    const pace = (index) => (count <= 1 ? 0 : index / (count - 1));
-
-    if (narrow && colors.length > 2) {
-      return [
-        { color: colors[1], speedT: pace(0), wanderT: pace(1) },
-        { color: colors[2], speedT: pace(1), wanderT: pace(2) },
-      ];
-    }
-    return colors.map((color, index) => ({
-      color,
-      speedT: pace(index),
-      wanderT: pace(index),
-    }));
+    const shown = narrow && colors.length > 1 ? colors.slice(1) : colors;
+    return shown.map((color, index) => {
+      const speedT = shown.length < 2 || index === 0 ? 0 : 0.5;
+      return { color, speedT, wanderT: speedT };
+    });
   }
 
   function snakeRecord(id, slot) {
@@ -1867,8 +1856,7 @@ function createLedWall(canvas, options = {}) {
     };
   }
 
-  /** The loading line follows the same cyan the wall keeps, including on a phone
-   *  where that snake is the slow one and the green one stays off. */
+  /** The loading line follows the cyan snake, including on a phone where it is the only one. */
   function cyanSlotIndex(slots) {
     const cyan = cfg.snakeColors[Math.min(1, cfg.snakeColors.length - 1)];
     const index = slots.findIndex((slot) => slot.color === cyan);

@@ -78,14 +78,13 @@ window.LED_WALL_CONFIG = {
   glassesFlareTravel: 0.85,
 
   // --- Snakes ---
-  /** A lemon, the wall's cyan, then a pink kept off the red shirt. The last one is the hectic snake. */
+  /** Lemon, then the wall's cyan. A phone drops the lemon one and keeps cyan. */
   snakeColors: [
     { r: 244, g: 208, b: 64 },
     { r: 64, g: 214, b: 232 },
-    { r: 255, g: 164, b: 224 },
   ],
-  /** Below this width the lemon snake stays off. Cyan runs slow, pink at the middle speed. */
-  dropLastSnakeBelowPx: 480,
+  /** Below this width the lemon snake stays off, same cutoff as the stacked labels. */
+  dropLastSnakeBelowPx: 720,
   /** LED steps per second, counted in cells. A denser phone grid keeps this same rate. */
   snakeSpeed: 10,
   /**
