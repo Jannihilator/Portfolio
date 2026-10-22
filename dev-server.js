@@ -1,6 +1,6 @@
 /**
  * Static server for the portfolio. Every response is uncached, and a save
- * reloads the open tab, so edits to led-wall.config.js show up immediately.
+ * of site code reloads the open tab. Media drops and git metadata do not.
  */
 const http = require("http");
 const fs = require("fs");
@@ -38,10 +38,17 @@ function notify() {
   }, 120);
 }
 
+/** Reload for html, css, and js only. Pictures and git writes stay quiet. */
+function shouldReload(filename) {
+  const name = String(filename).replace(/\\/g, "/");
+  if (!name || name.includes("node_modules") || name.endsWith("dev-server.js")) return false;
+  if (name === ".git" || name.startsWith(".git/")) return false;
+  if (/(^|\/)Camp_Movewell_Medias(\/|$)/.test(name)) return false;
+  return /\.(html|css|scss|js)$/i.test(name);
+}
+
 fs.watch(root, { recursive: true }, (_event, filename) => {
-  if (!filename) return;
-  const name = String(filename);
-  if (name.includes("node_modules") || name.endsWith("dev-server.js")) return;
+  if (!filename || !shouldReload(filename)) return;
   notify();
 });
 
@@ -102,5 +109,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, "127.0.0.1", () => {
   console.log("Serving " + root + " at http://127.0.0.1:" + port);
-  console.log("Cache disabled. Saving a file reloads the tab.");
+  console.log("Cache disabled. Saving html, css, or js reloads the tab.");
 });

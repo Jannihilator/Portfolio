@@ -372,7 +372,7 @@
     }
 
     /** Three projects visible before anyone opens the wall. */
-    const GLANCE_IDS = ["mento-issue", "renushu", "star-fishing"];
+    const GLANCE_IDS = ["mento-issue", "renushu", "borderless"];
 
     /**
      * "(In Development)" sits in the title with no caption, so it reads quieter
@@ -441,21 +441,12 @@
       document.getElementById("glance").toggleAttribute("inert", away);
     }
 
-    // The wall lights its middle up and hands back the box the page goes in
-    function placePage(rect) {
-      if (isMobile()) {
-        // The grid is centered in the viewport, so even a zero border leaves a
-        // few pixels of slack at the edges. A phone takes the lot instead.
-        pageEl.style.inset = "0";
-        pageEl.style.width = "";
-        pageEl.style.height = "";
-      } else {
-        pageEl.style.inset = "";
-        pageEl.style.left = `${rect.x}px`;
-        pageEl.style.top = `${rect.y}px`;
-        pageEl.style.width = `${rect.width}px`;
-        pageEl.style.height = `${rect.height}px`;
-      }
+    // The page covers the wall. The grid is centered, so even a zero LED
+    // border leaves a few pixels of slack; the page takes the viewport.
+    function placePage() {
+      pageEl.style.inset = "0";
+      pageEl.style.width = "";
+      pageEl.style.height = "";
     }
 
     function colorCss(color) {
@@ -568,9 +559,8 @@
         }
         revealPage();
         document.body.classList.add("panel-open");
-        // On a phone the page covers the wall edge to edge, so there is
-        // nothing left to animate behind it
-        if (isMobile()) wall.pause();
+        // The page covers the wall, so the sim stops until close brings it back
+        wall.pause();
       },
       onPanelClose() {
         document.body.classList.remove("panel-open");
@@ -637,25 +627,10 @@
       closePanel();
     });
 
-    // A phone gives the page the whole wall; a desktop keeps the lane of LEDs
-    // the snakes run around
-    const DESKTOP_BORDER = {
-      x: wall.config.panelBorderX,
-      y: wall.config.panelBorderY,
-    };
-
-    function syncViewport() {
-      const mobile = isMobile();
-      wall.config.panelBorderX = mobile ? 0 : DESKTOP_BORDER.x;
-      wall.config.panelBorderY = mobile ? 0 : DESKTOP_BORDER.y;
-    }
-
     mobileQuery.addEventListener("change", () => {
-      syncViewport();
-      if (!isMobile()) wall.resume();
       wall.resize();
       centerGlance();
-      if (isMobile() && wall.panelState === "open") wall.pause();
+      if (wall.panelState === "open") wall.pause();
     });
     window.addEventListener("resize", () => centerGlance());
 
@@ -673,7 +648,6 @@
     wall.addLabel("PROJECTS", { id: "projects", under: "portrait", col: 1, row: 0, align: "right" });
     wall.addLabel("SKILLS", { id: "skills", under: "portrait", col: 0, row: 1, align: "left" });
     wall.addLabel("BLOGS", { id: "blog", under: "portrait", col: 1, row: 1, align: "right" });
-    syncViewport();
     wall.start();
   </script>
 </body>

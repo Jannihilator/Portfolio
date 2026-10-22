@@ -119,10 +119,339 @@ window.PORTFOLIO_PROJECTS = [
           { type: "video", src: "./assets/borderless-website.mp4" },
         ],
         description:
-          "Big Picture Studio is an interdisciplinary team innovating a new medium across 4 mobile phones by creating a 20-minute, cooperative puzzle-narrative seamlessly integrating film narrative, game design, and comic art storytelling.",
+          "Innovating a new medium across 4 mobile phones by creating a 20-minute, cooperative puzzle-narrative seamlessly integrating film narrative, game design, and comic art storytelling.",
         stack: ["Networking", "Mobile", "Puzzle"],
         href: "https://projects.etc.cmu.edu/big-picture-studio/",
         iframe: "https://www.youtube.com/embed/ulOF7EMQaaA?si=Ya-9DIRYZQONljsz",
+        devlog: true,
+        beats: [
+          {
+            heading: "Animation that ignores the bezel",
+            blocks: [
+              {
+                type: "text",
+                text: "I once played Zoom, an improv game where a sequence of pictures is revealed side by side, each one zooming out from the last. I thought it would be cool if those pictures lived on several shared devices and could come to life, with animation flowing from one screen into the next as if the borders were not there.",
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/zoom.jpg",
+                    alt: "Picture cards from the improv game Zoom laid out side by side",
+                    ratio: "1100 / 256",
+                    caption: "Zoom",
+                    note: "What if these pictures lived on several shared devices and could come to life?",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/ok-go.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/ok-go.jpg",
+                    caption: "OK Go",
+                    note: "An OK Go music video played across a wall of phones. Many screens can act as one picture.",
+                  },
+                ],
+              },
+              {
+                type: "text",
+                text: "We chose phones as the screens. Everyone already has one, they come with the touch and motion sensors we needed, and a group waiting in a queue can put theirs together and play.",
+              },
+            ],
+          },
+          {
+            heading: "Where is each phone?",
+            blocks: [
+              {
+                type: "text",
+                text: "For a picture to line up across screens, every phone has to know where it sits relative to the others. I went through earlier multi-display research to see how others solved it.",
+              },
+              {
+                type: "row",
+                width: "narrow",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/research-paper-cases.jpg",
+                    alt: "Pages from a multi-display research paper showing phones and tablets arranged into one large picture",
+                    ratio: "auto",
+                    caption: "Free-shape multi-display",
+                    note: "Separate displays arranged freely read as one large image, and can fit spaces a single screen cannot.",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/fiducial.png",
+                    alt: "Diagram of two tablets locating each other through a fiducial marker",
+                    ratio: "383 / 403",
+                    caption: "Fiducial marker",
+                    note: "Each phone camera finds a marker and works out its own pose. It needs extra setup, and the camera angle is constrained.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/pinch.png",
+                    alt: "Diagram of a pinch gesture across two phones telling them which edges meet",
+                    ratio: "740 / 449",
+                    caption: "Pinch across two screens",
+                    note: "The player pinches across two phones. The direction on each screen tells them which edges meet. No setup needed, so this became our baseline.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Proof of concept",
+            blocks: [
+              {
+                type: "text",
+                text: "Before there was a game, I built quick proofs of concept to show the team what I had in mind: pinch two screens to join them, then let content cross the seam.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "9 / 16",
+                width: "narrow",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/jigsaw-connect.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/jigsaw-connect.jpg",
+                    caption: "Jigsaw connect",
+                    note: "A pinch across two tablets registers them as neighbors.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/animation-connect.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/animation-connect.jpg",
+                    caption: "Animation connect",
+                    note: "Once joined, the picture continues from one screen onto the other.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Four phones on one PC",
+            blocks: [
+              {
+                type: "text",
+                text: "Testing every idea on four real phones is slow, so we built a simulator. Each window is a phone, and moving windows next to each other stands in for placing phones side by side.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "3 / 2",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/pc-jigsaw.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/pc-jigsaw.jpg",
+                    caption: "Jigsaw",
+                    note: "Phones as puzzle pieces. Arrange the windows until the picture lines up.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/pc-polygon.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/pc-polygon.jpg",
+                    caption: "Polygon",
+                    note: "A more dynamic idea, where the outcome is generated in real time as lines carry across windows.",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/player-polygon.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/player-polygon.jpg",
+                    caption: "Polygon on real phones",
+                    note: "A player building the shape across four phones.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "The eye catches a late frame",
+            blocks: [
+              {
+                type: "text",
+                text: "Everything rests on pinch detection. Both touched phones have to register the gesture at a precise moment so the network can update every screen together.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/static-animation.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/static-animation.jpg",
+                    caption: "Forgiving case",
+                    note: "Mostly static background with one moving subject. If the sync is a little off, nobody notices.",
+                  },
+                ],
+              },
+              {
+                type: "callout",
+                label: "Problem",
+                text: "When the whole picture flows across the border, a lag in detection is obvious. Human eyes are very sensitive to a line that breaks at the seam.",
+              },
+              {
+                type: "text",
+                text: "I logged the timestamp each phone attached to the same pinch and subtracted them. The gap was seconds, not milliseconds: the phones' system clocks disagree.",
+              },
+            ],
+          },
+          {
+            heading: "Play on the host's clock",
+            blocks: [
+              {
+                type: "text",
+                text: "Every phone syncs its time to the host. When a pinch comes in, the host does not say \"play now\". It works out a lookahead and schedules the start.",
+              },
+              {
+                type: "flow",
+                steps: [
+                  { actor: "Phones", title: "Sync clocks", text: "Each phone learns its offset from the host clock." },
+                  { actor: "Phones", title: "Pinch", text: "Both touched phones report the gesture." },
+                  { actor: "Host", title: "Schedule", text: "Broadcast: play at host time now + 100 ms." },
+                  { actor: "Phones", title: "Convert", text: "Each phone maps that time onto its own clock." },
+                  { actor: "Result", title: "Play", text: "Every screen starts on the same frame." },
+                ],
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "5 / 4",
+                arrow: true,
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/log-before.jpg",
+                    alt: "Android logcat before the fix, with time differences of several seconds",
+                    caption: "Log before",
+                    stat: "7.8 s average gap",
+                    note: "TIME DIFF for one pinch ran from 3,894 ms to 16,303 ms.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/log-after.jpg",
+                    alt: "Android logcat after the fix, with time differences under 50 milliseconds",
+                    caption: "Log after",
+                    stat: "19.6 ms average gap",
+                    note: "TIME DIFF from 0 to 50 ms once the start is scheduled on the host clock.",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "9 / 10",
+                arrow: true,
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/before-sync.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/before-sync.jpg",
+                    caption: "Before sync",
+                    note: "A composite animation across four phones. Each screen starts at a different time, so the borders visibly mismatch.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/after-sync.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/after-sync.jpg",
+                    caption: "After sync",
+                    note: "The same animation after the fix. The picture runs across the borders smoothly.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "A ripple for every pinch",
+            blocks: [
+              {
+                type: "text",
+                text: "I made a shader effect inspired by liquid glass for the pinch gesture. Every connection ripples along the joined edge, so each change feels fluid and players can see it coming.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/ripple-shader.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/ripple-shader.jpg",
+                    caption: "Ripple shader",
+                    note: "The ripple travels along the edge where two phones meet.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Pieces, displays and controllers",
+            blocks: [
+              {
+                type: "text",
+                text: "With that in place, phones work as puzzle pieces, as displays and as controllers at the same time, for a group of players working together.",
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/spaceship.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/spaceship.jpg",
+                    ratio: "2 / 3",
+                    caption: "Displays",
+                    note: "One scene spread across every screen on the table.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/interacting-with-4-phones.jpg",
+                    alt: "Players pinching across four phones laid out on a table",
+                    ratio: "4 / 3",
+                    caption: "Puzzle pieces",
+                    note: "Players pinch phones together to join them into one picture.",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Borderless_Medias/web/people-work-together.jpg",
+                    alt: "Four people around a table playing Borderless on their phones",
+                    ratio: "768 / 429",
+                    caption: "Together",
+                    note: "A group playtest around one table.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Borderless_Medias/web/controller.mp4",
+                    poster: "./assets/Borderless_Medias/web/posters/controller.jpg",
+                    ratio: "16 / 9",
+                    caption: "Controllers",
+                    note: "Some phones show the scene while others act as controllers.",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         id: "renushu",
@@ -389,51 +718,115 @@ window.PORTFOLIO_PROJECTS = [
     return stills.length ? stills : items;
   }
 
+  /** "16 / 9" or a number, as width over height. 0 when it is not a ratio. */
+  function ratioValue(ratio) {
+    if (typeof ratio === "number") return ratio > 0 ? ratio : 0;
+    const [w, h] = String(ratio || "").split("/").map(Number);
+    return w > 0 && h > 0 ? w / h : 0;
+  }
+
   function passCaption(block) {
     return block.caption ? `<figcaption>${escapeHtml(block.caption)}</figcaption>` : "";
   }
 
   function passNote(block) {
-    return block.note ? `<p class="pass-note">${escapeHtml(block.note)}</p>` : "";
+    const stat = block.stat ? `<p class="pass-stat">${escapeHtml(block.stat)}</p>` : "";
+    const note = block.note ? `<p class="pass-note">${escapeHtml(block.note)}</p>` : "";
+    return stat || note ? `<div class="pass-text">${stat}${note}</div>` : "";
   }
 
   function passBox(media, block) {
     return `<div class="pass-box">${media}${passNote(block)}</div>`;
   }
 
-  function passVideoHtml(block) {
-    const poster = block.poster ? ` poster="${escapeHtml(block.poster)}"` : "";
-    const media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster} src="${escapeHtml(
-      block.src
-    )}"></video>`;
+  /** A "match" row sets each item's ratio, so the frame keeps that shape under cover. */
+  function passShape(ratio) {
+    if (ratio === "auto") return ` class="pass-natural"`;
+    return ratioValue(ratio) ? ` style="aspect-ratio: ${escapeHtml(ratio)}"` : "";
+  }
+
+  function passItemHtml(block, ratio) {
+    const shape = passShape(block.ratio || ratio);
+    let media;
+    if (block.type === "image") {
+      media = `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(
+        block.alt || ""
+      )}" loading="lazy" decoding="async"${shape} />`;
+    } else {
+      const poster = block.poster ? ` poster="${escapeHtml(block.poster)}"` : "";
+      media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster}${shape} src="${escapeHtml(
+        block.src
+      )}"></video>`;
+    }
     return `<figure class="pass">
       ${passCaption(block)}
       ${passBox(media, block)}
     </figure>`;
   }
 
-  function passItemHtml(block) {
-    if (block.type === "image") {
-      const media = `<img src="${escapeHtml(block.src)}" alt="${escapeHtml(block.alt || "")}" />`;
-      return `<figure class="pass">
-        ${passCaption(block)}
-        ${passBox(media, block)}
-      </figure>`;
+  const ROW_ARROW = `<span class="pass-arrow" aria-hidden="true"></span>`;
+
+  function rowHtml(block) {
+    const items = block.items || [];
+    const classes = ["pass-row"];
+    let style = "";
+    if (block.match === "height" || block.arrow) {
+      const tracks = items.map((item) => {
+        const fr = block.match === "height" ? ratioValue(item.ratio) || 1 : 1;
+        return `minmax(0, ${fr.toFixed(3)}fr)`;
+      });
+      classes.push("pass-row--tracks");
+      style = ` style="--row-tracks: ${tracks.join(block.arrow ? " auto " : " ")}"`;
+    } else if (block.cols === 2 || block.cols === 3) {
+      classes.push(`cols-${block.cols}`);
     }
-    return passVideoHtml(block);
+    if (block.arrow) classes.push("pass-row--arrow");
+    if (block.width === "narrow") classes.push("pass-row--narrow");
+    const parts = items.map((item) => passItemHtml(item, block.ratio));
+    return `<div class="${classes.join(" ")}"${style}>${parts.join(block.arrow ? ROW_ARROW : "")}</div>`;
+  }
+
+  function flowHtml(block) {
+    const steps = (block.steps || [])
+      .map(
+        (step, i) => `<li class="beat-flow-step${step.actor === "Host" ? " is-host" : ""}">
+          <span class="beat-flow-actor">${escapeHtml(step.actor || "")}</span>
+          <strong><span class="beat-flow-num">${i + 1}</span>${escapeHtml(step.title || "")}</strong>
+          <span class="beat-flow-text">${escapeHtml(step.text || "")}</span>
+        </li>`
+      )
+      .join("");
+    return `<ol class="beat-flow">${steps}</ol>`;
   }
 
   function beatBlockHtml(block) {
     if (block.type === "text") return `<p>${escapeHtml(block.text)}</p>`;
-    if (block.type === "row") {
-      const cols = block.cols === 2 || block.cols === 3 ? ` cols-${block.cols}` : "";
-      return `<div class="pass-row${cols}">${(block.items || []).map(passItemHtml).join("")}</div>`;
+    if (block.type === "row") return rowHtml(block);
+    if (block.type === "flow") return flowHtml(block);
+    if (block.type === "callout") {
+      const label = block.label ? `<span class="beat-callout-label">${escapeHtml(block.label)}</span>` : "";
+      return `<div class="beat-callout">${label}<p>${escapeHtml(block.text || "")}</p></div>`;
     }
     return "";
   }
 
+  /** A devlog entry folds down to its log number and heading. The first one starts open. */
+  function logEntryHtml(beat, i) {
+    const blocks = (beat.blocks || []).map(beatBlockHtml).join("");
+    return `<details class="beat beat--log"${i === 0 ? " open" : ""}>
+      <summary>
+        <span class="beat-step">Log ${String(i + 1).padStart(2, "0")}</span>
+        <h2>${escapeHtml(beat.heading || "")}</h2>
+      </summary>
+      <div class="beat-body">${blocks}</div>
+    </details>`;
+  }
+
   function beatsHtml(project) {
     if (!Array.isArray(project.beats) || !project.beats.length) return "";
+    if (project.devlog) {
+      return `<div class="beats beats--log">${project.beats.map(logEntryHtml).join("")}</div>`;
+    }
     return project.beats
       .map((beat) => {
         const heading = beat.heading ? `<h2>${escapeHtml(beat.heading)}</h2>` : "";
@@ -780,11 +1173,11 @@ window.PORTFOLIO_PROJECTS = [
     }
     const desc = project.description ? `<p>${escapeHtml(project.description)}</p>` : "";
     const beats = beatsHtml(project);
-    const hero = beats
-      ? ""
-      : project.iframe
-        ? `<div class="project-embed" data-embed></div>`
-        : mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true });
+    const embed = project.iframe ? `<div class="project-embed" data-embed></div>` : "";
+    let hero = embed || mediaHtml(featuredMedia(project), "project-detail-media", { autoplay: true });
+    if (beats) hero = embed ? `<section class="beat beat-trailer"><h2>Trailer</h2>${embed}</section>` : "";
+    // Borderless is a devlog. The trailer leads the entries, ahead of Log 01.
+    const trailerFirst = Boolean(project.devlog && hero);
     container.innerHTML = `
       <div class="project-detail">
         <h1>${escapeHtml(project.title)}</h1>
@@ -792,8 +1185,9 @@ window.PORTFOLIO_PROJECTS = [
         ${awardHtml(project)}
         ${contributionsHtml(project)}
         ${desc}
+        ${trailerFirst ? hero : ""}
         ${beats}
-        ${hero}
+        ${trailerFirst ? "" : hero}
         ${detailPhotoHtml(project)}
         ${linkHtml(project.href, "Project website")}
       </div>`;

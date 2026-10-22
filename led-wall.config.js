@@ -154,11 +154,11 @@ window.LED_WALL_CONFIG = {
   /** Extra bloom on a spark at the moment of the pop */
   burstFlash: 3,
 
-  // --- Page panel (clicking a label drives the middle of the wall to white) ---
-  /** LEDs of wall kept above and below the page. Floor. */
-  panelBorderY: 4,
-  /** LEDs kept either side of it — the lane the snakes are left with. Floor. */
-  panelBorderX: 6,
+  // --- Page panel (clicking a label drives the wall to the page color) ---
+  /** LEDs kept around the page. 0 covers the whole wall; the sim pauses
+   *  while a page is open and starts again on the way back. */
+  panelBorderY: 0,
+  panelBorderX: 0,
   /** How much of the extra wall (past a ~1280×800 laptop) the page may take.
    *  0 = stay laptop-sized, 1 = grow with the monitor. Width stays close to
    *  laptop; height follows a taller screen. */

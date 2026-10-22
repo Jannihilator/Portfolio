@@ -48,7 +48,7 @@ window.PROJECT_CONTRIBUTIONS = {
   borderless: [
     "Client server model networked over four phones",
     "Cut animation lag from 3s to under 30ms by clock-offset sync and a scheduled start",
-    "Implement swipe gesture for spacial awareness from research paper",
+    "Implement swipe gesture for spatial awareness from research paper",
   ],
 
   renushu: [
