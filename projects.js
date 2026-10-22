@@ -466,6 +466,12 @@ window.PORTFOLIO_PROJECTS = [
             alt: "The Camp Movewell team at the 2026 Games for Change Awards",
             detailOnly: true,
           },
+          {
+            type: "image",
+            src: "./assets/Camp_Movewell_Medias/extra-zoom-some-James2.jpeg",
+            alt: "James on stage presenting the Camp Movewell smart shoes",
+            detailOnly: true,
+          },
         ],
         description:
           "Camp Movewell, from the ReNUSHU team at CMU’s Entertainment Technology Center with Magnes AG, is an exergame that makes physical therapy fun and measurable with NuShu smart shoes for gait sensing and haptic feedback. From rehab to play, from play to progress, every step is progress you can see and measure.",
@@ -874,13 +880,15 @@ window.PORTFOLIO_PROJECTS = [
 
   function detailPhotoHtml(project) {
     const photos = (project.media || []).filter((item) => item.detailOnly && item.type === "image");
-    return photos
+    if (!photos.length) return "";
+    const figures = photos
       .map(
         (item) => `<figure class="project-detail-photo">
           <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt || "")}" />
         </figure>`
       )
       .join("");
+    return `<div class="project-detail-photos">${figures}</div>`;
   }
 
   /**
