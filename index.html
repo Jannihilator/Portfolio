@@ -371,29 +371,35 @@
         .replace(/"/g, "&quot;");
     }
 
-    /** Three projects visible before anyone opens the wall. */
-    const GLANCE_IDS = ["mento-issue", "renushu", "star-fishing"];
+    /** Projects on the bottom strip, before anyone opens the wall. */
+    const GLANCE_IDS = ["mento-issue", "renushu", "borderless", "star-fishing"];
 
     /**
      * "(In Development)" sits in the title with no caption, so it reads quieter
      * than an award line. On the strip it becomes a highlighted caption.
+     * A tagline fills that same line when the project has no award.
      */
-    function glanceCopy(project, award) {
+    function glanceCopy(project, note) {
       const title = String(project.title || "");
       const progress = title.match(/^(.*?)\s*\(\s*in (?:progress|development)\s*\)\s*$/i);
-      if (!progress) return { title, note: award };
-      return { title: progress[1], note: award || "in development" };
+      if (!progress) return { title, note };
+      return { title: progress[1], note: note || "In development" };
+    }
+
+    function glanceNote(id) {
+      const data = window.PROJECT_CONTRIBUTIONS || {};
+      const award = (data.awards || {})[id];
+      const tagline = (data.taglines || {})[id];
+      return String(award || tagline || "").trim();
     }
 
     function renderGlance() {
       const root = document.getElementById("glance");
-      const awards =
-        (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.awards) || {};
       root.innerHTML = GLANCE_IDS.map((id) => {
         const project = PortfolioProjects.find(id);
         if (!project) return "";
         const shot = (project.media || []).find((item) => item.type === "image");
-        const copy = glanceCopy(project, awards[id] || "");
+        const copy = glanceCopy(project, glanceNote(id));
         return `<button type="button" data-glance="${escapeGlance(id)}">
           ${shot ? `<img src="${escapeGlance(shot.src)}" alt="" />` : ""}
           <span>
@@ -406,18 +412,27 @@
     }
 
     /**
-     * On a phone the strip is a scroller. Camp Movewell is the middle card,
-     * so it starts centered and the cards beside it peek in. A later resize
-     * that only changes height (the mobile toolbar) leaves a scroll the
-     * reader already made where it is.
+     * The row centers while every card fits. Once the window is too narrow,
+     * the strip scrolls instead of squeezing the words. On a phone, Camp
+     * Movewell starts centered and the cards beside it peek in. A later
+     * resize that only changes height (the mobile toolbar) leaves a scroll
+     * the reader already made where it is.
      */
     let glanceCenteredWidth = -1;
     function centerGlance(force) {
       const root = document.getElementById("glance");
       const width = root.clientWidth;
+      const buttons = [...root.querySelectorAll("button")];
+      const styles = getComputedStyle(root);
+      const gap = parseFloat(styles.columnGap) || 0;
+      const pad = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+      const needed =
+        buttons.reduce((sum, button) => sum + button.offsetWidth, 0) +
+        gap * Math.max(0, buttons.length - 1) +
+        pad;
+      root.classList.toggle("is-overflowing", needed > width + 1);
       if (!force && width === glanceCenteredWidth) return;
       glanceCenteredWidth = width;
-      const buttons = [...root.querySelectorAll("button")];
       const middle = buttons[Math.floor((buttons.length - 1) / 2)];
       if (!middle || !isMobile()) {
         root.scrollLeft = 0;

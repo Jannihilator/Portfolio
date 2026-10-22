@@ -17,6 +17,9 @@
  * Leave a project out of awards if it has none.
  * A nomination stays a nomination.
  *
+ * taglines: one short line when a project has no award.
+ * Same bar, on the card and on the bottom strip. Say what it is.
+ *
  * personal: ids that show "Highlights" instead of "My contributions".
  * Add an id when the project is yours alone. Leave team projects off this list.
  */
@@ -35,7 +38,11 @@ window.PROJECT_CONTRIBUTIONS = {
 
   awards: {
     "mento-issue": "GGJ 2025 · Pittsburgh site award",
-    renushu: "G4C 2026 · Health & Wellness nominee",
+    "renushu": "G4C 2026 · Health & Wellness nominee",
+  },
+
+  taglines: {
+    borderless: "Four phones, one picture",
   },
 
   "star-fishing": [

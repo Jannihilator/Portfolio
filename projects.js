@@ -74,7 +74,7 @@ window.PORTFOLIO_PROJECTS = [
                     src: "./assets/Shooting_Star_Medias/fishing_particles.mp4",
                     poster: "./assets/Shooting_Star_Medias/posters/fishing_particles.jpg",
                     caption: "Boat",
-                    note: "A boat as a focal point. However the shooting stars lies disconnected in the background layer.",
+                    note: "A boat as a focal point. However the shooting stars lies distant in the background layer.",
                   },
                 ],
               },
@@ -101,7 +101,7 @@ window.PORTFOLIO_PROJECTS = [
                     type: "video",
                     src: "./assets/Shooting_Star_Medias/lay_cast.mp4",
                     poster: "./assets/Shooting_Star_Medias/posters/lay_cast.png",
-                    caption: "Lay cast",
+                    caption: "Swing cast",
                     note: "You swing the mouse out and the rod waits until a star is close. Closer to real fishing, where you sit and wait.",
                   },
                 ],
@@ -115,7 +115,7 @@ window.PORTFOLIO_PROJECTS = [
         title: "Borderless",
         size: "big",
         media: [
-          { type: "image", src: "./assets/borderless-phones.png", alt: "Borderless on four phones" },
+          { type: "image", src: "./assets/Borderless_Medias/web/people-work-together.jpg", alt: "Four people around a table playing Borderless on their phones" },
           { type: "video", src: "./assets/borderless-website.mp4" },
         ],
         description:
@@ -474,20 +474,6 @@ window.PORTFOLIO_PROJECTS = [
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
       },
       {
-        id: "serainity",
-        title: "Serainity (In Development)",
-        size: "big",
-        media: [
-          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
-          { type: "video", src: "./assets/rain-demo.mp4" },
-        ],
-        description:
-          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
-        stack: ["Shader", "Object Pooling"],
-        iframe:
-          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
-      },
-      {
         id: "xhaler",
         title: "XHaler",
         size: "big",
@@ -500,6 +486,20 @@ window.PORTFOLIO_PROJECTS = [
         stack: ["VR", "Python", "Arduino"],
         href: "https://projects.etc.cmu.edu/xhaler/about-us/",
         iframe: "https://www.youtube.com/embed/fUHDFnX35RE?si=fEktM0qxvHswPbne",
+      },
+      {
+        id: "serainity",
+        title: "Serainity",
+        size: "big",
+        media: [
+          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
+          { type: "video", src: "./assets/rain-demo.mp4" },
+        ],
+        description:
+          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
+        stack: ["Shader", "Object Pooling"],
+        iframe:
+          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
       },
     ],
   },
@@ -1033,11 +1033,17 @@ window.PORTFOLIO_PROJECTS = [
     return lines.map((line) => String(line).trim()).filter(Boolean);
   }
 
+  function cardLine(project) {
+    const data = window.PROJECT_CONTRIBUTIONS || {};
+    const award = (data.awards || {})[project.id];
+    const tagline = (data.taglines || {})[project.id];
+    return String(award || tagline || "").trim();
+  }
+
   function awardHtml(project) {
-    const awards = (window.PROJECT_CONTRIBUTIONS && window.PROJECT_CONTRIBUTIONS.awards) || {};
-    const award = awards[project.id];
-    if (!award || !String(award).trim()) return "";
-    return `<p class="project-award">${escapeHtml(String(award).trim())}</p>`;
+    const line = cardLine(project);
+    if (!line) return "";
+    return `<p class="project-award">${escapeHtml(line)}</p>`;
   }
 
   function contributionsHtml(project) {
