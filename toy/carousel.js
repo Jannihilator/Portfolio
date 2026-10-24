@@ -18,10 +18,26 @@ function heroImage(project) {
   return (project.media || []).find((item) => item.type === "image" && !item.detailOnly);
 }
 
+/** The demo video the old project card played, when the project has one */
+function heroVideo(project) {
+  return (project.media || []).find((item) => item.type === "video" && !item.detailOnly);
+}
+
+function heroHtml(project) {
+  const esc = P.escapeHtml;
+  const image = heroImage(project);
+  const video = heroVideo(project);
+  if (video) {
+    // Plays only while its slide is on the board
+    return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none"
+      ${image ? `poster="${esc(image.src)}"` : ""} aria-label="${esc(project.title)} demo"><source src="${esc(video.src)}" type="video/mp4" /></video></figure>`;
+  }
+  return image ? `<figure class="slide-hero"><img src="${esc(image.src)}" alt="${esc(image.alt || "")}" loading="lazy" decoding="async" /></figure>` : "";
+}
+
 function slideHtml(project, i, total) {
   const esc = P.escapeHtml;
   const { name, status } = splitTitle(project.title);
-  const hero = heroImage(project);
   const placeholder = project.placeholder
     ? `<p class="slide-note">Placeholder beats. The real thinking process goes here.</p>`
     : "";
@@ -43,7 +59,7 @@ function slideHtml(project, i, total) {
         ${P.stackHtml(project.stack)}
       </header>
       <div class="slide-lead">
-        ${hero ? `<figure class="slide-hero"><img src="${esc(hero.src)}" alt="${esc(hero.alt || "")}" loading="lazy" decoding="async" /></figure>` : ""}
+        ${heroHtml(project)}
         <div class="slide-lead-copy">
           ${P.contributionsHtml(project)}
           ${project.description ? `<p class="slide-desc">${esc(project.description)}</p>` : ""}
@@ -84,6 +100,12 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
       slide.setAttribute("aria-hidden", j !== i ? "true" : "false");
     });
     tabButtons.forEach((b, j) => b.setAttribute("aria-current", j === i ? "true" : "false"));
+    slides.forEach((slide, j) => {
+      const video = slide.querySelector("video[data-hero]");
+      if (!video) return;
+      if (j === i && !reduceMotion.matches) video.play().catch(() => {});
+      else video.pause();
+    });
     prev.disabled = i <= 0;
     next.disabled = i >= slides.length - 1;
     // The trailer only loads once someone is on its slide

@@ -17,7 +17,8 @@
   --yellow: #f2c14e;
   --green: #6fae66;
   --col: max(min(1180px, 66vw), min(100vw - 32px, 760px));
-  --board-h: clamp(540px, calc(100vh - 150px), 1000px);
+  /* The project board fills nearly the whole screen */
+  --board-h: max(540px, calc(100vh - 36px));
   --head: "Fredoka", "Nunito", system-ui, sans-serif;
   --body: "Nunito", system-ui, sans-serif;
   color-scheme: light;
@@ -107,6 +108,26 @@ a {
   z-index: 1;
 }
 
+/* Room past the last page, where the table is all there is */
+.table-room {
+  height: 100vh;
+  padding-top: 36px;
+  text-align: center;
+}
+
+.table-tag {
+  display: inline-block;
+  margin: 0;
+  padding: 0.45em 1em;
+  border-radius: 6px;
+  background: var(--page);
+  box-shadow: 0 0 0 2px #5c4330, 0 6px 12px rgba(70, 40, 16, 0.25);
+  font-family: var(--head);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  transform: rotate(-1.5deg);
+}
+
 /* ------------------------------------------------------------- blocks */
 
 /* Buttons are painted wooden blocks: they press in when hit */
@@ -162,6 +183,11 @@ a {
   --edge: #bfa47a;
 }
 
+.block-btn--green {
+  --face: #aac68a;
+  --edge: #6b8a4c;
+}
+
 .block-btn--tab {
   --face: #f3e5c9;
   --edge: #bfa47a;
@@ -184,9 +210,73 @@ a {
 
 /* -------------------------------------------------------------- intro */
 
-.intro {
+/* The intro is a card with the résumé on its back. Both faces share one
+   grid cell; the card turns over, and grows to nearly a screen tall while
+   the résumé is showing. */
+.intro-flip {
   width: var(--col);
   margin: 28px auto 30px;
+  display: grid;
+  perspective: 2400px;
+  min-height: 0;
+  transition: min-height 0.6s ease;
+}
+
+.intro-flip > .panel {
+  grid-area: 1 / 1;
+  backface-visibility: hidden;
+  transition: transform 0.75s cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+.intro-back {
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 28px 28px;
+}
+
+.intro-flip.is-flipped {
+  min-height: calc(100vh - 56px);
+}
+
+.intro-flip.is-flipped > .intro {
+  transform: rotateY(-180deg);
+}
+
+.intro-flip.is-flipped > .intro-back {
+  transform: rotateY(0deg);
+}
+
+.intro-back-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.intro-back-bar h2 {
+  font-size: 1.9rem;
+}
+
+.intro-back-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.resume-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 0 0 2px var(--line);
+}
+
+.intro {
   padding: 30px 36px 32px;
   display: grid;
   grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
@@ -242,7 +332,8 @@ a {
   border: 20px solid #cfa56c;
   border-bottom: 0;
   border-radius: 14px 14px 12px 12px;
-  box-shadow: 0 14px 30px rgba(70, 40, 16, 0.28), 0 2px 4px rgba(70, 40, 16, 0.2);
+  /* Inked at the edge, like the intro and More work sheets */
+  box-shadow: 0 0 0 2.5px #5c4330, 0 14px 30px rgba(70, 40, 16, 0.28), 0 2px 4px rgba(70, 40, 16, 0.2);
 }
 
 .board-bar {
@@ -337,8 +428,10 @@ a {
   margin: 0;
 }
 
-.slide-hero img {
+.slide-hero img,
+.slide-hero video {
   display: block;
+  background: #1d1812;
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
@@ -975,15 +1068,22 @@ a {
   width: 28px;
   height: 28px;
   margin: -14px 0 0 -14px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s, width 0.12s, height 0.12s, margin 0.12s;
+}
+
+/* The ring is its own layer, so it can pop on a shot without moving */
+.aim-ring {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 0 0 1.5px rgba(44, 30, 16, 0.75), inset 0 0 0 1.5px rgba(44, 30, 16, 0.75);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.12s, width 0.12s, height 0.12s, margin 0.12s, border-color 0.12s;
+  transition: border-color 0.12s;
 }
 
-#aim::after {
+.aim-ring::after {
   content: "";
   position: absolute;
   left: 50%;
@@ -1004,29 +1104,25 @@ body.toy-on #aim.is-shown {
   width: 38px;
   height: 38px;
   margin: -19px 0 0 -19px;
+}
+
+#aim.is-target .aim-ring {
   border-color: var(--orange);
 }
 
-/* The crosshair stands in for the pointer wherever the blaster aims */
+/* The crosshair stands in for the pointer everywhere, buttons and links
+   included: they are pressed by a dart */
 body.toy-on,
 body.toy-on * {
   cursor: none !important;
 }
 
-body.toy-on a,
-body.toy-on a *,
 body.toy-on input,
 body.toy-on textarea,
+body.toy-on select,
 body.toy-on iframe,
-body.toy-on dialog,
-body.toy-on dialog * {
+body.toy-on label {
   cursor: auto !important;
-}
-
-body.toy-on a,
-body.toy-on a *,
-body.toy-on dialog button {
-  cursor: pointer !important;
 }
 
 /* A suction dart seen almost end-on: the cup on the surface, the foam tail
@@ -1070,17 +1166,11 @@ body.toy-on dialog button {
 
 .dart--falling {
   position: fixed;
-  animation: dart-fall 0.95s cubic-bezier(0.45, 0, 0.85, 0.6) forwards;
-}
-
-@keyframes dart-fall {
-  to {
-    transform: translate(var(--drift, 0), 75vh) rotate(var(--spin, 180deg));
-    opacity: 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .intro-flip,
+  .intro-flip > .panel,
   .block-btn,
   .thumb,
   #aim {
@@ -1103,18 +1193,21 @@ body.toy-on dialog button {
   }
 }
 
-/* A dart in flight, seen from behind as it leaves for the target: the
-   foam tail cap and a ring of shadow */
+/* A dart in flight: a foam dart pointing the way it flies, blue cup at
+   the front, light cap at the back. It is drawn long as it leaves you and
+   shortens to nearly end-on as it arrives (scaled from toy.js). */
 .dart-fly {
   position: fixed;
   left: 0;
   top: 0;
-  width: 40px;
-  height: 40px;
-  margin: -20px 0 0 -20px;
-  border-radius: 50%;
+  width: 60px;
+  height: 20px;
+  margin: -10px 0 0 -30px;
+  border-radius: 10px;
   background:
-    radial-gradient(circle at 50% 50%, #ffc38f 0 34%, #ff7a1f 36% 62%, #c95308 64% 70%, transparent 72%);
-  filter: drop-shadow(2px 4px 3px rgba(50, 30, 12, 0.35));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 45%, rgba(120, 50, 0, 0.25)),
+    linear-gradient(90deg, #ffc38f 0 12%, #ff7a1f 12% 82%, #2f6fd6 82%);
+  box-shadow: 0 0 0 1.5px rgba(74, 50, 30, 0.7);
+  filter: drop-shadow(3px 6px 4px rgba(50, 30, 12, 0.35));
   will-change: transform;
 }
