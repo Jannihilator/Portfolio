@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800">
+  <rect width="600" height="800" fill="#fffdf7"/>
+  <g fill="none" stroke="#2c241d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M70 660 H530"/>
+
+    <!-- robe -->
+    <path d="M222 360 C206 470 196 570 190 660 H368 C362 570 352 470 338 360 Z" fill="#7a56b0"/>
+    <path d="M214 478 Q280 498 346 478"/>
+
+    <!-- wand arm -->
+    <path d="M344 410 L420 392"/>
+    <path d="M414 394 L496 322"/>
+
+    <!-- hat, tip flopped over -->
+    <path d="M205 290 C230 220 262 160 300 110 C330 90 352 100 346 126 C340 190 350 250 358 290 Q282 322 205 290 Z" fill="#7a56b0"/>
+    <path d="M178 292 Q282 322 388 292"/>
+
+    <!-- face and beard -->
+    <circle cx="258" cy="326" r="5" fill="#2c241d" stroke="none"/>
+    <circle cx="302" cy="326" r="5" fill="#2c241d" stroke="none"/>
+    <path d="M232 342 Q280 440 336 342" fill="#fffdf7"/>
+
+    <!-- the spell: a gold spark -->
+    <path d="M496 280 L506 312 L538 322 L506 332 L496 364 L486 332 L454 322 L486 312 Z" fill="#f2c14e" stroke-width="9"/>
+
+    <!-- every pixel is simulated: falling gold squares -->
+    <g stroke-width="8" fill="#f2c14e">
+      <rect x="498" y="394" width="22" height="22"/>
+      <rect x="474" y="452" width="22" height="22"/>
+      <rect x="526" y="506" width="22" height="22"/>
+      <rect x="492" y="570" width="22" height="22"/>
+    </g>
+
+    <!-- pile of sand, stepped -->
+    <path d="M396 660 V630 H426 V600 H456 V570 H486 V600 H516 V630 H530 V660 Z" stroke-width="10" fill="#f2c14e"/>
+  </g>
+</svg>

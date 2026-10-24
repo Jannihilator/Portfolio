@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#fffdf7"/>
+  <g fill="none" stroke="#2c241d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M90 474 C140 469 220 478 280 471"/>
+    <path d="M520 472 C570 477 650 468 710 474"/>
+
+    <!-- left player: orange -->
+    <g transform="translate(-50 0)">
+      <path d="M182 402 C180 360 212 330 252 332 C292 334 320 364 318 402 C316 440 288 470 248 468 C210 466 184 440 182 402 Z" fill="#f0902f"/>
+      <path d="M316 412 L346 404"/>
+      <path d="M342 394 H380 V406 H356 V420 H344 Z" fill="#2c241d" stroke-width="8"/>
+    </g>
+    <circle cx="218" cy="386" r="7" fill="#2c241d" stroke="none"/>
+    <circle cx="244" cy="386" r="7" fill="#2c241d" stroke="none"/>
+
+    <!-- right player: blue -->
+    <g transform="translate(40 0)">
+      <path d="M492 398 C494 360 524 332 562 334 C600 336 628 366 626 402 C624 438 596 468 558 466 C520 464 490 436 492 398 Z" fill="#4b8fd8"/>
+      <path d="M494 412 L464 404"/>
+      <path d="M468 394 H430 V406 H454 V420 H466 Z" fill="#2c241d" stroke-width="8"/>
+    </g>
+    <circle cx="574" cy="384" r="7" fill="#2c241d" stroke="none"/>
+    <circle cx="600" cy="384" r="7" fill="#2c241d" stroke="none"/>
+    <path d="M564 362 L582 368 M612 362 L594 368" stroke-width="7"/>
+
+    <!-- bullet drops in an arc -->
+    <path d="M346 386 Q 420 236 524 318" stroke-width="9" stroke-dasharray="0 24"/>
+    <ellipse cx="540" cy="332" rx="15" ry="8" transform="rotate(40 540 332)" fill="#f0902f" stroke-width="7"/>
+  </g>
+</svg>

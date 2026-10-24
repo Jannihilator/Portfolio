@@ -79,10 +79,29 @@ export const sound = {
     tone({ type: "triangle", from: pitch, to: pitch * 0.75, decay: 0.06 + s * 0.05, peak: 0.12 + s * 0.38 });
     burst({ freq: vary(small ? 2600 : 1600), q: 2.5, decay: 0.025, peak: 0.1 + s * 0.25 });
   },
+  /**
+   * Through the paper: a soft punch, then the rip itself, many tiny
+   * crackles of bright noise, uneven in timing and loudness, that swell
+   * and fade over about a fifth of a second.
+   */
   tear() {
     if (!ready()) return;
-    for (let i = 0; i < 4; i++) {
-      burst({ type: "highpass", freq: vary(2400, 0.3), q: 0.7, decay: 0.018, peak: vary(0.28), at: i * 0.014 + Math.random() * 0.006 });
+    burst({ type: "lowpass", freq: 380, decay: 0.05, peak: 0.22 });
+    const length = vary(0.2, 0.25);
+    let t = 0.008;
+    while (t < length) {
+      const k = t / length;
+      const swell = Math.sin(Math.PI * Math.min(1, k * 1.3));
+      burst({
+        type: "bandpass",
+        freq: 1800 + Math.random() * 3800,
+        q: 0.8 + Math.random() * 0.9,
+        attack: 0.001,
+        decay: 0.004 + Math.random() * 0.012,
+        peak: (0.05 + Math.random() * 0.2) * (0.35 + swell),
+        at: t,
+      });
+      t += 0.005 + Math.random() * 0.014;
     }
   },
   stick() {
@@ -94,6 +113,19 @@ export const sound = {
     if (!ready()) return;
     tone({ type: "square", from: 900, to: 600, decay: 0.02, peak: 0.08 });
     tone({ type: "triangle", from: vary(380), to: 300, decay: 0.05, peak: 0.25, at: 0.01 });
+  },
+  /** A dart thwops onto a train target: suction, then a bright wooden ring */
+  ding() {
+    if (!ready()) return;
+    tone({ from: vary(720), to: 260, decay: 0.06, peak: 0.22 });
+    tone({ type: "triangle", from: 1320, to: 1300, attack: 0.004, decay: 0.35, peak: 0.16, at: 0.03 });
+    tone({ type: "sine", from: 1980, to: 1960, attack: 0.004, decay: 0.25, peak: 0.07, at: 0.03 });
+  },
+  /** Nothing but net: a swish, then a bright little three-note cheer */
+  swish() {
+    if (!ready()) return;
+    burst({ type: "bandpass", freq: 2600, q: 0.8, attack: 0.03, decay: 0.22, peak: 0.25 });
+    [523, 659, 784].forEach((f, i) => tone({ type: "triangle", from: f, to: f, attack: 0.005, decay: 0.22, peak: 0.16, at: 0.14 + i * 0.09 }));
   },
   bounce() {
     if (!ready()) return;

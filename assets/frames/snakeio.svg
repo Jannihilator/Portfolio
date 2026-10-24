@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#fffdf7"/>
+  <!-- the body: an ink tube with a green core gives an outlined snake -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 420 C140 330 280 330 330 400 C380 470 470 470 520 400 C560 345 620 330 660 360" stroke="#2c241d" stroke-width="64"/>
+    <path d="M140 420 C140 330 280 330 330 400 C380 470 470 470 520 400 C560 345 620 330 660 360" stroke="#6fd36a" stroke-width="40"/>
+  </g>
+
+  <!-- head -->
+  <circle cx="676" cy="368" r="46" fill="#6fd36a" stroke="#2c241d" stroke-width="12"/>
+  <circle cx="690" cy="354" r="8" fill="#2c241d"/>
+  <circle cx="690" cy="384" r="8" fill="#2c241d"/>
+
+  <!-- food pellets -->
+  <g stroke="#2c241d" stroke-width="8">
+    <circle cx="276" cy="238" r="14" fill="#4cc3d9"/>
+    <circle cx="560" cy="226" r="14" fill="#f2c14e"/>
+    <circle cx="470" cy="160" r="14" fill="#4cc3d9"/>
+    <circle cx="650" cy="256" r="20" fill="#ee6fa4"/>
+  </g>
+</svg>

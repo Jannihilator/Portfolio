@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#fffdf7"/>
+  <defs>
+    <!-- a gun pointing right from the potato's edge, with a dotted line of bullets -->
+    <g id="gun">
+      <path d="M552 372 H650 V386 H614 V406 H598 V386 H552 Z" fill="#2c241d" stroke-width="8"/>
+      <path d="M670 379 H700" stroke-width="9" stroke-dasharray="0 22"/>
+    </g>
+  </defs>
+  <g fill="none" stroke="#2c241d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <!-- guns all round -->
+    <use href="#gun"/>
+    <use href="#gun" transform="translate(800 0) scale(-1 1)"/>
+    <use href="#gun" transform="rotate(-40 400 360)"/>
+    <use href="#gun" transform="translate(800 0) scale(-1 1) rotate(-40 400 360)"/>
+
+    <!-- aliens at the ends of the two bullet lines -->
+    <g fill="#6fae66">
+      <path d="M708 379 C706 354 740 350 748 376 C752 394 740 408 726 408 C712 408 708 394 708 379 Z"/>
+      <path d="M92 379 C94 354 60 350 52 376 C48 394 60 408 74 408 C88 408 92 394 92 379 Z"/>
+    </g>
+    <g fill="#2c241d" stroke="none">
+      <circle cx="722" cy="378" r="4"/><circle cx="736" cy="378" r="4"/>
+      <circle cx="78" cy="378" r="4"/><circle cx="64" cy="378" r="4"/>
+    </g>
+
+    <!-- the potato -->
+    <path d="M400 190 C500 190 560 270 556 360 C552 450 480 500 400 500 C320 500 246 450 244 360 C242 270 300 190 400 190 Z" fill="#d9a85b"/>
+    <path d="M322 296 L372 314 M478 296 L428 314"/>
+    <circle cx="350" cy="334" r="8" fill="#2c241d" stroke="none"/>
+    <circle cx="450" cy="334" r="8" fill="#2c241d" stroke="none"/>
+    <path d="M370 410 H430"/>
+    <g fill="#2c241d" stroke="none">
+      <circle cx="302" cy="440" r="5"/><circle cx="488" cy="238" r="5"/><circle cx="514" cy="430" r="5"/>
+    </g>
+  </g>
+</svg>
