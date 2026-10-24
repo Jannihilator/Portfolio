@@ -978,6 +978,10 @@ a {
   font-weight: 700;
 }
 
+.skill-tags--inline {
+  display: none;
+}
+
 .contact-links {
   display: flex;
   flex-wrap: wrap;
@@ -1202,7 +1206,7 @@ body.toy-on label {
     grid-template-columns: 1fr;
   }
 
-  .intro-portrait {
+  .intro-portrait img {
     max-width: 180px;
   }
 }
@@ -1210,6 +1214,14 @@ body.toy-on label {
 /* Phones: side-by-side passes are too thin to read, so each row stacks
    and its arrows point down */
 @media (max-width: 640px) {
+  .intro-portrait .skill-tags {
+    display: none;
+  }
+
+  .skill-tags--inline {
+    display: flex;
+  }
+
   .slide-scroll {
     padding: 22px 18px 32px;
   }
