@@ -39,7 +39,7 @@ function slideHtml(project, i, total) {
   const esc = P.escapeHtml;
   const { name, status } = splitTitle(project.title);
   const placeholder = project.placeholder
-    ? `<p class="slide-note">Placeholder beats. The real thinking process goes here.</p>`
+    ? `<p class="slide-note">Placeholder beats. The real working process goes here.</p>`
     : "";
   const links = [
     project.href
@@ -66,7 +66,7 @@ function slideHtml(project, i, total) {
           ${links ? `<div class="slide-links">${links}</div>` : ""}
         </div>
       </div>
-      <h3 class="slide-process">Thinking process</h3>
+      <h3 class="slide-process">Working process</h3>
       ${placeholder}
       ${P.beatsHtml(project)}
       ${trailer}

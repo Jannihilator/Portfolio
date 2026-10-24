@@ -1207,6 +1207,40 @@ body.toy-on label {
   }
 }
 
+/* Phones: side-by-side passes are too thin to read, so each row stacks
+   and its arrows point down */
+@media (max-width: 640px) {
+  .slide-scroll {
+    padding: 22px 18px 32px;
+  }
+
+  .pass-row.cols-2,
+  .pass-row.cols-3,
+  .pass-row--tracks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pass-row--arrow {
+    justify-items: center;
+  }
+
+  .pass-row--arrow .pass {
+    width: 100%;
+  }
+
+  .pass-arrow {
+    transform: rotate(90deg);
+  }
+
+  .beats--log {
+    padding-left: 18px;
+  }
+
+  .beat--log::before {
+    left: -26px;
+  }
+}
+
 /* A dart in flight: a foam dart pointing the way it flies, blue cup at
    the front, light cap at the back. It is drawn long as it leaves you and
    shortens to nearly end-on as it arrives (scaled from toy.js). */
