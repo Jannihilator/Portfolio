@@ -80,29 +80,36 @@ export const sound = {
     burst({ freq: vary(small ? 2600 : 1600), q: 2.5, decay: 0.025, peak: 0.1 + s * 0.25 });
   },
   /**
-   * Through the paper: a soft punch, then the rip itself, many tiny
-   * crackles of bright noise, uneven in timing and loudness, that swell
-   * and fade over about a fifth of a second.
+   * Through the paper: psssh. A soft "p" of a punch, then one smooth hiss
+   * that starts bright and sibilant and slides darker as it fades, over
+   * about a third of a second.
    */
   tear() {
     if (!ready()) return;
-    burst({ type: "lowpass", freq: 380, decay: 0.05, peak: 0.22 });
-    const length = vary(0.2, 0.25);
-    let t = 0.008;
-    while (t < length) {
-      const k = t / length;
-      const swell = Math.sin(Math.PI * Math.min(1, k * 1.3));
-      burst({
-        type: "bandpass",
-        freq: 1800 + Math.random() * 3800,
-        q: 0.8 + Math.random() * 0.9,
-        attack: 0.001,
-        decay: 0.004 + Math.random() * 0.012,
-        peak: (0.05 + Math.random() * 0.2) * (0.35 + swell),
-        at: t,
-      });
-      t += 0.005 + Math.random() * 0.014;
-    }
+    burst({ type: "lowpass", freq: 420, decay: 0.04, peak: 0.2 });
+    const t = ctx.currentTime + 0.006;
+    const length = vary(0.2, 0.15);
+    const src = ctx.createBufferSource();
+    src.buffer = noise;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.value = 0.7;
+    filter.frequency.setValueAtTime(vary(6800), t);
+    filter.frequency.exponentialRampToValueAtTime(vary(2600), t + length);
+    // Air on top, so the start has a crisp "s" in it
+    const air = ctx.createBiquadFilter();
+    air.type = "highshelf";
+    air.frequency.value = 5000;
+    air.gain.value = 6;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.42, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.22, t + length * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + length);
+    src.connect(filter).connect(air).connect(g).connect(master);
+    src.start(t, Math.random() * 0.3);
+    src.stop(t + length + 0.05);
   },
   stick() {
     if (!ready()) return;
