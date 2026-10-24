@@ -8,6 +8,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
   <title>Yen-Chun Huang</title>
+  <meta name="description" content="Yen-Chun (James) Huang, game developer. Projects, thinking process and contact." />
   <link rel="icon" href="./assets/favicon/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon/favicon-16x16.png" />
@@ -15,655 +16,101 @@
   <link rel="manifest" href="./assets/favicon/site.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Press+Start+2P&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-  <link rel="stylesheet" href="led-wall.css" />
+  <link rel="stylesheet" href="toy.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
+      "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js"
+    }
+  }
+  </script>
 </head>
-<body class="is-booting">
-  <div id="led-stage">
-    <canvas id="led-canvas" aria-label="Yen-Chun Huang, interactive LED snake wall"></canvas>
-  </div>
+<body>
+  <!-- The toy table lies under the pages. Nothing on it carries content. -->
+  <canvas id="table" aria-hidden="true"></canvas>
 
-  <article id="page" hidden>
-    <div class="page-bar">
-      <button id="page-back" class="pixel-btn" type="button" hidden aria-label="Back to projects">Back</button>
-      <span class="page-bar-spacer"></span>
-      <button id="page-close" class="pixel-btn" type="button" aria-label="Close">Close</button>
-    </div>
-    <!-- The scroller is the full width of the panel, so its bar rides the right
-         edge while the copy stays in a centered column -->
-    <div class="page-inner">
-      <div class="page-body" data-view="about">
-        <div class="about">
-          <header class="about-head">
-            <figure class="about-portrait">
-              <img
-                src="./assets/profile-2026.jpg"
-                alt="Yen Chun (James) Huang"
-                width="1178"
-                height="1563"
-                loading="lazy"
-                decoding="async"
-              />
-            </figure>
-            <h1>Yen Chun (James) Huang</h1>
-          </header>
-          <p>
-            I’m a game developer who likes making ideas happen. With engineering
-            behind me and a love of board games, I pay a lot of attention to detail.
-            What I like is making something, then watching how other people react to it.
-          </p>
-          <p>
-            I'm constantly fascinated by new tech and new ways of interaction. A lot of the
-            time I want to be the first person to see something new actually happen,
-            so I take that work on myself. Breathing as an input, smart shoes,
-            a machine learning .io game bot, combat with audio inputs, and a lot more fun stuff.
-          </p>
-          <ul class="about-marks">
-            <li>
-              <span class="highlight">Mento-Issue</span> won the Pittsburgh
-              non-traditional award at Global Game Jam 2025.
-            </li>
-            <li>
-              <span class="highlight">Camp Movewell</span> was nominated for the 2026
-              Games for Change Awards, Best in Health &amp; Wellness.
-            </li>
-          </ul>
-          <a
-            class="pixel-btn page-resume"
-            href="./assets/Resume.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-            >View Résumé</a
-          >
-          <section class="about-contact">
-            <h2>Contact</h2>
-            <p>
-              Always up for talking about games, odd input devices, or a project you
-              want a hand with.
-            </p>
-            <ul class="contact-links">
-              <li>
-                <a href="mailto:yenchun.huang11@gmail.com">
-                  <i aria-hidden="true" class="fa-solid fa-envelope"></i>
-                  <span>Email</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer">
-                  <i aria-hidden="true" class="fa-brands fa-itch-io"></i>
-                  <span>itch.io</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.linkedin.com/in/yen-chun-huang"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <i aria-hidden="true" class="fa-brands fa-linkedin"></i>
-                  <span>LinkedIn</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer">
-                  <i aria-hidden="true" class="fa-brands fa-github"></i>
-                  <span>GitHub</span>
-                </a>
-              </li>
-              <li>
-                <a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer">
-                  <i aria-hidden="true" class="fa-brands fa-medium"></i>
-                  <span>Medium</span>
-                </a>
-              </li>
-            </ul>
-          </section>
-        </div>
-      </div>
-      <div class="page-body page-body--wide" data-view="projects" hidden>
-        <!-- <p class="projects-hint">Click a project to open it in this panel</p> -->
-        <div id="projects-list"></div>
-      </div>
-      <div class="page-body page-body--wide" data-view="detail" hidden></div>
-      <div class="page-body" data-view="skills" hidden>
-        <h1>Skills</h1>
+  <div id="page">
+    <header id="about" class="panel intro" data-panel>
+      <figure class="intro-portrait">
+        <img src="./assets/profile-2026.jpg" alt="Yen Chun (James) Huang" width="1178" height="1563" decoding="async" />
+      </figure>
+      <div class="intro-copy">
+        <h1>Yen Chun (James) Huang</h1>
+        <p class="intro-role">Game developer</p>
         <p>
-          My development stack.
+          I’m a game developer who likes making ideas happen. With engineering
+          behind me and a love of board games, I pay a lot of attention to detail.
+          What I like is making something, then watching how other people react to it.
         </p>
-        <!-- Each group is a tower: the plinth is written first so it reads as
-             the heading, and the bricks are listed top of the stack down -->
-        <div class="skills-stacks">
-          <div class="skill-stack">
-            <h2 class="skill-plinth">Engines</h2>
-            <ul class="skill-bricks">
-              <li>VR/XR</li>
-              <li>TouchDesigner</li>
-              <li>Unreal</li>
-              <li>Unity</li>
-            </ul>
-          </div>
-          <div class="skill-stack">
-            <h2 class="skill-plinth">Code</h2>
-            <ul class="skill-bricks">
-              <li>Networking</li>
-              <li>OOP</li>
-              <li>HTML/CSS</li>
-              <li>JavaScript</li>
-              <li>Python</li>
-              <li>C/C++</li>
-              <li>C#</li>
-            </ul>
-          </div>
-          <div class="skill-stack">
-            <h2 class="skill-plinth">VFX</h2>
-            <ul class="skill-bricks">
-              <li>Shader</li>
-              <li>VFX Graph</li>
-              <li>Particles</li>
-              <li>Photoshop</li>
-            </ul>
-          </div>
-          <div class="skill-stack">
-            <h2 class="skill-plinth">Pipeline</h2>
-            <ul class="skill-bricks">
-              <li>AI Workflow</li>
-              <li>Perforce</li>
-              <li>Git</li>
-            </ul>
-          </div>
-          
+        <p>
+          I'm constantly fascinated by new tech and new ways of interaction. A lot of the
+          time I want to be the first person to see something new actually happen,
+          so I take that work on myself. Breathing as an input, smart shoes,
+          a machine learning .io game bot, combat with audio inputs, and a lot more fun stuff.
+        </p>
+        <ul class="about-marks">
+          <li><strong>Mento-Issue</strong> won the Pittsburgh non-traditional award at Global Game Jam 2025.</li>
+          <li><strong>Camp Movewell</strong> was nominated for the 2026 Games for Change Awards, Best in Health &amp; Wellness.</li>
+        </ul>
+        <ul class="skill-tags" aria-label="Skills">
+          <li>Unity</li><li>Unreal</li><li>TouchDesigner</li><li>VR/XR</li>
+          <li>C#</li><li>C/C++</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
+          <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
+          <li>Git</li><li>Perforce</li>
+        </ul>
+        <div class="intro-actions">
+          <button type="button" class="block-btn" data-goto="featured">Projects</button>
+          <button type="button" class="block-btn block-btn--blue" data-goto="other">More work</button>
+          <a class="block-btn block-btn--link" href="./assets/Resume.pdf" target="_blank" rel="noopener noreferrer">Résumé</a>
         </div>
+        <ul class="contact-links" aria-label="Contact">
+          <li><a href="mailto:yenchun.huang11@gmail.com"><i aria-hidden="true" class="fa-solid fa-envelope"></i><span>Email</span></a></li>
+          <li><a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-itch-io"></i><span>itch.io</span></a></li>
+          <li><a href="https://www.linkedin.com/in/yen-chun-huang" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-linkedin"></i><span>LinkedIn</span></a></li>
+          <li><a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-github"></i><span>GitHub</span></a></li>
+          <li><a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-medium"></i><span>Medium</span></a></li>
+        </ul>
       </div>
-      <div class="page-body page-body--wide" data-view="blogs" hidden>
-        <div class="blogs-grid">
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/what-makes-french-games-french-89c5b69af113"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Apr 23, 2026</span>
-            <h3>What Makes French Games French</h3>
-            <p>
-              A look at the studios, the cities, and the creative conditions behind
-              France’s indie scene.
-            </p>
-            <ul class="project-stack">
-              <li>France</li>
-              <li>Game Development</li>
-              <li>Culture</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/what-are-we-actually-fighting-for-453a360e6f3b"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Apr 13, 2026</span>
-            <h3>What Are We Actually Fighting For?</h3>
-            <p>On designing a reason to fight.</p>
-            <ul class="project-stack">
-              <li>Game Design</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/how-18-cards-are-enough-to-play-a-game-43d3b80576fd"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Mar 26, 2026</span>
-            <h3>How 18 cards are enough to play a game</h3>
-            <p>Game designs that fit in your pocket.</p>
-            <ul class="project-stack">
-              <li>Minimalism</li>
-              <li>Board Game Design</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/happy-developer-happy-players-2ae966eaa509"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Feb 26, 2026</span>
-            <h3>Happy Developer, Happy Players</h3>
-            <p>It starts with a happy mind and body.</p>
-            <ul class="project-stack">
-              <li>Game Development</li>
-              <li>Mental Health</li>
-              <li>Creative Process</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/can-i-find-the-toy-in-successful-games-bad8d59b1933"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Feb 5, 2026</span>
-            <h3>Can I find the “toy” in games?</h3>
-            <p>Start designing the game by finding the toy.</p>
-            <ul class="project-stack">
-              <li>Creative Process</li>
-              <li>Game Design</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/im-better-than-my-stats-5e19fb38ac35"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Jan 22, 2026</span>
-            <h3>I’m Better Than My Stats</h3>
-            <p>Is meta-progression killing mastery?</p>
-            <ul class="project-stack">
-              <li>Game Design</li>
-            </ul>
-          </a>
-          <a
-            class="blog-card"
-            href="https://medium.com/@jannihilator/%E7%BE%8E%E5%9C%8B%E9%81%8A%E6%88%B2%E8%A8%AD%E8%A8%88%E7%A2%A9%E5%A3%ABgame-design-development-master%E7%94%B3%E8%AB%8B%E5%88%86%E4%BA%AB-2024fall-836806486119"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span class="blog-date">Jun 19, 2024</span>
-            <h3>美國遊戲設計碩士 Game Design/Development Master 申請分享 2024 Fall</h3>
-            <p>
-              為什麼想讀遊戲設計，以及有相關學程的學校介紹。
-            </p>
-            <ul class="project-stack">
-              <li>Grad School</li>
-              <li>中文</li>
-            </ul>
-          </a>
+    </header>
+
+    <main>
+      <section id="featured" class="board" data-card
+        aria-roledescription="carousel" aria-label="Featured projects">
+        <div class="board-track" id="track" tabindex="-1"></div>
+        <div class="board-bar">
+          <button type="button" class="block-btn block-btn--arrow" id="prev" aria-label="Previous project">
+            <span aria-hidden="true">◀</span>
+          </button>
+          <div class="board-tabs" id="tabs" role="group" aria-label="Choose a project"></div>
+          <button type="button" class="block-btn block-btn--arrow" id="next" aria-label="Next project">
+            <span aria-hidden="true">▶</span>
+          </button>
         </div>
-        <a
-          class="pixel-btn blogs-all"
-          href="https://medium.com/@jannihilator"
-          target="_blank"
-          rel="noopener noreferrer"
-          >All posts on Medium</a
-        >
-      </div>
-    </div>
-  </article>
+      </section>
 
-  <nav id="glance" aria-label="A few projects"></nav>
-
-  <div id="boot" role="status" aria-label="Loading">
-    <h1 id="boot-name">
-      <span data-letter>Y</span><span data-letter>e</span><span data-letter>n</span><span class="boot-gap" aria-hidden="true"></span><span data-letter>C</span><span data-letter>h</span><span data-letter>u</span><span data-letter>n</span><span class="boot-gap" aria-hidden="true"></span><span data-letter>H</span><span data-letter>u</span><span data-letter>a</span><span data-letter>n</span><span data-letter>g</span>
-    </h1>
+      <section id="other" class="panel other" data-panel aria-labelledby="other-title">
+        <h2 id="other-title">More work</h2>
+        <div id="other-list"></div>
+      </section>
+    </main>
   </div>
 
-  <!-- <div id="hud">
-    <span class="hint">Snakes chase the yellow dots · click on a word to open</span>
-  </div> -->
+  <dialog id="peek" class="peek" aria-labelledby="peek-title">
+    <button type="button" class="block-btn peek-close" id="peek-close" aria-label="Close">Close</button>
+    <div id="peek-body"></div>
+  </dialog>
 
-  <script src="led-wall.config.js?v=2"></script>
-  <script src="led-wall.js?v=2"></script>
+  <!-- The crosshair and darts in flight draw over the page and never take a click -->
+  <div id="aim" aria-hidden="true"></div>
+  <div id="fx" aria-hidden="true"></div>
+
+  <script>window.PORTFOLIO_SKIP_VIDEO_PRELOAD = true;</script>
   <script src="contributions.js"></script>
   <script src="projects.js"></script>
-  <script>
-    const canvas = document.getElementById("led-canvas");
-    const pageEl = document.getElementById("page");
-    const pageInner = pageEl.querySelector(".page-inner");
-    const closeEl = document.getElementById("page-close");
-    const backEl = document.getElementById("page-back");
-    const views = {
-      about: pageEl.querySelector('[data-view="about"]'),
-      projects: pageEl.querySelector('[data-view="projects"]'),
-      detail: pageEl.querySelector('[data-view="detail"]'),
-      skills: pageEl.querySelector('[data-view="skills"]'),
-      blogs: pageEl.querySelector('[data-view="blogs"]'),
-    };
-
-    const stackBelow =
-      (window.LED_WALL_CONFIG && window.LED_WALL_CONFIG.stackLabelsBelowPx) || 720;
-    const mobileQuery = window.matchMedia(`(max-width: ${stackBelow}px)`);
-
-    function isMobile() {
-      return mobileQuery.matches;
-    }
-
-    /** Which word on the wall opens which view */
-    const LABEL_VIEWS = {
-      about: "about",
-      projects: "projects",
-      skills: "skills",
-      blog: "blogs",
-    };
-
-    /**
-     * Every view lights the wall its own color and carries a matching accent.
-     * The accents are the wall's own palette: its dot yellow, then Inky, Pinky
-     * and Blinky off the snakes.
-     */
-    const VIEW_THEMES = {
-      about: { fill: { r: 250, g: 244, b: 228 }, accent: "#b78500", accentRgb: "250, 204, 21" },
-      projects: { fill: { r: 30, g: 32, b: 38 }, accent: "#facc15", accentRgb: "250, 204, 21" },
-      detail: { fill: { r: 30, g: 32, b: 38 }, accent: "#facc15", accentRgb: "250, 204, 21" },
-      skills: { fill: { r: 14, g: 38, b: 46 }, accent: "#5fd8ec", accentRgb: "95, 216, 236" },
-      blogs: { fill: { r: 30, g: 26, b: 50 }, accent: "#c3a6ff", accentRgb: "195, 166, 255" },
-    };
-
-    function themeFor(view) {
-      return VIEW_THEMES[view] || VIEW_THEMES.about;
-    }
-
-    let pageView = "about";
-    let activeProject = null;
-    /** List scroll to put back after a card opens a detail. */
-    let projectsScrollTop = 0;
-    let keepProjectsScroll = false;
-
-    PortfolioProjects.renderList(document.getElementById("projects-list"));
-
-    function escapeGlance(value) {
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    /** Projects on the bottom strip, before anyone opens the wall. */
-    const GLANCE_IDS = ["mento-issue", "renushu", "borderless", "star-fishing"];
-
-    /**
-     * "(In Development)" sits in the title with no caption, so it reads quieter
-     * than an award line. On the strip it becomes a highlighted caption.
-     * A tagline fills that same line when the project has no award.
-     */
-    function glanceCopy(project, note) {
-      const title = String(project.title || "");
-      const progress = title.match(/^(.*?)\s*\(\s*in (?:progress|development)\s*\)\s*$/i);
-      if (!progress) return { title, note };
-      return { title: progress[1], note: note || "In development" };
-    }
-
-    function glanceNote(id) {
-      const data = window.PROJECT_CONTRIBUTIONS || {};
-      const award = (data.awards || {})[id];
-      const tagline = (data.taglines || {})[id];
-      return String(award || tagline || "").trim();
-    }
-
-    function renderGlance() {
-      const root = document.getElementById("glance");
-      root.innerHTML = GLANCE_IDS.map((id) => {
-        const project = PortfolioProjects.find(id);
-        if (!project) return "";
-        const shot = (project.media || []).find((item) => item.type === "image");
-        const copy = glanceCopy(project, glanceNote(id));
-        return `<button type="button" data-glance="${escapeGlance(id)}">
-          ${shot ? `<img src="${escapeGlance(shot.src)}" alt="" />` : ""}
-          <span>
-            <strong>${escapeGlance(copy.title)}</strong>
-            ${copy.note ? `<em>${escapeGlance(copy.note)}</em>` : ""}
-          </span>
-        </button>`;
-      }).join("");
-      centerGlance();
-    }
-
-    /**
-     * The row centers while every card fits. Once the window is too narrow,
-     * the strip scrolls instead of squeezing the words. On a phone, Camp
-     * Movewell starts centered and the cards beside it peek in. A later
-     * resize that only changes height (the mobile toolbar) leaves a scroll
-     * the reader already made where it is.
-     */
-    let glanceCenteredWidth = -1;
-    function centerGlance(force) {
-      const root = document.getElementById("glance");
-      const width = root.clientWidth;
-      const buttons = [...root.querySelectorAll("button")];
-      const styles = getComputedStyle(root);
-      const gap = parseFloat(styles.columnGap) || 0;
-      const pad = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
-      const needed =
-        buttons.reduce((sum, button) => sum + button.offsetWidth, 0) +
-        gap * Math.max(0, buttons.length - 1) +
-        pad;
-      root.classList.toggle("is-overflowing", needed > width + 1);
-      if (!force && width === glanceCenteredWidth) return;
-      glanceCenteredWidth = width;
-      const middle = buttons[Math.floor((buttons.length - 1) / 2)];
-      if (!middle || !isMobile()) {
-        root.scrollLeft = 0;
-        return;
-      }
-      const rootBox = root.getBoundingClientRect();
-      const box = middle.getBoundingClientRect();
-      root.scrollLeft += box.left - rootBox.left - (rootBox.width - box.width) / 2;
-    }
-
-    renderGlance();
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => centerGlance(true));
-    }
-
-    let pendingProject = null;
-
-    /** The strip eases off as soon as a page starts opening, and back on close */
-    function setGlanceAway(away) {
-      document.body.classList.toggle("glance-away", away);
-      document.getElementById("glance").toggleAttribute("inert", away);
-    }
-
-    // The page covers the wall. The grid is centered, so even a zero LED
-    // border leaves a few pixels of slack; the page takes the viewport.
-    function placePage() {
-      pageEl.style.inset = "0";
-      pageEl.style.width = "";
-      pageEl.style.height = "";
-    }
-
-    function colorCss(color) {
-      return `rgb(${color.r}, ${color.g}, ${color.b})`;
-    }
-
-    function luminance(color) {
-      return (color.r + color.g + color.b) / 3;
-    }
-
-
-    function applyPageTheme(view) {
-      const theme = themeFor(view);
-      const dark = luminance(theme.fill) < 140;
-      pageEl.style.backgroundColor = colorCss(theme.fill);
-      pageEl.style.setProperty("--accent", theme.accent);
-      pageEl.style.setProperty("--accent-rgb", theme.accentRgb);
-      pageEl.classList.toggle("is-dark", dark);
-    }
-
-    function hidePage() {
-      pageEl.classList.remove("is-open");
-      pageEl.hidden = true;
-      views.projects.querySelectorAll("video").forEach((video) => video.pause());
-    }
-
-    function teardownDetail() {
-      PortfolioProjects.stopMedia(views.detail);
-      views.detail.innerHTML = "";
-      activeProject = null;
-    }
-
-    function showView(name) {
-      pageView = name;
-      for (const [key, el] of Object.entries(views)) {
-        el.hidden = key !== name;
-      }
-      backEl.hidden = name !== "detail";
-      if (name === "projects") {
-        views.projects.querySelectorAll("video").forEach((video) => {
-          video.play().catch(() => {});
-        });
-      } else {
-        views.projects.querySelectorAll("video").forEach((video) => video.pause());
-      }
-    }
-
-    function revealPage() {
-      applyPageTheme(pageView);
-      showView(pageView);
-      pageInner.scrollTop = 0;
-      pageEl.hidden = false;
-      requestAnimationFrame(() => pageEl.classList.add("is-open"));
-    }
-
-    function scrollProjectIntoView(projectId) {
-      if (!projectId) return;
-      const card = views.projects.querySelector(
-        `[data-project-id="${CSS.escape(projectId)}"]`
-      );
-      if (!card) return;
-      const top =
-        card.getBoundingClientRect().top - pageInner.getBoundingClientRect().top;
-      pageInner.scrollTop += top;
-    }
-
-    function openProject(project) {
-      if (!project || wall.panelState !== "open") return;
-      projectsScrollTop = pageInner.scrollTop;
-      keepProjectsScroll = true;
-      activeProject = project;
-      PortfolioProjects.renderDetail(views.detail, project);
-      showView("detail");
-      pageInner.scrollTop = 0;
-    }
-
-    function backToProjects() {
-      if (wall.panelState !== "open" || pageView !== "detail") return;
-      const projectId = activeProject && activeProject.id;
-      teardownDetail();
-      showView("projects");
-      if (keepProjectsScroll) {
-        pageInner.scrollTop = projectsScrollTop;
-        keepProjectsScroll = false;
-        return;
-      }
-      scrollProjectIntoView(projectId);
-    }
-
-    const wall = createLedWall(canvas, {
-      introName: document.getElementById("boot-name"),
-      getLoadProgress: () =>
-        window.PortfolioProjects && PortfolioProjects.loadProgress
-          ? PortfolioProjects.loadProgress()
-          : 1,
-      onSelect(label) {
-        const view = LABEL_VIEWS[label.id];
-        if (!view) return;
-        pageView = view;
-        activeProject = null;
-        if (wall.openPanel(label, themeFor(view).fill)) setGlanceAway(true);
-      },
-      onPanelOpen(label, rect) {
-        placePage(rect);
-        if (pendingProject) {
-          pageView = "detail";
-          activeProject = pendingProject;
-          PortfolioProjects.renderDetail(views.detail, pendingProject);
-          pendingProject = null;
-        }
-        revealPage();
-        document.body.classList.add("panel-open");
-        // The page covers the wall, so the sim stops until close brings it back
-        wall.pause();
-      },
-      onPanelClose() {
-        document.body.classList.remove("panel-open");
-        setGlanceAway(false);
-        hidePage();
-        teardownDetail();
-        pageView = "about";
-        projectsScrollTop = 0;
-        keepProjectsScroll = false;
-      },
-      onPanelResize: placePage,
-    });
-
-    let glanceStartX = 0;
-    let glanceMoved = false;
-    document.getElementById("glance").addEventListener("pointerdown", (event) => {
-      glanceStartX = event.clientX;
-      glanceMoved = false;
-    });
-    document.getElementById("glance").addEventListener("pointermove", (event) => {
-      if (Math.abs(event.clientX - glanceStartX) > 8) glanceMoved = true;
-    });
-
-    document.getElementById("glance").addEventListener("click", (event) => {
-      if (glanceMoved) return;
-      const button = event.target.closest("[data-glance]");
-      if (!button || wall.panelState !== "closed") return;
-      const project = PortfolioProjects.find(button.dataset.glance);
-      if (!project) return;
-      pendingProject = project;
-      pageView = "projects";
-      if (wall.openPanel({ id: "projects" }, themeFor("detail").fill)) setGlanceAway(true);
-    });
-
-    views.projects.addEventListener("click", (event) => {
-      if (event.target.closest("a")) return;
-      const card = event.target.closest("[data-project-id]");
-      if (!card) return;
-      openProject(PortfolioProjects.find(card.dataset.projectId));
-    });
-
-    views.projects.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      const card = event.target.closest("[data-project-id]");
-      if (!card || event.target !== card) return;
-      event.preventDefault();
-      openProject(PortfolioProjects.find(card.dataset.projectId));
-    });
-
-    /** The wall has to be running again before it can sweep itself back off */
-    function closePanel() {
-      wall.resume();
-      wall.closePanel();
-    }
-
-    backEl.addEventListener("click", () => backToProjects());
-    closeEl.addEventListener("click", closePanel);
-    window.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      if (pageView === "detail" && wall.panelState === "open") {
-        backToProjects();
-        return;
-      }
-      closePanel();
-    });
-
-    mobileQuery.addEventListener("change", () => {
-      wall.resize();
-      centerGlance();
-      if (wall.panelState === "open") wall.pause();
-    });
-    window.addEventListener("resize", () => centerGlance());
-
-    // The face is its own About button; the name is another. They open the
-    // same page but hover independently.
-    wall.addMosaic({
-      id: "portrait",
-      pageId: "about",
-      anchorX: 0.5,
-      anchorY: 0.34,
-    });
-    // Desktop: two columns under the bust. Left edges line up, right edges
-    // line up. A phone stacks these four words in one left-aligned column.
-    wall.addLabel("ABOUT", { id: "about", under: "portrait", col: 0, row: 0, align: "left" });
-    wall.addLabel("PROJECTS", { id: "projects", under: "portrait", col: 1, row: 0, align: "right" });
-    wall.addLabel("SKILLS", { id: "skills", under: "portrait", col: 0, row: 1, align: "left" });
-    wall.addLabel("BLOGS", { id: "blog", under: "portrait", col: 1, row: 1, align: "right" });
-    wall.start();
-  </script>
+  <script type="module" src="toy/main.js"></script>
 </body>
 </html>

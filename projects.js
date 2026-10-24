@@ -478,6 +478,61 @@ window.PORTFOLIO_PROJECTS = [
         stack: ["Local Networking", "Web", "Sensor"],
         href: "https://projects.etc.cmu.edu/renushu/",
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
+        // PLACEHOLDER beats: same shape as star-fishing. Replace the text
+        // and media with the real thinking process, then drop `placeholder`.
+        placeholder: true,
+        beats: [
+          {
+            heading: "Placeholder: where it started",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. What problem the physical therapists had, and the first idea for the smart shoes.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/renushu-pt.jpeg",
+                    alt: "Camp Movewell physical therapy session",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this step.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/renushu-game.png",
+                    alt: "Camp Movewell gameplay",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this step.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Placeholder: what changed",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. A problem found in playtests and how the design changed because of it.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/g4c.jpeg",
+                    alt: "The Camp Movewell team at the 2026 Games for Change Awards",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this step.",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         id: "xhaler",
@@ -492,6 +547,48 @@ window.PORTFOLIO_PROJECTS = [
         stack: ["VR", "Python", "Arduino"],
         href: "https://projects.etc.cmu.edu/xhaler/about-us/",
         iframe: "https://www.youtube.com/embed/fUHDFnX35RE?si=fEktM0qxvHswPbne",
+        // PLACEHOLDER beats: replace with the real thinking process.
+        placeholder: true,
+        beats: [
+          {
+            heading: "Placeholder: breathing as input",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. How a breath is read by the sensor and turned into a game action.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/xhaler-archer.png",
+                    alt: "XHaler archer prototype",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this prototype.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/xhaler-dive.png",
+                    alt: "XHaler dive prototype",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this prototype.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Placeholder: what the prototypes taught",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. What felt good, what failed, and what came next.",
+              },
+            ],
+          },
+        ],
       },
       {
         id: "serainity",
@@ -522,6 +619,40 @@ window.PORTFOLIO_PROJECTS = [
           'A Global Game Jam 2026 submission for the theme "Mask". Programmed organic herding animal behaviors with state machine. Implemented special mask abilities that cross influence the animals.',
         stack: ["Unity", "Local Multiplayer", "Animal AI"],
         iframe: "https://www.youtube.com/embed/h6fDWDABDJI?si=jGGutDBmGCm1bqKO",
+        // PLACEHOLDER beats: replace with the real thinking process.
+        placeholder: true,
+        beats: [
+          {
+            heading: "Placeholder: herding that feels alive",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. How the sheep state machine moves between grazing, fleeing and flocking.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/sheep.png",
+                    alt: "Wool You Mask It",
+                    caption: "Placeholder caption",
+                    note: "Placeholder note about this step.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Placeholder: masks that change the flock",
+            blocks: [
+              {
+                type: "text",
+                text: "Placeholder beat. How each mask ability pushes on the animals, and what came out of playtesting it in the jam.",
+              },
+            ],
+          },
+        ],
       },
       {
         id: "voice-in-the-void",
@@ -1236,7 +1367,16 @@ window.PORTFOLIO_PROJECTS = [
     renderDetail,
     stopMedia,
     loadProgress: videoLoadProgress,
+    beatsHtml,
+    bindBeatPlayers,
+    awardHtml,
+    contributionsHtml,
+    stackHtml,
+    mountEmbed,
+    escapeHtml,
   };
 
-  preloadProjectVideos();
+  // The toy table shows stills on its slides and streams the beat clips as
+  // they come into view, so it has no use for the early card-video fetch
+  if (!window.PORTFOLIO_SKIP_VIDEO_PRELOAD) preloadProjectVideos();
 })(window.PORTFOLIO_PROJECTS);
