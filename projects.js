@@ -543,52 +543,297 @@ window.PORTFOLIO_PROJECTS = [
         title: "XHaler",
         size: "big",
         media: [
-          { type: "image", src: "./assets/xhaler-archer.png", alt: "XHaler archer prototype" },
-          { type: "image", src: "./assets/xhaler-dive.png", alt: "XHaler dive prototype" },
+          { type: "image", src: "./assets/Xhaler_Media/web/posters/demo-reel.jpg", alt: "XHaler demo reel" },
+          { type: "video", src: "./assets/Xhaler_Media/web/demo-reel.mp4" },
         ],
         description:
-          "Xhaler is a student-driven project exploring the use of breathing as a game input. By developing prototypes that map different breathing patterns to in-game actions, we aim to enhance immersion in virtual reality.",
-        stack: ["VR", "Python", "Arduino"],
+          "A VR game with multiple levels, played by breathing. The goal is to experiment with this new type of control and see whether it can reach a higher state of immersion, including emotional impact.",
+        stack: ["VR", "Unity", "Arduino", "ESP32"],
         href: "https://projects.etc.cmu.edu/xhaler/about-us/",
-        iframe: "https://www.youtube.com/embed/fUHDFnX35RE?si=fEktM0qxvHswPbne",
-        // PLACEHOLDER beats: replace with the real thinking process.
-        placeholder: true,
         beats: [
           {
-            heading: "Placeholder: breathing as input",
+            heading: "A VR game played with your breath",
             blocks: [
               {
                 type: "text",
-                text: "Placeholder beat. How a breath is read by the sensor and turned into a game action.",
+                text: "XHaler is a VR game with multiple levels, and the goal is to experiment with a new type of control: your breathing. We chose VR in the first place because it already brings immersion, so the question is whether breath can lift that higher, emotional impact included.",
               },
               {
                 type: "row",
                 cols: 2,
+                ratio: "16 / 9",
                 items: [
                   {
-                    type: "image",
-                    src: "./assets/xhaler-archer.png",
-                    alt: "XHaler archer prototype",
-                    caption: "Placeholder caption",
-                    note: "Placeholder note about this prototype.",
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/fire-credits.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/fire-credits.jpg",
+                    caption: "Breathing fire",
+                    note: "The credits scene, with the wind sensor driving the fire.",
                   },
                   {
                     type: "image",
-                    src: "./assets/xhaler-dive.png",
-                    alt: "XHaler dive prototype",
-                    caption: "Placeholder caption",
-                    note: "Placeholder note about this prototype.",
+                    src: "./assets/Xhaler_Media/web/gdc.jpg",
+                    alt: "A player in a headset at the XHaler booth on the GDC show floor",
+                    caption: "At GDC",
+                    note: "We brought the game to the community.",
                   },
                 ],
               },
             ],
           },
           {
-            heading: "Placeholder: what the prototypes taught",
+            heading: "A breathing pattern becomes an ability",
             blocks: [
               {
                 type: "text",
-                text: "Placeholder beat. What felt good, what failed, and what came next.",
+                text: "The project started from a fantasy: use breathing as a game input. Our early vision was that when your input matches a specific breathing pattern, an ability triggers. A steady breath shoots a steady arrow, and a stable pattern summons a shield.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/media-1.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/media-1.jpg",
+                    ratio: "1920 / 576",
+                    caption: "Steady arrow",
+                    note: "Matching the pattern shoots a steady arrow.",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/media-2.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/media-2.jpg",
+                    ratio: "1920 / 576",
+                    caption: "Shield",
+                    note: "A stable pattern summons a shield.",
+                  },
+                ],
+              },
+              {
+                type: "text",
+                text: "These are not edited mockups. That is me using a sensor I built by hand, composited with concept footage. A stretchy band changes resistance as the chest expands, and an Arduino reads it.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/stack.png",
+                    alt: "Early tech stack diagram: Arduino with a microphone, wind sensor, conducting cord or flex sensor, feeding Unity on a Meta Quest 3",
+                    ratio: "auto",
+                    caption: "Early tech stack",
+                    note: "Arduino reads the sensors and sends the breath to Unity on the headset.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "First interaction: inhale to puff up",
+            blocks: [
+              {
+                type: "text",
+                text: "The first thing I built with the breathing input was a Flappy Bird style game. Inhaling puffs the fish up and makes it rise, and exhaling shrinks it so it sinks. The size of the fish becomes another layer on top of the height, yet it feels intuitive because it matches what the body does.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/flappy-bird-prototype.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/flappy-bird-prototype.jpg",
+                    ratio: "1304 / 720",
+                    caption: "Flappy fish prototype",
+                  },
+                ],
+              },
+              {
+                type: "callout",
+                label: "Caution",
+                text: "When the game demands precise control, players may hyperventilate. The rest of the game has to be designed with that in mind.",
+              },
+            ],
+          },
+          {
+            heading: "One breathing pattern per level",
+            blocks: [
+              {
+                type: "text",
+                text: "The core of the game is a set of levels, each using a different breathing pattern, to see whether that boosts immersion on top of VR. Here are some of the patterns and the scenarios we imagined, like diving in water, sneaking past guards and blowing on pinwheels.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/plan.jpg",
+                    alt: "Level plan: each level labelled with a hand-drawn breathing pattern, including Intro, Sneak, Blow Fans, Run, Heal, Dive, Climb, Archery and Dragon fire",
+                    ratio: "auto",
+                    caption: "Level plan",
+                    note: "Each level is tied to a pattern drawn on a sticky note.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Reading everyone's breath",
+            blocks: [
+              {
+                type: "text",
+                text: "To make detection accessible, the data needs processing. Everyone breathes differently, some through the chest and others with the belly, and the values vary too. This is the pipeline I built:",
+              },
+              {
+                type: "flow",
+                steps: [
+                  { actor: "Signal", title: "Smooth", text: "A low-pass filter or short moving average removes sensor noise." },
+                  { actor: "Signal", title: "Slope", text: "The first derivative over a short window. Positive is inhaling, negative is exhaling, near zero is holding." },
+                  { actor: "Signal", title: "Hysteresis", text: "A minimum-duration rule so noise does not flip the state every few frames." },
+                  { actor: "Player", title: "Calibrate", text: "A short calibration records the player's min and max chest expansion, since amplitude varies by person and strap tightness." },
+                ],
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/calibration.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/calibration.jpg",
+                    caption: "Calibration",
+                    note: "The player's breathing range is measured before play.",
+                  },
+                ],
+              },
+              {
+                type: "text",
+                text: "With that in place we made the archery demo: hold your breath and it generates a power shot arrow.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/archery-hold.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/archery-hold.jpg",
+                    caption: "Hold to power shot",
+                    note: "Holding your breath generates a power shot arrow.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Feedback you can see",
+            blocks: [
+              {
+                type: "text",
+                text: "Even while you are just breathing and moving around the map, the environment picks up your breathing state and reflects it as diegetic feedback. The same goes for diving, where the bubbles react to your breath.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "16 / 9",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/synced-vfx-vine.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/synced-vfx-vine.jpg",
+                    caption: "Environment follows you",
+                    note: "The vines reflect the player's breathing state.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/dive-bubbles.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/dive-bubbles.jpg",
+                    caption: "Diving",
+                    note: "The bubbles react to your breathing.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Measuring the air itself",
+            blocks: [
+              {
+                type: "text",
+                text: "A strap is good at telling inhale, exhale or hold, but it knows less about how much air comes out of the player's mouth. So we added a wind sensor to the headset and moved to an ESP32 for a more compact controller board. Now we can detect any exhale and also measure the throughput of the wind, then map it to the game.",
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/wind-sensor-hmd.jpg",
+                    alt: "A wind sensor mounted on a VR headset",
+                    ratio: "1081 / 898",
+                    caption: "Wind sensor on the headset",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/sensor.jpg",
+                    alt: "An ESP32 board, a Vernier respiration belt and a bare wind sensor board on a desk",
+                    ratio: "4 / 3",
+                    caption: "ESP32, respiration belt and wind sensor",
+                  },
+                ],
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "video",
+                    src: "./assets/Xhaler_Media/web/wind-sensor.mp4",
+                    poster: "./assets/Xhaler_Media/web/posters/wind-sensor.jpg",
+                    ratio: "16 / 9",
+                    caption: "Wind as input",
+                    note: "The throughput of the wind is mapped to the game.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "What I learned",
+            blocks: [
+              {
+                type: "text",
+                text: "The way players interact with the game is likely not the way you designed it, unless you design the experience carefully. Because the body is the input, intuitiveness really matters, or the game causes body dissonance. Feedback matters just as much: it tells the player the state of the game and encourages them to keep going when things go well.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/blockers.jpg",
+                    alt: "Process diagram: initial design, prototype, encounter blockers, then refine and add enhancers such as positive reinforcement, diegetic feedback, simple, intuitive and one focus",
+                    ratio: "auto",
+                    caption: "Blockers and enhancers",
+                  },
+                ],
+              },
+              {
+                type: "text",
+                text: "The design can only get to the players once the blockers are removed.",
+              },
+              {
+                type: "row",
+                width: "narrow",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Xhaler_Media/web/lawrence-shooting.jpg",
+                    alt: "A player enjoying the game in a headset",
+                    ratio: "auto",
+                    caption: "Reaching the players",
+                  },
+                ],
               },
             ],
           },
