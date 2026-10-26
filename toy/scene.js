@@ -315,7 +315,7 @@ function skillCanvas(text, color, ink, w = 400) {
   ctx.stroke();
   let size = 76;
   do {
-    ctx.font = `600 ${size}px Fredoka, Nunito, sans-serif`;
+    ctx.font = `600 ${size}px Figtree, Nunito, sans-serif`;
     size -= 2;
   } while (ctx.measureText(text).width > w - 70 && size > 24);
   ctx.fillStyle = ink;
@@ -432,7 +432,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   await RAPIER.init();
   // The skill bricks are painted with the page's own font
   try {
-    await Promise.race([document.fonts.load("600 40px Fredoka"), new Promise((r) => setTimeout(r, 1500))]);
+    await Promise.race([document.fonts.load("600 40px Figtree"), new Promise((r) => setTimeout(r, 1500))]);
   } catch {
     // Painted in the fallback font instead
   }
@@ -981,7 +981,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       });
       const mid = [(at[0][0] + at[1][0] + at[2][0]) / 3, (at[0][1] + at[1][1] + at[2][1]) / 3];
       if (sides === 4) {
-        ctx.font = "700 30px Fredoka, Nunito, sans-serif";
+        ctx.font = "700 30px Figtree, Nunito, sans-serif";
         at.forEach(([px, py], k) => {
           const n = cornerOf(v.fromBufferAttribute(pos, f * 3 + k));
           const tx = mid[0] + (px - mid[0]) * 0.55;
@@ -993,7 +993,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
           ctx.restore();
         });
       } else {
-        ctx.font = `700 ${sides === 20 ? 40 : 48}px Fredoka, Nunito, sans-serif`;
+        ctx.font = `700 ${sides === 20 ? 40 : 48}px Figtree, Nunito, sans-serif`;
         const n = f + 1;
         ctx.fillText(String(n), mid[0], mid[1]);
         // 6 and 9 get a line under them, as real dice do
@@ -1239,9 +1239,9 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     ctx.stroke();
     // The writing sits up the far side, on the part of the sheet in view
     ctx.fillStyle = "#4a3526";
-    ctx.font = "600 68px Fredoka, Nunito, sans-serif";
+    ctx.font = "600 68px Figtree, Nunito, sans-serif";
     ctx.fillText("toys:", 100, 118);
-    ctx.font = "500 44px Fredoka, Nunito, sans-serif";
+    ctx.font = "500 44px Figtree, Nunito, sans-serif";
     const words = "an object or system you play with just for the joy of tinkering around".split(" ");
     let line = "";
     let y = 180;

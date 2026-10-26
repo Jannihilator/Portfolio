@@ -19,7 +19,7 @@
   --col: max(min(1180px, 66vw), min(100vw - 32px, 760px));
   /* The project board fills nearly the whole screen */
   --board-h: max(540px, calc(100vh - 36px));
-  --head: "Fredoka", "Nunito", system-ui, sans-serif;
+  --head: "Figtree", "Nunito", system-ui, sans-serif;
   --body: "Nunito", system-ui, sans-serif;
   color-scheme: light;
 }
