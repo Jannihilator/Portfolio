@@ -20,7 +20,6 @@ window.PORTFOLIO_PROJECTS = [
         description:
           "A game about fishing for shooting stars and collecting constellations.",
         stack: ["Shader", "Upgrade / Ability System", "Skill Tree"],
-        devlog: true,
         beats: [
           {
             heading: "Bringing the sky to life",
