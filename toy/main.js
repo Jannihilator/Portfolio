@@ -51,6 +51,8 @@ function splashProgress() {
     const show = Math.min(1, Math.max(0, (p - 0.9) / 0.1));
     intro.style.opacity = show < 1 ? show.toFixed(3) : "";
     intro.style.pointerEvents = p < 1 ? "none" : "";
+    // The work below waits until the intro is upright, so it never shows up beside the flying sheet
+    document.body.classList.toggle("sheet-flying", p < 1);
   };
   const queue = () => {
     if (!queued) requestAnimationFrame(update);

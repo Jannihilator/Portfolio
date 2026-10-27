@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import RAPIER from "rapier";
+import { LAYOUT } from "./layout.js";
 
 /** The width the camera always shows, whatever the window's shape */
 const H_FOV = 60;
@@ -1087,6 +1088,127 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   }
 
   /**
+   * A stack of casino chips: a coloured body with six white spots round the
+   * edge, a ring and a small inlay on the face, each chip a little out of true
+   */
+  function chipStack(x, z, colors, rotY = 0) {
+    const r = 0.23;
+    const h = 0.058;
+    const white = 0xf6f1e6;
+    const body = geo("chip", () => new THREE.CylinderGeometry(r, r, h, 36));
+    const spot = geo("chipSpot", () => new THREE.BoxGeometry(0.06, h * 0.98, 0.1));
+    const ring = geo("chipRing", () => new THREE.CylinderGeometry(r * 0.74, r * 0.74, h + 0.003, 36));
+    const field = geo("chipField", () => new THREE.CylinderGeometry(r * 0.69, r * 0.69, h + 0.005, 36));
+    const inlay = geo("chipInlay", () => new THREE.CylinderGeometry(r * 0.4, r * 0.4, h + 0.007, 28));
+    const g = new THREE.Group();
+    colors.forEach((color, i) => {
+      const chip = new THREE.Group();
+      chip.position.set(Math.sin(i * 2.3) * 0.012, h / 2 + i * h, Math.cos(i * 1.7) * 0.012);
+      chip.rotation.y = i * 0.7;
+      chip.add(new THREE.Mesh(body, mat(color)));
+      for (let k = 0; k < 6; k++) {
+        const a = (k * Math.PI) / 3;
+        const m = new THREE.Mesh(spot, mat(white));
+        m.position.set(Math.cos(a) * (r - 0.018), 0, Math.sin(a) * (r - 0.018));
+        m.rotation.y = -a;
+        chip.add(m);
+      }
+      chip.add(new THREE.Mesh(ring, mat(white)), new THREE.Mesh(field, mat(color)), new THREE.Mesh(inlay, mat(white)));
+      g.add(chip);
+    });
+    const H = colors.length * h;
+    return addProp(g, [RAPIER.ColliderDesc.cylinder(H / 2, r).setTranslation(0, H / 2, 0).setDensity(1.2)], new THREE.Vector3(x, 0, z), rotY);
+  }
+
+  /**
+   * The "all in" puck, as a toy: a cream triangular block with softened
+   * corners and a painted face, a red border round black, a red spade and
+   * the words in white. It lies with its point away from you.
+   */
+  function allInMarker(x, z, rotY) {
+    const SIZE = 1.4;
+    const corners = [new THREE.Vector2(0, 0.52), new THREE.Vector2(-0.45, -0.26), new THREE.Vector2(0.45, -0.26)];
+    const rounded = (scale, k) => {
+      const v = corners.map((p) => p.clone().multiplyScalar(scale));
+      const shape = new THREE.Shape();
+      v.forEach((p, i) => {
+        const a = p.clone().lerp(v[(i + 2) % 3], k);
+        const b = p.clone().lerp(v[(i + 1) % 3], k);
+        if (i === 0) shape.moveTo(a.x, a.y);
+        else shape.lineTo(a.x, a.y);
+        shape.quadraticCurveTo(p.x, p.y, b.x, b.y);
+      });
+      shape.closePath();
+      return shape;
+    };
+    const lip = 0.025;
+    const depth = 0.07;
+    const top = depth + 2 * lip;
+    const body = new THREE.ExtrudeGeometry(rounded(0.97, 0.13), { depth, bevelEnabled: true, bevelThickness: lip, bevelSize: lip, bevelSegments: 3, curveSegments: 6 });
+    body.rotateX(-Math.PI / 2).translate(0, lip, 0);
+
+    // The painted face is a flat copy of the triangle, mapped onto a canvas: x runs -0.5..0.5, y -0.3..0.7
+    const faceGeo = new THREE.ShapeGeometry(rounded(0.87, 0.13), 6);
+    const uv = faceGeo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, faceGeo.attributes.position.getX(i) + 0.5, faceGeo.attributes.position.getY(i) + 0.3);
+    faceGeo.rotateX(-Math.PI / 2).translate(0, top + 0.002, 0);
+
+    const N = 512;
+    const c = document.createElement("canvas");
+    c.width = c.height = N;
+    const ctx = c.getContext("2d");
+    const px = (p) => [(p.x + 0.5) * N, (0.7 - p.y) * N];
+    ctx.fillStyle = "#c2392c";
+    ctx.fillRect(0, 0, N, N);
+    // The black field, with rounded corners from a thick round-joined stroke
+    ctx.fillStyle = ctx.strokeStyle = "#1d1917";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 0.05 * N;
+    ctx.beginPath();
+    corners.forEach((p, i) => {
+      const [X, Y] = px(p.clone().multiplyScalar(0.6));
+      if (i === 0) ctx.moveTo(X, Y);
+      else ctx.lineTo(X, Y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // The spade: two lobes and a point, on a short stem
+    const [cx, cy] = [N / 2, (0.7 - 0.12) * N];
+    const k = 0.075 * N;
+    ctx.fillStyle = "#e0432f";
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - k);
+    ctx.bezierCurveTo(cx + k * 1.4, cy - k * 0.1, cx + k * 0.95, cy + k * 0.85, cx, cy + k * 0.45);
+    ctx.bezierCurveTo(cx - k * 0.95, cy + k * 0.85, cx - k * 1.4, cy - k * 0.1, cx, cy - k);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + k * 0.3);
+    ctx.lineTo(cx - k * 0.4, cy + k * 1.15);
+    ctx.lineTo(cx + k * 0.4, cy + k * 1.15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#fffaf0";
+    ctx.font = `800 ${0.1 * N}px Figtree, Nunito, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("ALL IN", N / 2, (0.7 + 0.1) * N);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = anisotropy;
+
+    const g = new THREE.Group();
+    g.scale.setScalar(SIZE);
+    g.add(
+      new THREE.Mesh(body, new THREE.MeshStandardMaterial({ color: 0xf1e7d2, roughness: 0.7 })),
+      new THREE.Mesh(faceGeo, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 }))
+    );
+    const pts = [];
+    for (const p of corners) for (const y of [0, top]) pts.push(p.x * 0.95 * SIZE, y * SIZE, -p.y * 0.95 * SIZE);
+    return addProp(g, [RAPIER.ColliderDesc.convexHull(new Float32Array(pts)).setDensity(1.1)], new THREE.Vector3(x, 0, z), rotY);
+  }
+
+  /**
    * A retro game controller lying on the table: a flat grey body, a black
    * d-pad, two red buttons, start and select, and its cable running off
    * toward you.
@@ -1356,41 +1478,47 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
    * and some out at the back among the pinwheels.
    */
   function deskToys() {
-    // The middle: a big meeple, a die, three juggling balls and a controller
-    meeple(-1.9, 3.2, COLORS.mustard, 0.15, 1.35);
-    die(-2.2, 4.4, "#fffaf0", "#4a3526", 0.5, 4);
-    // Four juggling balls: three in a triangle and one sat on top
-    jugglingBall(-2.9, 0, 6.0, "#dc6a52", "#ebbb55", 0.4);
-    jugglingBall(-2.42, 0, 6.0, "#7f9fcb", "#fffaf0", 1.1);
-    jugglingBall(-2.66, 0, 6.42, "#93a86c", "#ebbb55", 2.0);
-    jugglingBall(-2.66, 0.392, 6.14, "#ebbb55", "#dc6a52", 2.6);
-    controller(0.9, 8.9, -0.2);
-    // Round the dominoes: inside the first arch, in the loop, and beyond
-    meeple(3.4, 6.5, COLORS.sage, -0.25, 0.6);
-    die(3.7, 7.3, "#dc6a52", "#fffaf0", -0.3, 3);
-    polyDie(20, 7.0, 4.7, COLORS.red, 0.3);
-    die(3.9, 6.0, "#7f9fcb", "#fffaf0", 0.2, 6);
-    animal("boar", 4.5, 4.3, 0x7a5236, 0.2, 0.3);
-    animal("sheep", 7.65, 6.95, 0x4a4446, -0.3, 0.38);
-    animal("sheep", 6.25, 5.6, COLORS.cream, 0.4, 0.32);
-    animal("boar", 8.2, 4.6, 0x7a5236, -0.5, 0.4);
-    polyDie(4, 6.1, 4.4, COLORS.mustard, 0.8, "#4a3526");
-    animal("sheep", 8.4, 6.7, COLORS.cream, -0.15, 0.7);
-    animal("sheep", 7.3, 7.5, COLORS.cream, 0.25, 0.55);
-    animal("sheep", 3.2, 4.2, COLORS.cream, 0.3, 0.45);
+    // Where each thing lies is in layout.js; a thing with no entry there is left out
+    const place = (name, make) => {
+      const at = LAYOUT[name];
+      if (at) make(at.x, at.z, at.turn ?? 0);
+    };
+    const animalAt = (kind, name, color, size) => place(name, (x, z, turn) => animal(kind, x, z, color, turn, size));
+    const meepleAt = (name, color, size) => place(name, (x, z, turn) => meeple(x, z, color, turn, size));
+    // The middle: a big meeple, a die and four juggling balls, three in a
+    // triangle and one sat on top
+    meepleAt("bigMeeple", COLORS.mustard, 1.35);
+    place("die", (x, z, turn) => die(x, z, "#fffaf0", "#4a3526", turn, 4));
+    place("jugglingBalls", (x, z) => {
+      jugglingBall(x - 0.24, 0, z - 0.15, "#dc6a52", "#ebbb55", 0.4);
+      jugglingBall(x + 0.24, 0, z - 0.15, "#7f9fcb", "#fffaf0", 1.1);
+      jugglingBall(x, 0, z + 0.27, "#93a86c", "#ebbb55", 2.0);
+      jugglingBall(x, 0.392, z - 0.01, "#ebbb55", "#dc6a52", 2.6);
+    });
+    place("allIn", allInMarker);
+    // Round the dominoes, which run in front of the train's track
+    meepleAt("sageMeeple", COLORS.sage, 0.6);
+    place("chipsRed", (x, z, turn) => chipStack(x, z, [0xb3261e, 0xb3261e, 0xb3261e, 0xb3261e, 0xb3261e, 0x23201e], turn));
+    place("chipsBlue", (x, z, turn) => chipStack(x, z, [0x2a4f9c, 0x2a4f9c, 0x2a4f9c], turn));
+    place("d20", (x, z, turn) => polyDie(20, x, z, COLORS.red, turn));
+    place("d4", (x, z, turn) => polyDie(4, x, z, COLORS.mustard, turn, "#4a3526"));
+    animalAt("boar", "boarMiddle", 0x7a5236, 0.3);
+    animalAt("sheep", "sheepDark", 0x4a4446, 0.38);
+    animalAt("sheep", "sheepNearTrack", COLORS.cream, 0.32);
+    animalAt("boar", "boarByDominoes", 0x7a5236, 0.4);
+    animalAt("sheep", "sheepBig", COLORS.cream, 0.7);
+    animalAt("sheep", "sheepFront", COLORS.cream, 0.55);
     // ...and on the near side and the left, so they ring it all round
-    animal("boar", -1.3, 8.5, 0x7a5236, 0.3, 0.34);
-    animal("sheep", 1.1, 3.4, COLORS.cream, -0.2, 0.55);
-    meeple(-0.6, 3.6, COLORS.coral, 0.2, 0.42);
-    animal("sheep", 9.6, 6.7, COLORS.cream, 0.15, 0.5);
-    animal("boar", 6.2, 7.95, 0x7a5236, -0.3, 0.42);
-    animal("sheep", 3.1, 8.0, COLORS.cream, -0.4, 0.42);
+    animalAt("sheep", "sheepMiddle", COLORS.cream, 0.55);
+    meepleAt("coralMeeple", COLORS.coral, 0.42);
+    animalAt("sheep", "sheepFarFront", COLORS.cream, 0.5);
+    animalAt("boar", "boarFront", 0x7a5236, 0.42);
     // Out at the back, by the pinwheels and in front of the hoop
-    meeple(-0.4, -5.3, COLORS.red, 0.3, 1.1);
-    animal("boar", 2.3, -4.7, 0x7a5236, -0.3, 0.85);
-    polyDie(20, -1.4, -4.7, COLORS.sage, -0.2);
-    polyDie(8, 1.0, -5.5, COLORS.blue, -0.4);
-    die(3.3, -4.3, "#ebbb55", "#4a3526", 0.3, 2);
+    meepleAt("redMeeple", COLORS.red, 1.1);
+    animalAt("boar", "boarBack", 0x7a5236, 0.85);
+    place("d20Back", (x, z, turn) => polyDie(20, x, z, COLORS.sage, turn));
+    place("d8Back", (x, z, turn) => polyDie(8, x, z, COLORS.blue, turn));
+    place("dieBack", (x, z, turn) => die(x, z, "#ebbb55", "#4a3526", turn, 2));
   }
 
   /** A big sheet of paper lying on the table, with a note written on it */
@@ -1949,13 +2077,19 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   // dice and meeples in the middle, and dominoes snaking off to the right
   // A sticky note turned counter-clockwise, the other way from the intro
   // sheet, with the pencil and the marker left beside it
-  note(-5.85, 5.15, 0.22);
-  pencil(-4.5, 6.4, 0.5);
-  marker(-6.0, 6.8, -0.25, COLORS.red);
+  for (const [name, make] of [
+    ["note", note],
+    ["pencil", pencil],
+    ["marker", (x, z, turn) => marker(x, z, turn, COLORS.red)],
+  ]) {
+    const at = LAYOUT[name];
+    if (at) make(at.x, at.z, at.turn ?? 0);
+  }
   deskToys();
   // An S: away from you, over, back toward you, round, and off to the
   // right past the edge of the view
-  dominoPath([[2.3, 9], [2.4, 7.5], [2.5, 5.9], [3.3, 4.9], [4.2, 5.5], [4.6, 6.9], [5.5, 7.6], [6.5, 7.1], [7.4, 6.1], [8.8, 5.6], [10.4, 5.5], [12, 5.6]], 33);
+  // (over to the right, clear of the intro sheet and of the train's track)
+  dominoPath(LAYOUT.dominoes, 33);
 
   // ------------------------------------------------------------ porcupine
   /**
@@ -2666,9 +2800,9 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
    * hinges. Lengths are in sheet heights.
    */
   const SHEET = {
-    at: new THREE.Vector3(0.2, 0.016, 6.0),
+    at: new THREE.Vector3(LAYOUT.sheet.x, 0.016, LAYOUT.sheet.z),
     turn: -0.12,
-    height: 3.1,
+    height: 3.0,
     /** How far in front of the eye the sheet meets the panel's place */
     depth: 4,
     hover: { peel: 0.13, radius: 0.07 },

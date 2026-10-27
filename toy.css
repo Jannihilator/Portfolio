@@ -152,6 +152,18 @@ a {
   height: 100svh;
 }
 
+/* Everything below the intro stays out of sight while the sheet is still
+   coming up off the table, and fades in once the intro is upright */
+main {
+  transition: opacity 0.45s ease, visibility 0s;
+}
+
+body.sheet-flying main {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s 0.2s;
+}
+
 /* On a phone the table is too small to look at, so the page starts at the intro */
 @media (max-width: 760px), (hover: none) and (pointer: coarse) {
   .splash {
