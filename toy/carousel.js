@@ -4,7 +4,7 @@
  */
 const P = window.PortfolioProjects;
 
-export const FEATURED = ["star-fishing", "borderless", "renushu", "xhaler", "wool-you-mask-it"];
+export const FEATURED = ["xhaler", "borderless", "star-fishing", "renushu"];
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -35,9 +35,27 @@ function heroHtml(project) {
   return image ? `<figure class="slide-hero"><img src="${esc(image.src)}" alt="${esc(image.alt || "")}" loading="lazy" decoding="async" /></figure>` : "";
 }
 
+/** Team, role and timeline, under the demo reel */
+function factsHtml(project) {
+  const esc = P.escapeHtml;
+  const rows = [
+    ["Team", project.team && esc(project.team)],
+    [
+      "Role",
+      project.role &&
+        `${esc(project.role)}${project.duties ? `<span class="slide-duties">${esc(project.duties)}</span>` : ""}`,
+    ],
+    ["Timeline", project.timeline && esc(project.timeline)],
+  ].filter(([, value]) => value);
+  if (!rows.length) return "";
+  return `<dl class="slide-facts">${rows.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("")}</dl>`;
+}
+
 function slideHtml(project, i, total) {
   const esc = P.escapeHtml;
-  const { name, status } = splitTitle(project.title);
+  const parsed = splitTitle(project.title);
+  const name = parsed.name;
+  const status = project.status || parsed.status;
   const placeholder = project.placeholder
     ? `<p class="slide-note">Placeholder beats. The real working process goes here.</p>`
     : "";
@@ -59,7 +77,10 @@ function slideHtml(project, i, total) {
         ${P.stackHtml(project.stack)}
       </header>
       <div class="slide-lead">
-        ${heroHtml(project)}
+        <div class="slide-lead-media">
+          ${heroHtml(project)}
+          ${factsHtml(project)}
+        </div>
         <div class="slide-lead-copy">
           ${P.contributionsHtml(project)}
           ${project.description ? `<p class="slide-desc">${esc(project.description)}</p>` : ""}

@@ -453,6 +453,40 @@ a {
   box-shadow: 0 2px 0 var(--line);
 }
 
+.slide-facts {
+  display: grid;
+  gap: 6px;
+  margin: 14px 0 0;
+  font-size: 0.92rem;
+}
+
+.slide-facts > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 10px;
+}
+
+.slide-facts dt {
+  font-family: var(--head);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.6rem;
+}
+
+.slide-facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.slide-duties {
+  display: block;
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
 .slide-desc {
   margin: 12px 0 0;
   color: var(--ink-soft);
@@ -853,6 +887,21 @@ a {
   color: var(--ink-soft);
 }
 
+/* Four steps read better as two rows of two than as four narrow columns. */
+.beat-flow--2 {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.3rem 1.5rem;
+}
+
+.beat-flow--2 .beat-flow-step:nth-child(even)::after {
+  display: none;
+}
+
+.beat-flow--2 .beat-flow-step {
+  padding: 12px 14px 14px;
+}
+
 @container (max-width: 46rem) {
   .beat-flow {
     grid-auto-flow: row;
@@ -860,6 +909,27 @@ a {
   }
 
   .beat-flow-step:not(:last-child)::after {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: calc(-1.3rem + 0.1rem);
+    transform: translateX(-50%) rotate(90deg);
+  }
+}
+
+/* The two-column variant has no devlog container, so it follows the screen.
+   On a phone it becomes a single column with arrows pointing down. */
+@media (max-width: 40rem) {
+  .beat-flow--2 {
+    grid-template-columns: none;
+    gap: 1.3rem;
+  }
+
+  .beat-flow--2 .beat-flow-step:nth-child(even):not(:last-child)::after {
+    display: block;
+  }
+
+  .beat-flow--2 .beat-flow-step:not(:last-child)::after {
     top: auto;
     right: auto;
     left: 50%;

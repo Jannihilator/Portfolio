@@ -11,6 +11,7 @@ window.PORTFOLIO_PROJECTS = [
       {
         id: "star-fishing",
         title: "Star Fishing (In Development)",
+        status: "Solo project, in development",
         size: "big",
         media: [
           { type: "image", src: "./assets/star-fishing.png", alt: "Star Fishing" },
@@ -124,7 +125,11 @@ window.PORTFOLIO_PROJECTS = [
         ],
         description:
           "Innovating a new medium across 4 mobile phones by creating a 20-minute, cooperative puzzle-narrative seamlessly integrating film narrative, game design, and comic art storytelling.",
-        stack: ["Networking", "Mobile", "Puzzle"],
+        stack: ["Unity", "Custom UDP/TCP Sockets", "Android Input System"],
+        team: "2 programmers, 2 artists, 1 producer, 1 writer",
+        role: "Programmer, networking",
+        duties: "Original concept, prototyping, performance optimization",
+        timeline: "Jan–May 2026",
         href: "https://projects.etc.cmu.edu/big-picture-studio/",
         iframe: "https://www.youtube.com/embed/ulOF7EMQaaA?si=Ya-9DIRYZQONljsz",
         devlog: true,
@@ -479,7 +484,11 @@ window.PORTFOLIO_PROJECTS = [
         ],
         description:
           "Camp Movewell, from the ReNUSHU team at CMU’s Entertainment Technology Center with Magnes AG, is an exergame that makes physical therapy fun and measurable with NuShu smart shoes for gait sensing and haptic feedback. From rehab to play, from play to progress, every step is progress you can see and measure.",
-        stack: ["Local Networking", "Web", "Sensor"],
+        stack: ["Unity", "Magnes NuShu Smart Shoes", "UDP/TCP Sockets", "JavaScript"],
+        team: "2 programmers, 2 artists, 1 producer",
+        role: "Programmer, gameplay & web",
+        duties: "Game design, prototyping, web interface",
+        timeline: "Aug–Dec 2025",
         href: "https://projects.etc.cmu.edu/renushu/",
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
         // PLACEHOLDER beats: same shape as star-fishing. Replace the text
@@ -548,7 +557,11 @@ window.PORTFOLIO_PROJECTS = [
         ],
         description:
           "A VR game with multiple levels, played by breathing. The goal is to experiment with this new type of control and see whether it can reach a higher state of immersion, including emotional impact.",
-        stack: ["VR", "Unity", "Arduino", "ESP32"],
+        stack: ["Unity", "Meta Quest 3", "Python", "Sensor Integration"],
+        team: "2 programmers, 2 artists, 1 level designer",
+        role: "Programmer, sensors & hardware",
+        duties: "Prototyping, sensor integration",
+        timeline: "Jan–May 2025",
         href: "https://projects.etc.cmu.edu/xhaler/about-us/",
         beats: [
           {
@@ -690,6 +703,7 @@ window.PORTFOLIO_PROJECTS = [
               },
               {
                 type: "flow",
+                cols: 2,
                 steps: [
                   { actor: "Signal", title: "Smooth", text: "A low-pass filter or short moving average removes sensor noise." },
                   { actor: "Signal", title: "Slope", text: "The first derivative over a short window. Positive is inhaling, negative is exhaling, near zero is holding." },
@@ -819,10 +833,6 @@ window.PORTFOLIO_PROJECTS = [
                 ],
               },
               {
-                type: "text",
-                text: "The design can only get to the players once the blockers are removed.",
-              },
-              {
                 type: "row",
                 width: "narrow",
                 items: [
@@ -831,27 +841,13 @@ window.PORTFOLIO_PROJECTS = [
                     src: "./assets/Xhaler_Media/web/lawrence-shooting.jpg",
                     alt: "A player enjoying the game in a headset",
                     ratio: "auto",
-                    caption: "Reaching the players",
+                    caption: "The design intention only reaches the players once all the blockers are removed.",
                   },
                 ],
               },
             ],
           },
         ],
-      },
-      {
-        id: "serainity",
-        title: "Serainity",
-        size: "big",
-        media: [
-          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
-          { type: "video", src: "./assets/rain-demo.mp4" },
-        ],
-        description:
-          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
-        stack: ["Shader", "Object Pooling"],
-        iframe:
-          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
       },
     ],
   },
@@ -958,6 +954,20 @@ window.PORTFOLIO_PROJECTS = [
     title: "Past Projects",
     layout: "grid",
     projects: [
+      {
+        id: "serainity",
+        title: "Serainity",
+        size: "big",
+        media: [
+          { type: "image", src: "./assets/rain-to-serene.png", alt: "Serainity" },
+          { type: "video", src: "./assets/rain-demo.mp4" },
+        ],
+        description:
+          "A serene incremental game where rain falls on lily pads to earn drops, spent on expanding the pond through two distinct upgrade paths across rain and sunny phases. Every ephemeral element (raindrops, ripple effects, leaf splashes, water beads, floating score popups, frogs) runs through object pools to keep low memory allocations. The water surface is a custom shader driven by a ping-pong render texture wave simulation, while each lily pad carries unique procedurally-assigned shader properties.",
+        stack: ["Shader", "Object Pooling"],
+        iframe:
+          "https://drive.google.com/file/d/1Udm21wbATYzfJfTBL4Q8_MjhB9S8pgze/preview",
+      },
       {
         id: "gpt-battle",
         title: "GPT Battle",
@@ -1182,7 +1192,7 @@ window.PORTFOLIO_PROJECTS = [
         </li>`
       )
       .join("");
-    return `<ol class="beat-flow">${steps}</ol>`;
+    return `<ol class="beat-flow${block.cols === 2 ? " beat-flow--2" : ""}">${steps}</ol>`;
   }
 
   function beatBlockHtml(block) {
