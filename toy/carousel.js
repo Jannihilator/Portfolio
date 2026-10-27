@@ -29,7 +29,8 @@ function heroHtml(project) {
   const video = heroVideo(project);
   if (video) {
     // Plays only while its slide is on the board
-    return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none"
+    const fallback = video.fallback ? `data-fallback="${esc(video.fallback)}"` : "";
+    return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none" ${fallback}
       ${image ? `poster="${esc(image.src)}"` : ""} aria-label="${esc(project.title)} demo"><source src="${esc(video.src)}" type="video/mp4" /></video></figure>`;
   }
   return image ? `<figure class="slide-hero"><img src="${esc(image.src)}" alt="${esc(image.alt || "")}" loading="lazy" decoding="async" /></figure>` : "";
@@ -124,8 +125,10 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
     slides.forEach((slide, j) => {
       const video = slide.querySelector("video[data-hero]");
       if (!video) return;
-      if (j === i && !reduceMotion.matches) video.play().catch(() => {});
-      else video.pause();
+      if (j === i && !reduceMotion.matches) {
+        P.watchStall(video);
+        video.play().catch(() => {});
+      } else video.pause();
     });
     prev.disabled = i <= 0;
     next.disabled = i >= slides.length - 1;

@@ -72,6 +72,35 @@ export const sound = {
     tone({ from: vary(260), to: 90, decay: 0.07, peak: 0.5 });
     burst({ type: "lowpass", freq: 500, decay: 0.09, peak: 0.25, at: 0.005 });
   },
+  /**
+   * A shot that came out weak: half a pop, then a wobbly slide-whistle
+   * sinking away with a sputter of air. Silly on purpose, a blown shot.
+   */
+  fizzle() {
+    if (!ready()) return;
+    const t = ctx.currentTime + 0.03;
+    const len = vary(0.38, 0.12);
+    burst({ freq: vary(1100), q: 0.9, decay: 0.04, peak: 0.28 });
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(vary(620, 0.1), t);
+    osc.frequency.exponentialRampToValueAtTime(vary(110, 0.15), t + len);
+    // A wobble that gets wider as it droops
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = vary(17, 0.15);
+    const depth = ctx.createGain();
+    depth.gain.setValueAtTime(8, t);
+    depth.gain.linearRampToValueAtTime(40, t + len);
+    lfo.connect(depth).connect(osc.frequency);
+    const g = ctx.createGain();
+    env(g, t, 0.02, len, 0.3);
+    osc.connect(g).connect(master);
+    osc.start(t);
+    lfo.start(t);
+    osc.stop(t + len + 0.08);
+    lfo.stop(t + len + 0.08);
+    burst({ type: "bandpass", freq: vary(3200), q: 1.2, attack: 0.01, decay: len * 0.8, peak: 0.1, at: 0.03 });
+  },
   thunk(strength = 0.6, small = false) {
     if (!ready()) return;
     const s = Math.max(0.08, Math.min(1, strength));
@@ -88,15 +117,19 @@ export const sound = {
     if (!ready()) return;
     burst({ type: "lowpass", freq: 420, decay: 0.04, peak: 0.2 });
     const t = ctx.currentTime + 0.006;
-    const length = vary(0.2, 0.15);
+    // Each tear is a different sheet: the whole hiss shifts up or down
+    // together, and the length and the slide's depth move with it
+    const pitch = 0.7 + Math.random() * 0.75;
+    const length = 0.2 * (1.25 - (pitch - 0.7) * 0.5) * vary(1, 0.1);
     const src = ctx.createBufferSource();
     src.buffer = noise;
     src.loop = true;
+    src.playbackRate.value = 0.85 + (pitch - 0.7) * 0.4;
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.Q.value = 0.7;
-    filter.frequency.setValueAtTime(vary(6800), t);
-    filter.frequency.exponentialRampToValueAtTime(vary(2600), t + length);
+    filter.Q.value = 0.7 + Math.random() * 0.6;
+    filter.frequency.setValueAtTime(Math.min(9500, 6800 * pitch), t);
+    filter.frequency.exponentialRampToValueAtTime(2600 * pitch * vary(1, 0.2), t + length);
     // Air on top, so the start has a crisp "s" in it
     const air = ctx.createBiquadFilter();
     air.type = "highshelf";

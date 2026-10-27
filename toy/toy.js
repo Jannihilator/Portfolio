@@ -163,11 +163,12 @@ export function createToy({ table, aim, fx, reducedMotion }) {
     const target = targetAt(x, y);
     if (target.kind === "none") return;
     wakeAudio();
-    sound.pop();
     pop();
     launch = launchFor(x);
     // Each shot keeps its own force, even if another is fired before it lands
     const f = (force = shotForce());
+    if (f < SHOT.normal[0]) sound.fizzle();
+    else sound.pop();
 
     if (target.kind === "table") {
       const [nx, ny] = toNdc(x, y);

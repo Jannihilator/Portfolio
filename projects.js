@@ -553,7 +553,7 @@ window.PORTFOLIO_PROJECTS = [
         size: "big",
         media: [
           { type: "image", src: "./assets/Xhaler_Media/web/posters/demo-reel.jpg", alt: "XHaler demo reel" },
-          { type: "video", src: "./assets/Xhaler_Media/web/demo-reel.mp4" },
+          { type: "video", src: "./assets/Xhaler_Media/web/demo-reel.mp4", fallback: "./assets/Xhaler_Media/web/flowers.jpg" },
         ],
         description:
           "A VR game with multiple levels, played by breathing. The goal is to experiment with this new type of control and see whether it can reach a higher state of immersion, including emotional impact.",
@@ -1150,7 +1150,8 @@ window.PORTFOLIO_PROJECTS = [
       )}" loading="lazy" decoding="async"${shape} />`;
     } else {
       const poster = block.poster ? ` poster="${escapeHtml(block.poster)}"` : "";
-      media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster}${shape} src="${escapeHtml(
+      const fallback = block.fallback ? ` data-fallback="${escapeHtml(block.fallback)}"` : "";
+      media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster}${fallback}${shape} src="${escapeHtml(
         block.src
       )}"></video>`;
     }
@@ -1236,6 +1237,29 @@ window.PORTFOLIO_PROJECTS = [
    *  reduced-motion setting leaves them stopped with controls. */
   let beatObserver = null;
 
+  const STALL_MS = 8000;
+
+  /** A clip that has shown nothing after a while swaps its poster for its
+   *  fallback still, so a slow connection does not leave a dead frame. */
+  function watchStall(video) {
+    const fallback = video.dataset.fallback;
+    if (!fallback || video.dataset.watching) return;
+    video.dataset.watching = "1";
+    const stalled = () => video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA;
+    const timer = setTimeout(() => {
+      if (stalled()) video.setAttribute("poster", fallback);
+    }, STALL_MS);
+    video.addEventListener("loadeddata", () => clearTimeout(timer), { once: true });
+    video.addEventListener(
+      "error",
+      () => {
+        clearTimeout(timer);
+        video.setAttribute("poster", fallback);
+      },
+      { once: true }
+    );
+  }
+
   function bindBeatPlayers(root) {
     if (beatObserver) {
       beatObserver.disconnect();
@@ -1252,15 +1276,20 @@ window.PORTFOLIO_PROJECTS = [
       return;
     }
     if (!("IntersectionObserver" in window)) {
-      videos.forEach((video) => video.play().catch(() => {}));
+      videos.forEach((video) => {
+        watchStall(video);
+        video.play().catch(() => {});
+      });
       return;
     }
     beatObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const video = entry.target;
-          if (entry.isIntersecting) video.play().catch(() => {});
-          else video.pause();
+          if (entry.isIntersecting) {
+            watchStall(video);
+            video.play().catch(() => {});
+          } else video.pause();
         });
       },
       { threshold: 0.35 }
@@ -1628,6 +1657,7 @@ window.PORTFOLIO_PROJECTS = [
     loadProgress: videoLoadProgress,
     beatsHtml,
     bindBeatPlayers,
+    watchStall,
     awardHtml,
     contributionsHtml,
     stackHtml,
