@@ -21,6 +21,91 @@ document.querySelectorAll("[data-goto]").forEach((button) => {
   });
 });
 
+// The splash is the table, with the intro lying on it as a real sheet of
+// paper in the 3D scene (see the sheet in scene.js). Scrolling peels it up
+// off the table until it lies exactly over the intro panel's place; a dart
+// on it does the same, by scrolling there. The real panel fades in over it
+// at the very end and takes over. Until the sheet is ready, or without the
+// 3D table, the page is just the page. Phones skip the splash (see toy.css).
+const splash = $("splash");
+const intro = $("intro-flip");
+$("about").tabIndex = -1;
+/** The toy table, once it is up and has the intro's picture */
+let sheetTable = null;
+
+function splashProgress() {
+  const span = splash.offsetHeight;
+  // A scroll can stop a fraction of a pixel short; that counts as up
+  const raw = span > 0 ? window.scrollY / span : 1;
+  return raw > 0.995 ? 1 : Math.max(0, raw);
+}
+
+{
+  let queued = false;
+  const update = () => {
+    queued = false;
+    if (!sheetTable) return;
+    const p = splashProgress();
+    // The panel's own place, which the sheet comes to rest on
+    sheetTable.setSheetProgress(p, $("about").getBoundingClientRect());
+    const show = Math.min(1, Math.max(0, (p - 0.9) / 0.1));
+    intro.style.opacity = show < 1 ? show.toFixed(3) : "";
+    intro.style.pointerEvents = p < 1 ? "none" : "";
+  };
+  const queue = () => {
+    if (!queued) requestAnimationFrame(update);
+    queued = true;
+  };
+  window.addEventListener("scroll", queue, { passive: true });
+  window.addEventListener("resize", queue);
+  window.addEventListener("sheet-ready", queue);
+}
+
+/** Paints the intro panel into a picture for the sheet on the table */
+async function paintSheet(table) {
+  const { default: html2canvas } = await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js");
+  const panel = $("about");
+  const picture = await html2canvas(panel, {
+    backgroundColor: null,
+    scale: Math.min(2, window.devicePixelRatio || 1) * 1.25,
+    logging: false,
+    onclone: (doc) => {
+      doc.getElementById("intro-flip").style.opacity = "1";
+      // The panel's paper is drawn on its canvas, which may not be painted yet: plain paper instead
+      const copy = doc.getElementById("about");
+      copy.style.background = "#fffdf7";
+      copy.querySelector(".panel-canvas")?.remove();
+      // The painter drops the text of inline-flex links; as inline blocks they keep it
+      copy.querySelectorAll(".contact-links a").forEach((link) => (link.style.display = "inline-block"));
+    },
+  });
+  table.setSheet(picture, panel.offsetWidth / panel.offsetHeight);
+  sheetTable = table;
+  window.dispatchEvent(new Event("sheet-ready"));
+}
+
+async function startSheet(table) {
+  if (!splash.offsetHeight) return;
+  try {
+    await document.fonts.ready;
+    await paintSheet(table);
+    $("table").addEventListener("pickup", () => {
+      if (splashProgress() >= 1) return;
+      window.scrollTo({ top: splash.offsetHeight, behavior: reducedMotion ? "auto" : "smooth" });
+      $("about").focus({ preventScroll: true });
+    });
+    // A new width reflows the panel, so it is painted again once the resizing stops
+    let again = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(again);
+      again = setTimeout(() => paintSheet(table).catch(() => {}), 300);
+    });
+  } catch (error) {
+    // The page keeps its plain panel
+    console.warn("Intro sheet unavailable", error);
+  }
+}
+
 // The Résumé button turns the intro card over to the résumé on its back;
 // the PDF only loads the first time it is asked for
 {
@@ -59,6 +144,7 @@ async function startTable() {
 }
 
 const table = await startTable();
+if (table) startSheet(table);
 
 let toy = null;
 if (table) {

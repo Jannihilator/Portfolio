@@ -75,11 +75,15 @@ export function createToy({ table, aim, fx, reducedMotion }) {
   function updateHover() {
     if (!pointer.inside) {
       if (performance.now() > tapShownUntil) aim.classList.remove("is-shown");
+      table.hoverSheet(false);
       return;
     }
     const t = targetAt(pointer.x, pointer.y);
+    // The intro lying on the table is a thing to pick up: its corner lifts under the crosshair
+    const onSheet = t.kind === "table" && table.sheetAt(...toNdc(pointer.x, pointer.y));
+    table.hoverSheet(onSheet);
     aim.classList.toggle("is-shown", t.kind !== "none");
-    aim.classList.toggle("is-target", t.kind === "button" || t.kind === "dart");
+    aim.classList.toggle("is-target", t.kind === "button" || t.kind === "dart" || onSheet);
   }
 
   /** The crosshair pops on every shot */

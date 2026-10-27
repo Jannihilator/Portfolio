@@ -17,7 +17,7 @@
   <link rel="manifest" href="./assets/favicon/site.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Shantell+Sans:wght@600&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
   <link rel="stylesheet" href="toy.css" />
   <script type="importmap">
@@ -35,6 +35,10 @@
   <canvas id="table" aria-hidden="true"></canvas>
 
   <div id="page">
+    <!-- The splash: a screen of nothing but the table, with the intro's top edge peeking up from below.
+         The way in is the Enter target on the table, or a scroll. -->
+    <div class="splash" id="splash" aria-hidden="true"></div>
+
     <!-- The intro is a card: the Résumé button turns it over to the résumé on its back -->
     <div class="intro-flip" id="intro-flip">
       <header id="about" class="panel intro" data-panel data-outline>

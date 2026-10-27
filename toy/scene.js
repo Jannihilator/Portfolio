@@ -325,6 +325,33 @@ function skillCanvas(text, color, ink, w = 400) {
   return c;
 }
 
+/** A cream stone face with a serif letter, like the bears' letter stones */
+function letterCanvas(letter, color, ink) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 160;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = css(color);
+  ctx.fillRect(0, 0, 160, 160);
+  // A few soft grey chips, so it reads as carved stone
+  const rand = rng(letter.charCodeAt(0));
+  ctx.strokeStyle = "rgba(110, 96, 84, 0.22)";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 9; i++) {
+    const a = rand() * Math.PI * 2;
+    const r = 52 + rand() * 22;
+    ctx.beginPath();
+    ctx.arc(80, 80, r, a, a + 0.3 + rand() * 0.5);
+    ctx.stroke();
+  }
+  ctx.font = "700 104px Georgia, 'Times New Roman', serif";
+  ctx.fillStyle = ink;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(letter, 80, 86);
+  return c;
+}
+
 /** Rings of a toy target, seen face on */
 function bullseyeCanvas() {
   const c = document.createElement("canvas");
@@ -432,7 +459,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   await RAPIER.init();
   // The skill bricks are painted with the page's own font
   try {
-    await Promise.race([document.fonts.load("600 40px Figtree"), new Promise((r) => setTimeout(r, 1500))]);
+    await Promise.race([Promise.all([document.fonts.load("600 40px Figtree"), document.fonts.load("600 40px \"Shantell Sans\"")]), new Promise((r) => setTimeout(r, 1500))]);
   } catch {
     // Painted in the fallback font instead
   }
@@ -1173,20 +1200,171 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   }
 
   /**
+   * Little black resin bears, like the ones on James's shelf, each holding
+   * a cream stone disc with a letter on it: tan muzzle, ears and paw pads,
+   * snouts tipped up. Each has its own pose, as on the shelf:
+   *   belly - standing, the disc hugged to its tummy
+   *   scarf - the same, with a green scarf on
+   *   head  - standing, arms out wide, the disc balanced on its head
+   *   sit   - sitting, feet out, the disc held between its legs
+   *   lean  - sitting back with its feet up, the disc in front
+   * The bear and its disc are one prop, so a dart knocks them over together.
+   */
+  /**
+   * A stone's outline: a rough round, a little wider than tall, with a few
+   * soft lumps so no two are the same and none is a true circle
+   */
+  function stoneOutline(r, seed) {
+    const rand = rng(seed * 7 + 3);
+    const n = 8;
+    const turn = rand() * Math.PI;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = turn + (i / n) * Math.PI * 2 + (rand() - 0.5) * 0.35;
+      const k = 0.86 + rand() * 0.2;
+      pts.push(new THREE.Vector2(Math.cos(a) * r * k * 1.1, Math.sin(a) * r * k));
+    }
+    const curve = new THREE.SplineCurve([...pts, pts[0], pts[1], pts[2]]);
+    // Sampled over the middle of the run, so the loop closes smoothly
+    const loop = [];
+    for (let i = 0; i < 40; i++) loop.push(curve.getPoint((1 + (i / 40) * n) / (n + 2)));
+    return new THREE.Shape(loop);
+  }
+
+  const BEAR = { s: 1.2, fur: 0x2b2624, tan: 0xd7a868, stone: 0xece3d1, scarf: 0x5f8a4a };
+  function bear(x, z, letter, pose, rotY) {
+    const { s, fur, tan } = BEAR;
+    const g = new THREE.Group();
+    const part = (parent, key, make, color, px, py, pz) => {
+      const m = new THREE.Mesh(geo(key, make), mat(color));
+      m.position.set(px * s, py * s, pz * s);
+      parent.add(m);
+      return m;
+    };
+    const ball = (r, sx = 1, sy = 1, sz = 1) => () => new THREE.SphereGeometry(r * s, 14, 10).scale(sx, sy, sz);
+    const standing = pose === "belly" || pose === "scarf" || pose === "head";
+
+    // Body and legs
+    const body = new THREE.Group();
+    g.add(body);
+    if (standing) {
+      part(body, "bearTorso", ball(0.2, 1, 1.35, 0.9), fur, 0, 0.4, 0);
+      for (const side of [-1, 1]) part(body, "bearStandLeg", ball(0.1, 1, 1.2, 1.1), fur, side * 0.1, 0.1, 0.02);
+    } else {
+      part(body, "bearSeat", ball(0.21, 1, 1.15, 0.95), fur, 0, 0.25, 0);
+      const up = pose === "lean";
+      for (const side of [-1, 1]) {
+        const leg = part(body, "bearSitLeg", ball(0.09, 1, 0.9, 1.5), fur, side * (up ? 0.19 : 0.16), up ? 0.15 : 0.09, 0.17);
+        if (up) leg.rotation.x = -0.6;
+        part(body, "bearPad", ball(0.07, 1, 1, 0.35), tan, side * (up ? 0.19 : 0.16), up ? 0.24 : 0.1, up ? 0.27 : 0.3);
+      }
+      if (up) body.rotation.x = -0.15;
+    }
+
+    // Head, tipped up a little
+    const head = new THREE.Group();
+    head.position.y = (standing ? 0.78 : 0.6) * s;
+    head.rotation.x = -0.3;
+    body.add(head);
+    part(head, "bearHead", ball(0.17), fur, 0, 0, 0.02);
+    part(head, "bearMuzzle", ball(0.08, 1, 0.8, 0.9), tan, 0, -0.04, 0.16);
+    part(head, "bearNose", ball(0.03), COLORS.ink, 0, -0.02, 0.24);
+    for (const side of [-1, 1]) {
+      part(head, "bearEar", ball(0.065, 1, 1, 0.6), fur, side * 0.13, 0.14, -0.01);
+      part(head, "bearInnerEar", ball(0.035, 1, 1, 0.4), tan, side * 0.13, 0.14, 0.03);
+      part(head, "bearEye", ball(0.022), 0x17120f, side * 0.065, 0.04, 0.155);
+    }
+
+    // Arms, and where the disc goes
+    let disc;
+    if (pose === "head") {
+      for (const side of [-1, 1]) {
+        const arm = part(body, "bearWideArm", ball(0.065, 2.2, 0.8, 0.8), fur, side * 0.3, 0.52, 0);
+        arm.rotation.z = side * 0.45;
+        part(body, "bearPalm", ball(0.045, 1, 1, 0.4), tan, side * 0.43, 0.6, 0.04);
+      }
+      disc = [0, 1.07, 0.02];
+    } else if (standing) {
+      for (const side of [-1, 1]) part(body, "bearHugArm", ball(0.065, 0.8, 0.8, 1.7), fur, side * 0.17, 0.45, 0.14);
+      if (pose === "scarf") {
+        const scarf = part(body, "bearScarf", () => new THREE.TorusGeometry(0.13 * s, 0.035 * s, 8, 18), BEAR.scarf, 0, 0.6, 0.01);
+        scarf.rotation.x = Math.PI / 2;
+      }
+      disc = [0, 0.4, 0.2];
+    } else {
+      for (const side of [-1, 1]) part(body, "bearSitArm", ball(0.06, 0.8, 0.8, 1.5), fur, side * 0.17, 0.27, 0.2);
+      disc = [0, 0.22, 0.3];
+    }
+    // The stone: a lumpy hand-shaped disc, each one its own, the letter on the front
+    const stone = new THREE.Group();
+    stone.position.set(disc[0] * s, disc[1] * s, disc[2] * s);
+    stone.rotation.x = -0.12;
+    const r = 0.16 * s;
+    const depth = 0.05 * s;
+    const lip = 0.01 * s;
+    const outline = stoneOutline(r, letter.charCodeAt(0));
+    const rock = new THREE.Mesh(
+      geo(`bearStone${letter}`, () =>
+        new THREE.ExtrudeGeometry(outline, { depth, bevelEnabled: true, bevelSize: lip * 0.8, bevelThickness: lip, bevelSegments: 2, curveSegments: 4 }).translate(0, 0, -depth / 2)
+      ),
+      mat(BEAR.stone)
+    );
+    // The face takes the letter canvas across the stone's whole width
+    const faceGeo = geo(`bearStoneFace${letter}`, () => {
+      const g2 = new THREE.ShapeGeometry(outline, 4);
+      const p = g2.attributes.position;
+      const uv = g2.attributes.uv;
+      for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / (2.2 * r) + 0.5, p.getY(i) / (2.2 * r) + 0.5);
+      return g2;
+    });
+    const face = new THREE.Mesh(faceGeo, canvasMaterial(letterCanvas(letter, BEAR.stone, "#3a2b36")));
+    face.position.z = depth / 2 + lip + 0.002;
+    stone.add(rock, face);
+    (pose === "head" ? g : body).add(stone);
+
+    const h = standing ? (pose === "head" ? 1.2 : 0.98) : 0.8;
+    return addProp(
+      g,
+      [
+        RAPIER.ColliderDesc.cuboid(0.24 * s, (h / 2) * s, 0.2 * s).setTranslation(0, (h / 2) * s, 0),
+        RAPIER.ColliderDesc.cuboid(0.17 * s, 0.17 * s, 0.05 * s).setTranslation(0, disc[1] * s, disc[2] * s),
+      ],
+      new THREE.Vector3(x, 0, z),
+      rotY
+    );
+  }
+
+  /**
+   * "James" in bear toys, out at the back between the castle and the
+   * pinwheels, in a gentle curve and each bear turned to the camera
+   */
+  function bearName(word) {
+    const poses = ["belly", "sit", "lean", "scarf", "head"];
+    const rand = rng(41);
+    [...word].forEach((letter, i) => {
+      const k = i - (word.length - 1) / 2;
+      const x = -5.75 + k * 0.68;
+      const z = -3.3 - k * k * 0.06;
+      const turn = Math.atan2(-x, camera.position.z - z) + (rand() - 0.5) * 0.25;
+      bear(x, z, letter, poses[i % poses.length], turn);
+    });
+  }
+
+  /**
    * Dice of every kind and the meeples: a few in the middle at the front
    * with the juggling balls and the controller, more round the dominoes,
    * and some out at the back among the pinwheels.
    */
   function deskToys() {
     // The middle: a big meeple, a die, three juggling balls and a controller
-    meeple(-1.0, 5.0, COLORS.mustard, 0.15, 1.35);
+    meeple(-1.9, 3.2, COLORS.mustard, 0.15, 1.35);
     die(-2.2, 4.4, "#fffaf0", "#4a3526", 0.5, 4);
     // Four juggling balls: three in a triangle and one sat on top
     jugglingBall(-2.9, 0, 6.0, "#dc6a52", "#ebbb55", 0.4);
     jugglingBall(-2.42, 0, 6.0, "#7f9fcb", "#fffaf0", 1.1);
     jugglingBall(-2.66, 0, 6.42, "#93a86c", "#ebbb55", 2.0);
     jugglingBall(-2.66, 0.392, 6.14, "#ebbb55", "#dc6a52", 2.6);
-    controller(0.6, 7.2, -0.2);
+    controller(0.9, 8.9, -0.2);
     // Round the dominoes: inside the first arch, in the loop, and beyond
     meeple(3.4, 6.5, COLORS.sage, -0.25, 0.6);
     die(3.7, 7.3, "#dc6a52", "#fffaf0", -0.3, 3);
@@ -1201,9 +1379,9 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     animal("sheep", 7.3, 7.5, COLORS.cream, 0.25, 0.55);
     animal("sheep", 3.2, 4.2, COLORS.cream, 0.3, 0.45);
     // ...and on the near side and the left, so they ring it all round
-    animal("boar", 1.65, 6.4, 0x7a5236, 0.3, 0.34);
-    animal("sheep", 1.5, 5.3, COLORS.cream, -0.2, 0.55);
-    meeple(1.8, 7.6, COLORS.coral, 0.2, 0.42);
+    animal("boar", -1.3, 8.5, 0x7a5236, 0.3, 0.34);
+    animal("sheep", 1.1, 3.4, COLORS.cream, -0.2, 0.55);
+    meeple(-0.6, 3.6, COLORS.coral, 0.2, 0.42);
     animal("sheep", 9.6, 6.7, COLORS.cream, 0.15, 0.5);
     animal("boar", 6.2, 7.95, 0x7a5236, -0.3, 0.42);
     animal("sheep", 3.1, 8.0, COLORS.cream, -0.4, 0.42);
@@ -1216,58 +1394,71 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   }
 
   /** A big sheet of paper lying on the table, with a note written on it */
+  /** A yellow sticky note's face: the glue band along the top, and the writing */
   function noteCanvas() {
     const c = document.createElement("canvas");
-    c.width = 700;
-    c.height = 1110;
+    c.width = c.height = 800;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#fffdf7";
-    ctx.fillRect(0, 0, 700, 1110);
-    // Faint ruled lines, like a page torn from a notebook
-    ctx.strokeStyle = "rgba(127, 159, 203, 0.35)";
-    ctx.lineWidth = 3;
-    for (let y = 70; y < 1110; y += 60) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(700, y);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = "rgba(220, 106, 82, 0.45)";
-    ctx.beginPath();
-    ctx.moveTo(70, 0);
-    ctx.lineTo(70, 1110);
-    ctx.stroke();
-    // The writing sits up the far side, on the part of the sheet in view
-    ctx.fillStyle = "#4a3526";
-    ctx.font = "600 68px Figtree, Nunito, sans-serif";
-    ctx.fillText("toys:", 100, 118);
-    ctx.font = "500 44px Figtree, Nunito, sans-serif";
+    ctx.fillStyle = "#f7df6f";
+    ctx.fillRect(0, 0, 800, 800);
+    // The glue band is a touch deeper and glossier
+    const glue = ctx.createLinearGradient(0, 0, 0, 150);
+    glue.addColorStop(0, "rgba(214, 170, 40, 0.28)");
+    glue.addColorStop(1, "rgba(214, 170, 40, 0)");
+    ctx.fillStyle = glue;
+    ctx.fillRect(0, 0, 800, 150);
+    // The free edge darkens a little where it curls away from the light
+    const curl = ctx.createLinearGradient(0, 620, 0, 800);
+    curl.addColorStop(0, "rgba(160, 110, 20, 0)");
+    curl.addColorStop(1, "rgba(160, 110, 20, 0.22)");
+    ctx.fillStyle = curl;
+    ctx.fillRect(0, 620, 800, 180);
+    // Marker-style handwriting, drawn tall: lying on the table the note is
+    // seen at a low angle that squashes it, so the letters are stretched
+    // up to read as normal from the camera
+    const TALL = 1.9;
+    ctx.fillStyle = "#3d2b20";
+    ctx.save();
+    ctx.scale(1, TALL);
+    ctx.font = "600 92px \"Shantell Sans\", Figtree, sans-serif";
+    ctx.fillText("toys:", 60, 180 / TALL);
+    ctx.font = "600 54px \"Shantell Sans\", Figtree, sans-serif";
     const words = "an object or system you play with just for the joy of tinkering around".split(" ");
     let line = "";
-    let y = 180;
+    let y = 310;
     for (const w of words) {
       const next = line ? `${line} ${w}` : w;
-      if (ctx.measureText(next).width > 560) {
-        ctx.fillText(line, 100, y);
+      if (ctx.measureText(next).width > 700) {
+        ctx.fillText(line, 60, y / TALL);
         line = w;
-        y += 60;
+        y += 125;
       } else line = next;
     }
-    ctx.fillText(line, 100, y);
+    ctx.fillText(line, 60, y / TALL);
+    ctx.restore();
     return c;
   }
 
-  function note(x, z) {
-    const w = 2.3;
-    const h = 3.7;
-    const paper = canvasMaterial(noteCanvas());
-    const blank = mat(COLORS.cream);
-    // Box faces +x, -x, +y, -y, +z, -z: the writing is on top
-    const card = new THREE.Mesh(new THREE.BoxGeometry(w, 0.02, h), [blank, blank, paper, blank, blank, blank]);
-    card.position.y = 0.01;
+  /**
+   * A sticky note lying on the table: square and yellow, held down by its
+   * glue along the far edge, its free edge near you curling up a little
+   */
+  function note(x, z, rotY) {
+    const size = 2.0;
+    const geo = new THREE.PlaneGeometry(size, size*0.8, 1, 18).rotateX(-Math.PI / 2);
+    // Local z runs from the glued edge (-size/2) to the free edge (+size/2)
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const k = Math.max(0, (pos.getZ(i) / size + 0.5 - 0.62) / 0.38);
+      pos.setY(i, 0.012 + 0.11 * k * k);
+    }
+    geo.computeVertexNormals();
     const g = new THREE.Group();
-    g.add(card);
-    return addProp(g, [RAPIER.ColliderDesc.cuboid(w / 2, 0.01, h / 2).setTranslation(0, 0.01, 0).setDensity(0.3)], new THREE.Vector3(x, 0, z), 0.03);
+    g.add(
+      new THREE.Mesh(geo, canvasMaterial(noteCanvas())),
+      new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xe8c95a, roughness: 0.9, side: THREE.BackSide }))
+    );
+    return addProp(g, [RAPIER.ColliderDesc.cuboid(size / 2, 0.01, size / 2).setTranslation(0, 0.01, 0).setDensity(0.3)], new THREE.Vector3(x, 0, z), rotY);
   }
 
   /** A yellow hexagonal pencil, sharpened, with a pink eraser, lying down */
@@ -1731,10 +1922,11 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   // A toy table laid out for its own sake. The pages lie on top of it.
   backWall(-9.6);
   castle(-8.5, -5);
-  pinwheel(-2.5, -4.4, 1.0, 0x4a4446, 0.3);
+  pinwheel(-2.5, -4.4, 1.0, 0x5f86b8, 0.3);
   pinwheel(-3.9, -5.8, 0.75, 0x6f9a4c, 0.45);
-  pinwheel(-3.8, -4.0, 0.6, 0x6e5c9e, 0.4);
   pinwheel(4.6, -5.3, 0.9, 0xc8574a, -0.35);
+  pinwheel(5.9, -4.3, 0.6, 0x6e5c9e, -0.4);
+  bearName("JAMES");
   house(11.6, -6.8, -0.35);
   tree(2.9, -3.4, { kind: "egg", scale: 0.95, color: COLORS.green });
   if (skills.length) skillWall(skills);
@@ -1755,12 +1947,11 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   });
   // Near the front edge: a note with a pencil and a marker by the porcupine,
   // dice and meeples in the middle, and dominoes snaking off to the right
-  // The sheet runs off the edge of the view; the pencil and marker lie on it
-  note(-5.5, 7.4);
-  standOn = 0.02;
-  pencil(-5.0, 7.95, 0.45);
-  marker(-5.8, 8.6, -0.1, COLORS.red);
-  standOn = 0;
+  // A sticky note turned counter-clockwise, the other way from the intro
+  // sheet, with the pencil and the marker left beside it
+  note(-5.85, 5.15, 0.22);
+  pencil(-4.5, 6.4, 0.5);
+  marker(-6.0, 6.8, -0.25, COLORS.red);
   deskToys();
   // An S: away from you, over, back toward you, round, and off to the
   // right past the edge of the view
@@ -2394,7 +2585,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
 
   /** A weak shot at the table or a toy falls short of it, instead of flying straight */
   function weak(hit, force) {
-    return force <= WEAK.below && !["target", "porcupine", "cloud"].includes(hit.kind) && hit.distance > 5;
+    return force <= WEAK.below && !["target", "porcupine", "cloud", "sheet"].includes(hit.kind) && hit.distance > 5;
   }
 
   /** Where the flying dart is handed from the page to the table. A weak shot is the table's from the start. */
@@ -2444,6 +2635,12 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       return "cloud";
     }
     const from = camera.position.clone().addScaledVector(dir, dist);
+    if (hit.kind === "sheet") {
+      // A dart on the lying intro picks it up; the dart drops off it
+      canvas.dispatchEvent(new Event("pickup"));
+      spawnDart(hit.point.clone().addScaledVector(dir, -0.15), dir.clone().multiplyScalar(-3).add(new THREE.Vector3(0, 2, 0)));
+      return "sheet";
+    }
     if (hit.kind === "target" || hit.kind === "porcupine") {
       pin(hit, from, dir);
       return hit.kind;
@@ -2452,6 +2649,190 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     // Everything else, the hoop too, flies straight along the aim
     spawnDart(from, dir.clone().multiplyScalar(DART_SPEED * force));
     return hit.kind;
+  }
+
+  // ---------------------------------------------------------------- sheet
+  /**
+   * The intro, as a real sheet of paper lying on the table: a finely cut
+   * plane wearing a picture of the intro panel, lit and shadowed with
+   * everything else. Hovering it curls its top-right corner up. As the
+   * page scrolls (progress 0 to 1) the corner peels further, then the
+   * sheet comes up off the table, cupping and rippling as it flies, and
+   * unrolls flat exactly over the intro panel's place on the screen, where
+   * the page hands over to the real panel.
+   *
+   * The bend is a page curl: past a fold line across the top-right corner,
+   * the paper wraps round a cylinder of radius R, so it rolls rather than
+   * hinges. Lengths are in sheet heights.
+   */
+  const SHEET = {
+    at: new THREE.Vector3(0.2, 0.016, 6.0),
+    turn: -0.12,
+    height: 3.1,
+    /** How far in front of the eye the sheet meets the panel's place */
+    depth: 4,
+    hover: { peel: 0.13, radius: 0.07 },
+    peel: { peel: 0.62, radius: 0.2 },
+  };
+  const sheet = (() => {
+    const geo = new THREE.PlaneGeometry(1, 1, 40, 40);
+    const base = geo.attributes.position.array.slice();
+    const front = new THREE.MeshStandardMaterial({ roughness: 0.92, alphaTest: 0.5, emissive: 0xffffff, emissiveIntensity: 0 });
+    const back = new THREE.MeshStandardMaterial({ color: 0xf3ead8, roughness: 0.95, side: THREE.BackSide });
+    const faceMesh = new THREE.Mesh(geo, front);
+    const backMesh = new THREE.Mesh(geo, back);
+    const obj = new THREE.Group();
+    obj.add(faceMesh, backMesh);
+    for (const m of [faceMesh, backMesh]) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.userData.hit = { kind: "sheet" };
+      hittables.push(m);
+    }
+    // Hidden mesh by mesh, since the darts' ray only skips hidden meshes
+    for (const m of obj.children) m.visible = false;
+    scene.add(obj);
+    const qLie = new THREE.Quaternion()
+      .setFromAxisAngle(new THREE.Vector3(0, 1, 0), SHEET.turn)
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2));
+    return {
+      obj, geo, base, front, qLie,
+      aspect: 1, ready: false, progress: 0, rect: null,
+      hover: false, hoverK: 0, hoverV: 0,
+      shape: null,
+    };
+  })();
+
+  /** Bends the flat sheet: a corner curl, a cup across it, and a ripple */
+  function bendSheet(peel, radius, cup, wave, phase) {
+    const key = [peel, radius, cup, wave, phase].map((v) => v.toFixed(4)).join();
+    if (key === sheet.shape) return;
+    sheet.shape = key;
+    const A = sheet.aspect;
+    const pos = sheet.geo.attributes.position.array;
+    const b = sheet.base;
+    // From the middle out to the top-right corner, and the fold line across it
+    const len = Math.hypot(A / 2, 0.5);
+    const dx = A / 2 / len;
+    const dy = 0.5 / len;
+    const line = len - peel;
+    for (let i = 0; i < pos.length; i += 3) {
+      let u = b[i] * A;
+      let v = b[i + 1];
+      let z = cup * (b[i] * b[i] - 1 / 12) + wave * Math.sin(Math.PI * 2 * (0.7 * b[i] + 0.45 * b[i + 1]) + phase);
+      const t = u * dx + v * dy - line;
+      if (peel > 0 && t > 0) {
+        const phi = t / radius;
+        let along;
+        let lift;
+        if (phi < Math.PI) {
+          along = line + radius * Math.sin(phi);
+          lift = radius * (1 - Math.cos(phi));
+        } else {
+          along = line - (t - Math.PI * radius);
+          lift = 2 * radius;
+        }
+        const shift = along - (t + line);
+        u += dx * shift;
+        v += dy * shift;
+        z += lift;
+      }
+      pos[i] = u;
+      pos[i + 1] = v;
+      pos[i + 2] = z;
+    }
+    sheet.geo.attributes.position.needsUpdate = true;
+    sheet.geo.computeVertexNormals();
+    sheet.geo.computeBoundingSphere();
+    sheet.geo.computeBoundingBox();
+  }
+
+  const camRight = new THREE.Vector3();
+  const camUp = new THREE.Vector3();
+  const camFwd = new THREE.Vector3();
+  const easeInOut = (k) => k * k * (3 - 2 * k);
+  const clamp01 = (k) => Math.min(1, Math.max(0, k));
+
+  /** Where the sheet lies flat over the panel's place on the screen */
+  function screenPose(rect) {
+    const D = SHEET.depth;
+    const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const tanH = tanV * camera.aspect;
+    const cx = ((rect.left + rect.width / 2) / window.innerWidth) * 2 - 1;
+    const cy = -(((rect.top + rect.height / 2) / window.innerHeight) * 2 - 1);
+    camera.matrixWorld.extractBasis(camRight, camUp, camFwd);
+    camFwd.negate();
+    const at = camera.position.clone().addScaledVector(camFwd, D).addScaledVector(camRight, cx * D * tanH).addScaledVector(camUp, cy * D * tanV);
+    const height = (rect.height / window.innerHeight) * 2 * D * tanV;
+    return { at, q: camera.quaternion.clone(), height };
+  }
+
+  const corner = new THREE.Vector3();
+  function poseSheet() {
+    const p = sheet.progress;
+    const show = sheet.ready && p < 1 && sheet.rect;
+    for (const m of sheet.obj.children) m.visible = !!show;
+    dirty = true;
+    shadowsDirty = true;
+    if (!show) return;
+    // The corner peels first, while the sheet still lies; it rolls back flat as the sheet arrives
+    const peelIn = easeInOut(clamp01(p / 0.22));
+    const peelOut = 1 - easeInOut(clamp01((p - 0.3) / 0.55));
+    const hk = sheet.hoverK * (1 - clamp01(p / 0.1));
+    const peel = Math.max(SHEET.hover.peel * hk, SHEET.peel.peel * peelIn * peelOut);
+    const radius = THREE.MathUtils.lerp(SHEET.hover.radius, SHEET.peel.radius, peelIn) * (1 + (1 - peelOut) * 2.5);
+    // The sheet itself comes up a beat behind and is flat on the panel's place by 0.9
+    const q = easeInOut(clamp01((p - 0.12) / 0.78));
+    const air = Math.sin(Math.PI * q);
+    const cup = 0.16 * air * (1 - q * 0.5);
+    const wave = 0.035 * air;
+    bendSheet(peel, radius, cup, wave, q * 7);
+
+    const target = screenPose(sheet.rect);
+    const o = sheet.obj;
+    o.position.lerpVectors(SHEET.at, target.at, q);
+    o.quaternion.slerpQuaternions(sheet.qLie, target.q, q);
+    // A loose sheet sways as it goes: it rolls one way and back, and its top leads
+    const sway = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(-0.35 * air * (1 - q), 0.25 * Math.sin(Math.PI * 2 * q) * (1 - q), 0.3 * Math.sin(Math.PI * 1.5 * q) * (1 - q))
+    );
+    o.quaternion.multiply(sway);
+    o.scale.setScalar(THREE.MathUtils.lerp(SHEET.height, target.height, q));
+    // Off the table, it never dips through it
+    o.updateMatrixWorld();
+    let low = Infinity;
+    for (const [x, y] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, -0.5]]) {
+      low = Math.min(low, corner.set(x * sheet.aspect, y, 0).applyMatrix4(o.matrixWorld).y);
+    }
+    if (q > 0 && low < SHEET.at.y) o.position.y += SHEET.at.y - low;
+    // Lit by the room on the table, it turns into the page's own flat paper as it arrives
+    const glow = easeInOut(clamp01((q - 0.55) / 0.45));
+    sheet.front.color.setScalar(1 - glow);
+    sheet.front.emissiveIntensity = glow;
+  }
+
+  function animateSheet(dt) {
+    if (!sheet.ready) return;
+    // The hover curl springs up with a little bounce, and settles back down
+    const goal = sheet.hover && sheet.progress < 0.05 ? 1 : 0;
+    if (Math.abs(goal - sheet.hoverK) < 0.001 && Math.abs(sheet.hoverV) < 0.001) return;
+    if (reducedMotion) {
+      sheet.hoverK = goal;
+      sheet.hoverV = 0;
+    } else {
+      const k = Math.min(dt, 1 / 30);
+      sheet.hoverV += ((goal - sheet.hoverK) * 160 - sheet.hoverV * 16) * k;
+      sheet.hoverK += sheet.hoverV * k;
+    }
+    poseSheet();
+  }
+
+  const sheetRay = new THREE.Raycaster();
+  function sheetAt(ndcX, ndcY) {
+    if (!sheet.obj.children[0].visible) return false;
+    sheetRay.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+    const hit = sheetRay.intersectObjects(hittables, true).find((h) => h.object.visible);
+    return !!hit && rootHit(hit.object)?.kind === "sheet";
   }
 
   // ---------------------------------------------------------------- loop
@@ -2640,6 +3021,31 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       turnMills(dt);
       waveFlags(now);
       watchFrames(dt);
+      animateSheet(dt);
+    },
+    /** The intro's picture, for the sheet on the table; aspect is width over height */
+    setSheet(picture, aspect) {
+      const tex = new THREE.CanvasTexture(picture);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = anisotropy;
+      sheet.front.map?.dispose();
+      sheet.front.map = tex;
+      sheet.front.emissiveMap = tex;
+      sheet.front.needsUpdate = true;
+      sheet.aspect = aspect;
+      sheet.shape = null;
+      sheet.ready = true;
+      poseSheet();
+    },
+    /** How far the page has scrolled off the splash (0 to 1), and where the intro panel is on the screen */
+    setSheetProgress(progress, rect) {
+      sheet.progress = progress;
+      sheet.rect = rect;
+      poseSheet();
+    },
+    sheetAt,
+    hoverSheet(on) {
+      sheet.hover = on;
     },
     render() {
       if (!dirty) return;
@@ -2664,6 +3070,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         lastDart: live.length ? live[live.length - 1].p1.toArray().map((v) => Math.round(v * 100) / 100) : null,
         trainS: Math.round(train.s * 10) / 10,
         cloudHits: clouds.map((c) => c.hits),
+        sheet: { shown: sheet.obj.children[0].visible, at: sheet.obj.position.toArray().map((v) => Math.round(v * 100) / 100), scale: Math.round(sheet.obj.scale.x * 100) / 100, aspect: sheet.aspect, progress: sheet.progress },
         active,
         quality: Math.round(quality * 100) / 100,
         buffer: [renderer.domElement.width, renderer.domElement.height],
