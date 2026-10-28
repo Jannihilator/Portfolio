@@ -747,27 +747,30 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     g.scale(0.78, 0.78, 0.78);
     return g;
   })();
-  /** A goofy, lopsided face: two black dots and a wobbly smile, on a transparent canvas */
+  /** A goofy face, traced from a hand drawing: two dots and a hooked smile, on a transparent canvas */
   const uglyFaceTex = (() => {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const ctx = c.getContext("2d");
+    // the drawing's own pixels, moved so its middle sits on the canvas middle
+    const k = 1.85;
+    const at = ([x, y]) => [128 + (x - 202) * k, 120 + (y - 106) * k];
     ctx.fillStyle = "#111";
-    ctx.beginPath();
-    ctx.arc(64, 64, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(138, 46, 13, 0, Math.PI * 2);
-    ctx.fill();
+    for (const e of [[148, 74], [196, 63]]) {
+      const [x, y] = at(e);
+      ctx.beginPath();
+      ctx.arc(x, y, 5.5 * k, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.strokeStyle = "#111";
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 8.5 * k;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.moveTo(36, 184);
-    ctx.bezierCurveTo(50, 168, 70, 172, 82, 182);
-    ctx.bezierCurveTo(98, 196, 118, 188, 140, 174);
-    ctx.bezierCurveTo(166, 158, 196, 160, 224, 148);
+    [[156, 146], [175, 150], [187, 151], [200, 146], [232, 136], [250, 126], [257, 115], [257, 102]].forEach((p, i) => {
+      const [x, y] = at(p);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
     ctx.stroke();
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
