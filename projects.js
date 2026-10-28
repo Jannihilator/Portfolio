@@ -1431,9 +1431,12 @@ window.PORTFOLIO_PROJECTS = [
           let direct = preloadedVideo.get(item.src) || "";
           if (!direct && (!preloadActive || videoFallback.has(item.src))) direct = item.src;
           const srcAttr = direct ? ` src="${escapeHtml(direct)}"` : "";
+          const still = item.poster || item.fallback;
+          const poster = still ? ` poster="${escapeHtml(still)}"` : "";
+          const fallback = item.fallback ? ` data-fallback="${escapeHtml(item.fallback)}"` : "";
           return `<video class="${extraClass}" muted loop playsinline preload="auto" data-video="${escapeHtml(
             item.src
-          )}"${autoplay}>
+          )}"${poster}${fallback}${autoplay}>
             <source${srcAttr} data-src="${escapeHtml(item.src)}" type="video/mp4" />
           </video>`;
         }
