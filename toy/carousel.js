@@ -113,6 +113,47 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
 
   P.bindBeatPlayers(track);
 
+  function playHero(video) {
+    if (reduceMotion.matches) return;
+    P.watchStall(video);
+    // A clip that never got its source going (a play() while the board was
+    // still hidden) starts its fetch again
+    if (video.readyState === HTMLMediaElement.HAVE_NOTHING && video.networkState !== HTMLMediaElement.NETWORK_LOADING) {
+      video.load();
+    }
+    video.play().catch(() => {});
+  }
+
+  function activeHero() {
+    return active >= 0 ? slides[active].querySelector("video[data-hero]") : null;
+  }
+
+  // Phones refuse the first play() while the board sits under the splash, so
+  // the first slide's reel tries again once it scrolls into view
+  if ("IntersectionObserver" in window) {
+    const heroWatch = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target;
+        if (video !== activeHero()) return;
+        if (entry.isIntersecting) {
+          if (video.paused) playHero(video);
+        } else video.pause();
+      });
+    }, { threshold: 0.25 });
+    slides.forEach((slide) => {
+      const video = slide.querySelector("video[data-hero]");
+      if (video) heroWatch.observe(video);
+    });
+  }
+
+  // Low Power Mode on iOS holds muted autoplay until the first touch
+  const wake = () => {
+    const video = activeHero();
+    if (video && video.paused) playHero(video);
+  };
+  document.addEventListener("touchend", wake, { once: true, passive: true });
+  document.addEventListener("click", wake, { once: true });
+
   function setActive(i) {
     if (i === active) return;
     active = i;
@@ -125,10 +166,8 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
     slides.forEach((slide, j) => {
       const video = slide.querySelector("video[data-hero]");
       if (!video) return;
-      if (j === i && !reduceMotion.matches) {
-        P.watchStall(video);
-        video.play().catch(() => {});
-      } else video.pause();
+      if (j === i) playHero(video);
+      else video.pause();
     });
     prev.disabled = i <= 0;
     next.disabled = i >= slides.length - 1;
