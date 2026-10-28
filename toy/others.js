@@ -14,6 +14,12 @@ const GROUP_TITLES = {
   prototypes: "Prototypes",
 };
 
+/** The grid's small copy of a picture (scripts/make-thumbs.py makes them) */
+function thumbSrc(src) {
+  const name = src.split("/").pop().replace(/\.[^.]+$/, "");
+  return `./assets/thumbs/${name}.jpg`;
+}
+
 function thumbHtml(project) {
   const esc = P.escapeHtml;
   const shot = (project.media || []).find((item) => item.type === "image");
@@ -21,7 +27,7 @@ function thumbHtml(project) {
   const line = String((data.awards || {})[project.id] || (data.taglines || {})[project.id] || "").trim();
   return `<li>
     <button type="button" class="thumb" data-peek="${esc(project.id)}">
-      <span class="thumb-shot">${shot ? `<img data-src="${esc(shot.src)}" alt="" decoding="async" />` : ""}</span>
+      <span class="thumb-shot">${shot ? `<img data-src="${esc(thumbSrc(shot.src))}" data-full="${esc(shot.src)}" alt="" decoding="async" />` : ""}</span>
       <span class="thumb-name">${esc(project.title)}</span>
       ${line ? `<span class="thumb-line">${esc(line)}</span>` : ""}
     </button>
@@ -45,6 +51,8 @@ export function initOthers({ list, dialog, body, close }) {
   // thumbnails wait until they are about a screen away (and the page is up)
   const shots = [...list.querySelectorAll("img[data-src]")];
   const showShot = (img) => {
+    // Without a small copy, the full picture
+    img.addEventListener("error", () => (img.src = img.dataset.full), { once: true });
     img.src = img.dataset.src;
     delete img.dataset.src;
   };
