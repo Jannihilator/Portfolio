@@ -164,6 +164,25 @@ body.sheet-flying main {
   transition: opacity 0.2s ease, visibility 0s 0.2s;
 }
 
+/* Once the sheet has landed, the intro holds still at its rest on the
+   screen (set in main.js) while a stretch of scrolling passes under it,
+   then the page moves on */
+/* Keeps the intro's margin inside, so main.js finds where the intro sits */
+.intro-stage {
+  display: flow-root;
+}
+
+.has-hold .intro-flip {
+  position: sticky;
+  top: var(--intro-rest, 28px);
+}
+
+.has-hold .intro-stage::after {
+  content: "";
+  display: block;
+  height: 35vh;
+}
+
 /* The page holds still while the intro sheet is still being painted */
 html.sheet-loading {
   overflow: hidden;
@@ -236,20 +255,6 @@ html.sheet-loading {
   --edge: #6b8a4c;
 }
 
-.block-btn--tab {
-  --face: #f3e5c9;
-  --edge: #bfa47a;
-  font-size: 0.9rem;
-  min-height: 36px;
-  padding: 0.4em 0.85em;
-}
-
-.block-btn--tab[aria-current="true"] {
-  --face: var(--orange);
-  --edge: #b04f0c;
-  color: #fff;
-}
-
 .block-btn--arrow {
   width: 44px;
   padding: 0;
@@ -261,10 +266,10 @@ html.sheet-loading {
 /* The intro is a card with the résumé on its back. Both faces share one
    grid cell; the card turns over, and grows to nearly a screen tall while
    the résumé is showing. */
-/* Narrower than the other panels, so on a big screen the intro stays a
-   page-shaped sheet, and lying on the table it clears the props beside it */
+/* As wide as the project board below it. Lying on the table, the sheet is
+   capped in scene.js so it still clears the props beside it. */
 .intro-flip {
-  width: min(var(--col), 880px);
+  width: var(--col);
   margin: 28px auto 30px;
   scroll-margin-top: 28px;
   display: grid;
@@ -325,6 +330,12 @@ html.sheet-loading {
   border-radius: 6px;
   background: #fff;
   box-shadow: 0 0 0 2px var(--line);
+}
+
+/* The intro is only focused from script, to carry keyboard focus on from
+   the splash, so it never shows a focus ring */
+.intro:focus {
+  outline: none;
 }
 
 .intro {
@@ -416,11 +427,88 @@ html.sheet-loading {
   gap: 12px;
 }
 
+/* The projects are bookmarks sticking up from behind the board's top
+   edge, so every project is in reach as soon as the board comes into view.
+   They sit under the board, which hides their tucked-in ends. */
+.board {
+  position: relative;
+  margin-top: 50px;
+}
+
 .board-tabs {
+  --tuck: 16px;
+  position: absolute;
+  z-index: -1;
+  bottom: calc(100% + 20px - var(--tuck));
+  left: 10px;
+  right: 10px;
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: wrap-reverse;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.bookmark {
+  --face: #f3e5c9;
+  --edge: #bfa47a;
+  /* Room at the bottom for the tucked-in end and the drop of a closed bookmark */
+  padding: 0.5em 0.85em calc(var(--tuck) + 6px + 0.4em);
+  border: 0;
+  border-radius: 9px 9px 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%),
+    var(--face);
+  color: var(--ink);
+  font-family: var(--head);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  box-shadow: 0 0 0 2px #5c4330, 0 4px 0 2px var(--edge), 0 6px 10px rgba(60, 38, 16, 0.25);
+  transform: translateY(6px);
+  transition: transform 0.16s cubic-bezier(0.3, 1.5, 0.5, 1), filter 0.12s;
+  cursor: pointer;
+}
+
+.bookmark:hover {
+  filter: brightness(1.05);
+  transform: translateY(0);
+}
+
+/* The open project's bookmark sticks up furthest */
+.bookmark[aria-current="true"] {
+  --face: var(--orange);
+  --edge: #b04f0c;
+  color: #fff;
+  transform: translateY(-6px);
+}
+
+.bookmark:active,
+.bookmark.is-hit {
+  transform: translateY(10px);
+  transition-duration: 0.06s;
+}
+
+/* Phones: all four share the top edge, a long name on two lines */
+@media (max-width: 640px) {
+  .board {
+    margin-top: 58px;
+  }
+
+  .board-tabs {
+    left: -6px;
+    right: -6px;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .bookmark {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 0.4em;
+    font-size: 0.8rem;
+    white-space: normal;
+  }
 }
 
 .slide {

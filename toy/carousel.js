@@ -102,7 +102,7 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
   tabs.innerHTML = projects
     .map(
       (p, i) =>
-        `<button type="button" class="block-btn block-btn--tab" data-slide="${i}">${P.escapeHtml(splitTitle(p.title).name)}</button>`
+        `<button type="button" class="bookmark" data-slide="${i}">${P.escapeHtml(splitTitle(p.title).name)}</button>`
     )
     .join("");
 

@@ -87,82 +87,86 @@
          The way in is the Enter target on the table, or a scroll. -->
     <div class="splash" id="splash" aria-hidden="true"></div>
 
-    <!-- The intro is a card: the Résumé button turns it over to the résumé on its back -->
-    <div class="intro-flip" id="intro-flip">
-      <header id="about" class="panel intro" data-panel data-outline>
-        <figure class="intro-portrait">
-          <img src="./assets/profile-2026.jpg" alt="Yen Chun (James) Huang" width="1178" height="1563" decoding="async" />
-          <ul class="skill-tags" aria-label="Skills">
-            <li>Unity</li><li>Unreal</li><li>Godot</li><li>TouchDesigner</li><li>VR/XR</li>
-            <li>C#</li><li>C/C++</li><li>OOP</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
-            <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
-            <li>Git</li><li>Perforce</li>
-          </ul>
-        </figure>
-        <div class="intro-copy">
-          <h1>Yen Chun (James) Huang</h1>
-          <p class="intro-role">Game developer</p>
-          <p>
-            I’m a game developer who likes making ideas happen. Engineering taught me
-            to break big problems into small steps, and board games taught me how a
-            working core mechanic can support a whole system.
-          </p>
-          <p>
-            That’s why I design toy first: I start with something fun to play with,
-            get the core right, then build outward and watch what people do with it.
-            Their reactions are my favorite part of the job, and they’re why I keep
-            looking for new ways for people to interact. I often want to be the first
-            to see something new actually happen, so I build it myself: breathing as
-            game input, smart shoes, a machine learning game bot, combat driven by
-            audio, and a lot more fun stuff.
-          </p>
-          <ul class="about-marks">
-            <li><strong>Mento-Issue</strong> won the Pittsburgh non-traditional award at Global Game Jam 2025.</li>
-            <li><strong>Camp Movewell</strong> was nominated for the 2026 Games for Change Awards, Best in Health &amp; Wellness.</li>
-          </ul>
-          <!-- Phones only: the same tags again, in the text column instead of under the portrait -->
-          <ul class="skill-tags skill-tags--inline" aria-label="Skills">
-            <li>Unity</li><li>Unreal</li><li>Godot</li><li>TouchDesigner</li><li>VR/XR</li>
-            <li>C#</li><li>C/C++</li><li>OOP</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
-            <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
-            <li>Git</li><li>Perforce</li>
-          </ul>
-          <div class="intro-actions">
-            <button type="button" class="block-btn" data-goto="featured">Projects</button>
-            <button type="button" class="block-btn block-btn--blue" data-goto="other">More work</button>
-            <button type="button" class="block-btn block-btn--link" id="flip-resume" aria-controls="resume-side" aria-expanded="false">Résumé</button>
-            <a class="block-btn block-btn--green" href="https://medium.com/@jannihilator" target="_blank" rel="noopener noreferrer">Blog</a>
+    <!-- The intro's stage: where it holds still for a while once the sheet has landed -->
+    <div class="intro-stage" id="intro-stage">
+      <!-- The intro is a card: the Résumé button turns it over to the résumé on its back -->
+      <div class="intro-flip" id="intro-flip">
+        <header id="about" class="panel intro" data-panel data-outline>
+          <figure class="intro-portrait">
+            <img src="./assets/profile-2026.jpg" alt="Yen Chun (James) Huang" width="1178" height="1563" decoding="async" />
+            <ul class="skill-tags" aria-label="Skills">
+              <li>Unity</li><li>Unreal</li><li>Godot</li><li>TouchDesigner</li><li>VR/XR</li>
+              <li>C#</li><li>C/C++</li><li>OOP</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
+              <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
+              <li>Git</li><li>Perforce</li>
+            </ul>
+          </figure>
+          <div class="intro-copy">
+            <h1>Yen Chun (James) Huang</h1>
+            <p class="intro-role">Game developer</p>
+            <p>
+              I’m a game developer who likes making ideas happen. Engineering taught me
+              to break big problems into small steps, and board games taught me how a
+              working core mechanic can support a whole system.
+            </p>
+            <p>
+              That’s why I design toy first: I start with something fun to play with,
+              get the core right, then build outward and watch what people do with it.
+              Their reactions are my favorite part of the job, and they’re why I keep
+              looking for new ways for people to interact. I often want to be the first
+              to see something new actually happen, so I build it myself: breathing as
+              game input, smart shoes, a machine learning game bot, combat driven by
+              audio, and a lot more fun stuff.
+            </p>
+            <ul class="about-marks">
+              <li><strong>Mento-Issue</strong> won the Pittsburgh non-traditional award at Global Game Jam 2025.</li>
+              <li><strong>Camp Movewell</strong> was nominated for the 2026 Games for Change Awards, Best in Health &amp; Wellness.</li>
+            </ul>
+            <!-- Phones only: the same tags again, in the text column instead of under the portrait -->
+            <ul class="skill-tags skill-tags--inline" aria-label="Skills">
+              <li>Unity</li><li>Unreal</li><li>Godot</li><li>TouchDesigner</li><li>VR/XR</li>
+              <li>C#</li><li>C/C++</li><li>OOP</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
+              <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
+              <li>Git</li><li>Perforce</li>
+            </ul>
+            <div class="intro-actions">
+              <button type="button" class="block-btn" data-goto="featured">Projects</button>
+              <button type="button" class="block-btn block-btn--blue" data-goto="other">More work</button>
+              <button type="button" class="block-btn block-btn--link" id="flip-resume" aria-controls="resume-side" aria-expanded="false">Résumé</button>
+              <a class="block-btn block-btn--green" href="https://medium.com/@jannihilator" target="_blank" rel="noopener noreferrer">Blog</a>
+            </div>
+            <ul class="contact-links" aria-label="Contact">
+              <li><a href="mailto:yenchun.huang11@gmail.com"><i aria-hidden="true" class="fa-solid fa-envelope"></i><span>Email</span></a></li>
+              <li><a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-itch-io"></i><span>itch.io</span></a></li>
+              <li><a href="https://www.linkedin.com/in/yen-chun-huang" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-linkedin"></i><span>LinkedIn</span></a></li>
+              <li><a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-github"></i><span>GitHub</span></a></li>
+              <li><a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-medium"></i><span>Medium</span></a></li>
+            </ul>
           </div>
-          <ul class="contact-links" aria-label="Contact">
-            <li><a href="mailto:yenchun.huang11@gmail.com"><i aria-hidden="true" class="fa-solid fa-envelope"></i><span>Email</span></a></li>
-            <li><a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-itch-io"></i><span>itch.io</span></a></li>
-            <li><a href="https://www.linkedin.com/in/yen-chun-huang" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-linkedin"></i><span>LinkedIn</span></a></li>
-            <li><a href="https://github.com/Jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-github"></i><span>GitHub</span></a></li>
-            <li><a href="https://medium.com/@jannihilator" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-medium"></i><span>Medium</span></a></li>
-          </ul>
-        </div>
-      </header>
-      <section id="resume-side" class="panel intro-back" data-panel data-outline aria-label="Résumé" inert>
-        <div class="intro-back-bar">
-          <h2>Résumé</h2>
-          <div class="intro-back-actions">
-            <a class="block-btn block-btn--link" href="./assets/Resume.pdf" download>Download PDF</a>
-            <button type="button" class="block-btn" id="flip-back">Back to intro</button>
+        </header>
+        <section id="resume-side" class="panel intro-back" data-panel data-outline aria-label="Résumé" inert>
+          <div class="intro-back-bar">
+            <h2>Résumé</h2>
+            <div class="intro-back-actions">
+              <a class="block-btn block-btn--link" href="./assets/Resume.pdf" download>Download PDF</a>
+              <button type="button" class="block-btn" id="flip-back">Back to intro</button>
+            </div>
           </div>
-        </div>
-        <iframe class="resume-frame" title="Résumé" data-src="./assets/Resume.pdf#view=FitH&amp;navpanes=0"></iframe>
-      </section>
+          <iframe class="resume-frame" title="Résumé" data-src="./assets/Resume.pdf#view=FitH&amp;navpanes=0"></iframe>
+        </section>
+      </div>
     </div>
 
     <main>
       <section id="featured" class="board" data-card
         aria-roledescription="carousel" aria-label="Featured projects">
+        <!-- Bookmarks sticking out from behind the board's edge, one per project -->
+        <div class="board-tabs" id="tabs" role="group" aria-label="Choose a project"></div>
         <div class="board-track" id="track" tabindex="-1"></div>
         <div class="board-bar">
           <button type="button" class="block-btn block-btn--arrow" id="prev" aria-label="Previous project">
             <span aria-hidden="true">◀</span>
           </button>
-          <div class="board-tabs" id="tabs" role="group" aria-label="Choose a project"></div>
           <button type="button" class="block-btn block-btn--arrow" id="next" aria-label="Next project">
             <span aria-hidden="true">▶</span>
           </button>

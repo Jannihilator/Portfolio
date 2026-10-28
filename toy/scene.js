@@ -1463,24 +1463,79 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
 
   /**
    * A sticky note lying on the table: square and yellow, held down by its
-   * glue along the far edge, its free edge near you curling up a little
+   * glue along the far edge, its free edge near you curling up a little.
+   * The glue holds it where it is: a dart never moves the note, but one on
+   * the curled edge flicks it down, and it springs back up with a wobble.
    */
+  const NOTE = { lift: 0.11, size: 2.0 };
+  const noteState = { obj: null, geo: null, curl: null, from: 0, lift: NOTE.lift, v: 0 };
   function note(x, z, rotY) {
-    const size = 2.0;
-    const geo = new THREE.PlaneGeometry(size, size*0.8, 1, 18).rotateX(-Math.PI / 2);
-    // Local z runs from the glued edge (-size/2) to the free edge (+size/2)
+    const { size } = NOTE;
+    const geo = new THREE.PlaneGeometry(size, size * 0.8, 1, 18).rotateX(-Math.PI / 2);
+    // Local z runs from the glued edge (-size/2) to the free edge (+size/2);
+    // past `from` the paper curls up, more the further out
     const pos = geo.attributes.position;
+    const curl = new Float32Array(pos.count);
     for (let i = 0; i < pos.count; i++) {
       const k = Math.max(0, (pos.getZ(i) / size + 0.5 - 0.62) / 0.38);
-      pos.setY(i, 0.012 + 0.11 * k * k);
+      curl[i] = k * k;
     }
-    geo.computeVertexNormals();
     const g = new THREE.Group();
     g.add(
       new THREE.Mesh(geo, canvasMaterial(noteCanvas())),
       new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xe8c95a, roughness: 0.9, side: THREE.BackSide }))
     );
-    return addProp(g, [RAPIER.ColliderDesc.cuboid(size / 2, 0.01, size / 2).setTranslation(0, 0.01, 0).setDensity(0.3)], new THREE.Vector3(x, 0, z), rotY);
+    g.position.set(x, standOn, z);
+    g.rotation.y = rotY;
+    g.traverse((m) => {
+      if (m.isMesh) m.castShadow = m.receiveShadow = true;
+    });
+    g.userData.hit = { kind: "note" };
+    scene.add(g);
+    hittables.push(g);
+    Object.assign(noteState, { obj: g, geo, curl, from: (0.62 - 0.5) * size });
+    shapeNote();
+    return g;
+  }
+
+  function shapeNote() {
+    const { geo, curl, lift } = noteState;
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setY(i, 0.012 + lift * curl[i]);
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    geo.computeBoundingSphere();
+  }
+
+  /** A dart on the note: only a hit on the curled edge moves it */
+  function flickNote(point, force) {
+    if (!noteState.obj) return;
+    const local = noteState.obj.worldToLocal(point.clone());
+    if (local.z < noteState.from) return;
+    noteState.v -= 1.8 * force;
+  }
+
+  function animateNote(dt) {
+    const s = noteState;
+    if (!s.obj || Math.abs(s.lift - NOTE.lift) + Math.abs(s.v) < 0.0004) return;
+    // Small steps, so the stiff spring stays steady on a slow frame
+    const n = Math.ceil(dt / (1 / 120));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      s.v += (-260 * (s.lift - NOTE.lift) - 7 * s.v) * h;
+      s.lift += s.v * h;
+      // Pressed flat, it slaps the table and comes off it again
+      if (s.lift < 0) {
+        s.lift = 0;
+        s.v = -s.v * 0.3;
+      }
+    }
+    if (Math.abs(s.lift - NOTE.lift) + Math.abs(s.v) < 0.0004) {
+      s.lift = NOTE.lift;
+      s.v = 0;
+    }
+    shapeNote();
+    dirty = shadowsDirty = true;
   }
 
   /** A yellow hexagonal pencil, sharpened, with a pink eraser, lying down */
@@ -1804,26 +1859,41 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     }
   }
 
-  /** Paper confetti for a basket */
+  /**
+   * Paper confetti for a basket. Five bursts share one mesh, so baskets in
+   * quick succession each get their own and the earlier ones play out; a
+   * sixth takes over the oldest.
+   */
   const confetti = (() => {
-    const count = 40;
+    const per = 40;
+    const count = per * 5;
     const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.09, 0.14), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, toneMapped: false }), count);
     const palette = [0xdc6a52, 0xebbb55, 0x7f9fcb, 0x93a86c, 0xe9906d].map((c) => new THREE.Color(c));
-    for (let i = 0; i < count; i++) mesh.setColorAt(i, palette[i % palette.length]);
+    const none = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (let i = 0; i < count; i++) {
+      mesh.setColorAt(i, palette[i % palette.length]);
+      mesh.setMatrixAt(i, none);
+    }
     mesh.visible = false;
     mesh.frustumCulled = false;
     scene.add(mesh);
-    const bits = Array.from({ length: count }, () => ({ p: new THREE.Vector3(), v: new THREE.Vector3(), r: new THREE.Euler(), spin: 0 }));
-    return { mesh, bits, age: 1 };
+    const bursts = Array.from({ length: count / per }, (_, n) => ({
+      age: 1,
+      first: n * per,
+      bits: Array.from({ length: per }, () => ({ p: new THREE.Vector3(), v: new THREE.Vector3(), r: new THREE.Euler(), spin: 0 })),
+    }));
+    return { mesh, bursts, none };
   })();
 
   function basket() {
     hoopState.scores++;
     hoopState.swishV += 6;
     cheers.push(1);
-    confetti.age = 0;
+    // A burst that has finished, or else the one furthest along
+    const burst = confetti.bursts.reduce((a, b) => (b.age > a.age ? b : a));
+    burst.age = 0;
     confetti.mesh.visible = true;
-    for (const b of confetti.bits) {
+    for (const b of burst.bits) {
       b.p.copy(hoopState.center);
       b.v.set((Math.random() - 0.5) * 4, 3 + Math.random() * 4, (Math.random() - 0.3) * 3);
       b.r.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
@@ -1834,6 +1904,31 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   const confettiM = new THREE.Matrix4();
   const confettiQ = new THREE.Quaternion();
   const confettiS = new THREE.Vector3(1, 1, 1);
+  function animateConfetti(dt) {
+    let playing = false;
+    for (const burst of confetti.bursts) {
+      if (burst.age >= 1) continue;
+      burst.age = Math.min(1, burst.age + dt / 1.8);
+      burst.bits.forEach((b, i) => {
+        const at = burst.first + i;
+        if (burst.age >= 1) return confetti.mesh.setMatrixAt(at, confetti.none);
+        b.v.y -= 9 * dt;
+        b.v.multiplyScalar(1 - 1.6 * dt);
+        b.p.addScaledVector(b.v, dt);
+        b.r.x += b.spin * dt;
+        b.r.y += b.spin * 0.6 * dt;
+        confettiQ.setFromEuler(b.r);
+        confettiS.setScalar(burst.age > 0.75 ? (1 - burst.age) * 4 : 1);
+        confetti.mesh.setMatrixAt(at, confettiM.compose(b.p, confettiQ, confettiS));
+      });
+      playing ||= burst.age < 1;
+    }
+    if (!confetti.mesh.visible) return;
+    confetti.mesh.instanceMatrix.needsUpdate = true;
+    confetti.mesh.visible = playing;
+    dirty = true;
+  }
+
   function animateHoop(dt) {
     if (Math.abs(hoopState.swish) + Math.abs(hoopState.swishV) > 0.0005) {
       hoopState.swishV += (-120 * hoopState.swish - 7 * hoopState.swishV) * dt;
@@ -1842,21 +1937,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       hoopState.net.scale.set(1 - s * 0.5, 1 + s, 1 - s * 0.5).multiplyScalar(hoopState.size);
       dirty = true;
     }
-    if (confetti.age >= 1) return;
-    confetti.age = Math.min(1, confetti.age + dt / 1.8);
-    confetti.bits.forEach((b, i) => {
-      b.v.y -= 9 * dt;
-      b.v.multiplyScalar(1 - 1.6 * dt);
-      b.p.addScaledVector(b.v, dt);
-      b.r.x += b.spin * dt;
-      b.r.y += b.spin * 0.6 * dt;
-      confettiQ.setFromEuler(b.r);
-      confettiS.setScalar(confetti.age > 0.75 ? (1 - confetti.age) * 4 : 1);
-      confetti.mesh.setMatrixAt(i, confettiM.compose(b.p, confettiQ, confettiS));
-    });
-    confetti.mesh.instanceMatrix.needsUpdate = true;
-    if (confetti.age >= 1) confetti.mesh.visible = false;
-    dirty = true;
+    animateConfetti(dt);
   }
 
   /** A doodle that stands in until a real picture goes in the frame */
@@ -2674,6 +2755,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       return hit.kind;
     }
     if (hit.kind === "windmill") pushMill(hit.mill, hit.point, dir, force);
+    if (hit.kind === "note") flickNote(hit.point, force);
     // Everything else, the hoop too, flies straight along the aim
     spawnDart(from, dir.clone().multiplyScalar(DART_SPEED * force));
     return hit.kind;
@@ -3049,6 +3131,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       animateTrainBits(dt);
       swingClouds(dt);
       animateHoop(dt);
+      animateNote(dt);
       turnMills(dt);
       waveFlags(now);
       watchFrames(dt);

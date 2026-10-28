@@ -27,17 +27,47 @@ document.querySelectorAll("[data-goto]").forEach((button) => {
 // on it does the same, by scrolling there. The real panel fades in over it
 // at the very end and takes over. Until the sheet is ready, or without the
 // 3D table, the page is just the page. Phones skip the splash (see toy.css).
+//
+// The sheet lands with the intro in the middle of the screen (near the top
+// when it is too tall for that), and the intro then holds still there for a
+// stretch of scrolling before the page moves on (.has-hold in toy.css).
 const splash = $("splash");
 const intro = $("intro-flip");
+const stage = $("intro-stage");
 $("about").tabIndex = -1;
 /** The toy table, once it is up and has the intro's picture */
 let sheetTable = null;
 
+/** The intro's height face up; the résumé side never moves where the sheet lands */
+let frontHeight = 0;
+
+/** Where the intro rests on the screen once the sheet has landed */
+function introRest() {
+  if (!intro.classList.contains("is-flipped") || !frontHeight) frontHeight = intro.offsetHeight;
+  return Math.max(28, (window.innerHeight - frontHeight) / 2);
+}
+
+/** How far down the page the sheet has landed: the intro is then at its rest */
+function landing() {
+  const top = stage.getBoundingClientRect().top + window.scrollY + parseFloat(getComputedStyle(intro).marginTop);
+  return Math.max(1, top - introRest());
+}
+
 function splashProgress() {
-  const span = splash.offsetHeight;
+  if (!splash.offsetHeight) return 1;
   // A scroll can stop a fraction of a pixel short; that counts as up
-  const raw = span > 0 ? window.scrollY / span : 1;
+  const raw = window.scrollY / landing();
   return raw > 0.995 ? 1 : Math.max(0, raw);
+}
+
+/** Off once the card has been turned over, until the sheet is back on the table */
+let holdOff = false;
+
+/** The intro holds at its rest only while it fits on the screen whole */
+function placeRest() {
+  const hold = !!sheetTable && !holdOff && introRest() > 28;
+  document.documentElement.classList.toggle("has-hold", hold);
+  stage.style.setProperty("--intro-rest", `${Math.round(introRest())}px`);
 }
 
 {
@@ -46,6 +76,8 @@ function splashProgress() {
     queued = false;
     if (!sheetTable) return;
     const p = splashProgress();
+    if (p < 0.9) holdOff = false;
+    placeRest();
     // The panel's own place, which the sheet comes to rest on
     sheetTable.setSheetProgress(p, $("about").getBoundingClientRect());
     const show = Math.min(1, Math.max(0, (p - 0.9) / 0.1));
@@ -61,6 +93,8 @@ function splashProgress() {
   window.addEventListener("scroll", queue, { passive: true });
   window.addEventListener("resize", queue);
   window.addEventListener("sheet-ready", queue);
+  // A taller or shorter intro rests somewhere else
+  new ResizeObserver(queue).observe(intro);
 }
 
 /** Paints the intro panel into a picture for the sheet on the table */
@@ -145,7 +179,7 @@ async function startSheet(table) {
     await openCurtain();
     $("table").addEventListener("pickup", () => {
       if (sheetLoading || splashProgress() >= 1) return;
-      window.scrollTo({ top: splash.offsetHeight, behavior: reducedMotion ? "auto" : "smooth" });
+      window.scrollTo({ top: landing(), behavior: reducedMotion ? "auto" : "smooth" });
       $("about").focus({ preventScroll: true });
     });
     // A new width reflows the panel, so it is painted again once the resizing stops
@@ -158,6 +192,7 @@ async function startSheet(table) {
     // The page keeps its plain panel
     console.warn("Intro sheet unavailable", error);
     sheetTable = null;
+    document.documentElement.classList.remove("has-hold");
     table.clearSheet();
     openCurtain();
     intro.style.opacity = "";
@@ -181,6 +216,9 @@ async function startSheet(table) {
     back.inert = !toBack;
     open.setAttribute("aria-expanded", String(toBack));
     (toBack ? $("flip-back") : open).focus({ preventScroll: true });
+    // A card that is turning and changing height no longer holds still
+    holdOff = true;
+    placeRest();
     card.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
   };
   open.addEventListener("click", () => turn(true));
