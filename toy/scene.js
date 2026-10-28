@@ -747,8 +747,42 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     g.scale(0.78, 0.78, 0.78);
     return g;
   })();
-  function meeple(x, z, color, rotY, size = 1) {
+  /** A goofy, lopsided face: two black dots and a wobbly smile, on a transparent canvas */
+  const uglyFaceTex = (() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(64, 64, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(138, 46, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 14;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(36, 184);
+    ctx.bezierCurveTo(50, 168, 70, 172, 82, 182);
+    ctx.bezierCurveTo(98, 196, 118, 188, 140, 174);
+    ctx.bezierCurveTo(166, 158, 196, 160, 224, 148);
+    ctx.stroke();
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  })();
+  const uglyFaceMat = new THREE.MeshBasicMaterial({ map: uglyFaceTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  function uglyFace(m) {
+    // the head is a circle of radius 0.2 centred 0.655 up, and the front face sits at z = 0.148
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.27, 0.27), uglyFaceMat);
+    face.position.set(0, 0.665, 0.152);
+    m.add(face);
+  }
+  function meeple(x, z, color, rotY, size = 1, face = false) {
     const m = new THREE.Mesh(meepleGeo, mat(color));
+    if (face) uglyFace(m);
     m.scale.setScalar(size);
     return addProp(m, [RAPIER.ColliderDesc.cuboid(0.36 * size, 0.41 * size, 0.15 * size).setTranslation(0, 0.41 * size, 0)], new THREE.Vector3(x, 0, z), rotY);
   }
@@ -1341,10 +1375,10 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       if (at) make(at.x, at.z, at.turn ?? 0);
     };
     const animalAt = (kind, name, color, size) => place(name, (x, z, turn) => animal(kind, x, z, color, turn, size));
-    const meepleAt = (name, color, size) => place(name, (x, z, turn) => meeple(x, z, color, turn, size));
+    const meepleAt = (name, color, size, face) => place(name, (x, z, turn) => meeple(x, z, color, turn, size, face));
     // The middle: a big meeple, a die and four juggling balls, three in a
     // triangle and one sat on top
-    meepleAt("bigMeeple", COLORS.mustard, 1.35);
+    meepleAt("bigMeeple", COLORS.mustard, 1.35, true);
     place("die", (x, z, turn) => die(x, z, "#fffaf0", "#4a3526", turn, 4));
     place("jugglingBalls", (x, z) => {
       jugglingBall(x - 0.24, 0, z - 0.15, "#dc6a52", "#ebbb55", 0.4);
