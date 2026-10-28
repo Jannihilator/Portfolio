@@ -2301,7 +2301,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const bullseye = canvasMaterial(bullseyeCanvas());
     const targets = [];
     const cars = [{ obj: loco, gap: 0, half: [1.1, 0.75, 0.5], at: [0, 0.9, 0] }];
-    for (const c of [{ gap: 2.3, color: COLORS.blue, tub: COLORS.cream, r: 0.6 }, { gap: 4.4, color: COLORS.sage, tub: COLORS.mustard, r: 0.4 }]) {
+    for (const c of [{ gap: 2.3, color: COLORS.blue, tub: COLORS.cream, r: 0.6, flip: 0 }, { gap: 4.4, color: COLORS.sage, tub: COLORS.mustard, r: 0.4, flip: 2.4 }]) {
       const car = new THREE.Group();
       car.add(box([1.8, 0.22, 0.86], c.color, 0, 0.5), box([1.7, 0.36, 0.84], c.tub, 0, 0.79), box([0.36, 0.08, 0.1], COLORS.ink, 1.0, 0.48));
       axles(car, [-0.55, 0.55], COLORS.mustard);
@@ -2316,7 +2316,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       disc.position.set(0, 0.35 + c.r, 0);
       pivot.add(post, disc);
       car.add(pivot);
-      const target = { pivot, disc, car, tilt: 0, spin: 0, hits: 0 };
+      const target = { pivot, disc, car, tilt: 0, spin: 0, hits: 0, flip: reducedMotion ? 0 : c.flip };
       disc.userData.hit = { kind: "target", target };
       targets.push(target);
       cars.push({ obj: car, gap: c.gap, half: [0.9, 0.5, 0.48], at: [0, 0.6, 0] });
@@ -2434,6 +2434,11 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       t.disc.getWorldPosition(discAt);
       const face = Math.atan2(camFlat.x - discAt.x, camFlat.z - discAt.z);
       t.pivot.rotation.y = face - t.car.rotation.y;
+      // The small one keeps turning on its post, so it goes edge-on and back
+      if (t.flip) {
+        t.disc.rotation.y += t.flip * dt;
+        dirty = true;
+      }
       if (Math.abs(t.tilt) + Math.abs(t.spin) > 0.0005) {
         t.spin += (-90 * t.tilt - 6 * t.spin) * dt;
         t.tilt += t.spin * dt;
@@ -2567,7 +2572,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const d = takeDart();
     d.state = "flying";
     d.obj.userData.hit = null;
-    const attach = hit.kind === "target" ? hit.target.pivot : porcupine.obj;
+    const attach = hit.kind === "target" ? hit.target.disc : porcupine.obj;
     attach.updateWorldMatrix(true, false);
     flights.push({
       d,

@@ -24,7 +24,7 @@ const PAGE_SIZE = 18;
  * makes it a lob), and normal is the range for every other shot. Full
  * speed itself is DART_SPEED in scene.js, and how a lob arcs is WEAK there.
  */
-const SHOT = { weakChance: 0.3, weak: [0.6, 0.6], normal: [0.65, 0.95] };
+const SHOT = { weakChance: 0.25, weak: [0.6, 0.6], normal: [0.65, 0.95] };
 
 function shotForce() {
   const [lo, hi] = Math.random() < SHOT.weakChance ? SHOT.weak : SHOT.normal;
