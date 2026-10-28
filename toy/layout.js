@@ -13,7 +13,7 @@
  */
 export const LAYOUT = {
   // The intro sheet, lying flat before it is peeled up
-  sheet: { x: -0.3, z: 5.6 },
+  sheet: { x: -0.65, z: 5.6 },
 
   // By the porcupine, front left
   note: { x: -5.85, z: 5.15, turn: 0.22 },

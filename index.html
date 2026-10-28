@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="sheet-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,6 +31,54 @@
   </script>
 </head>
 <body>
+  <!-- The curtain: a bank of mist over the page while the table and the intro load (main.js).
+       Under the mist, the view the table stands in; a little document writes itself out.
+       When all is ready the mist lifts off into the sky. -->
+  <div id="curtain" role="status" aria-label="Loading">
+    <!-- The view the table will stand in, blurred: its backdrop (toy/curtain.js) over the table's colour -->
+    <div id="curtain-view" class="curtain-view" aria-hidden="true"><span class="curtain-table"></span></div>
+    <div class="curtain-fog" aria-hidden="true">
+      <span class="fog-puff" style="--l:11vw;--t:9vh;--w:68vw;--d:9.5s;--x:-4.5vw;--i:0"></span>
+      <span class="fog-puff" style="--l:-19vw;--t:53vh;--w:46vw;--d:12.0s;--x:-4.0vw;--i:1"></span>
+      <span class="fog-puff" style="--l:36vw;--t:-3vh;--w:65vw;--d:15.6s;--x:-5.3vw;--i:2"></span>
+      <span class="fog-puff" style="--l:19vw;--t:112vh;--w:47vw;--d:15.0s;--x:4.7vw;--i:3"></span>
+      <span class="fog-puff" style="--l:34vw;--t:61vh;--w:65vw;--d:13.8s;--x:-5.3vw;--i:4"></span>
+      <span class="fog-puff" style="--l:45vw;--t:37vh;--w:64vw;--d:9.4s;--x:-5.5vw;--i:5"></span>
+      <span class="fog-puff" style="--l:30vw;--t:56vh;--w:72vw;--d:12.3s;--x:4.4vw;--i:6"></span>
+      <span class="fog-puff" style="--l:2vw;--t:12vh;--w:72vw;--d:9.6s;--x:5.1vw;--i:7"></span>
+      <span class="fog-puff" style="--l:71vw;--t:81vh;--w:55vw;--d:15.9s;--x:-5.0vw;--i:8"></span>
+      <span class="fog-puff" style="--l:-7vw;--t:33vh;--w:78vw;--d:12.0s;--x:-6.1vw;--i:9"></span>
+      <span class="fog-puff" style="--l:38vw;--t:99vh;--w:56vw;--d:13.9s;--x:5.3vw;--i:10"></span>
+      <span class="fog-puff" style="--l:25vw;--t:95vh;--w:78vw;--d:12.3s;--x:-3.2vw;--i:11"></span>
+      <span class="fog-puff" style="--l:52vw;--t:71vh;--w:80vw;--d:14.8s;--x:5.9vw;--i:12"></span>
+      <span class="fog-puff" style="--l:73vw;--t:33vh;--w:78vw;--d:11.5s;--x:-5.0vw;--i:13"></span>
+      <span class="fog-puff" style="--l:-1vw;--t:26vh;--w:71vw;--d:11.8s;--x:3.3vw;--i:14"></span>
+      <span class="fog-puff" style="--l:24vw;--t:59vh;--w:76vw;--d:14.7s;--x:5.8vw;--i:15"></span>
+    </div>
+    <div class="curtain-card">
+      <!-- A line sketch of the table with the intro lying on it, its parts appearing one by one -->
+      <div class="sketch" aria-hidden="true">
+          <svg class="sketch-base" viewBox="0 0 202 171"><path class="sketch-table" d="M109.7 4.0L198.0 55.0L92.3 116.0L4.0 65.0Z M4.0 65.0L4.0 72.0L92.3 123.0L198.0 62.0L198.0 55.0 M92.3 116.0L92.3 123.0 M4.0 72.0L4.0 116.0 M92.3 123.0L92.3 167.0 M198.0 62.0L198.0 106.0"/><path class="sketch-paper" d="M109.7 13.0L182.4 55.0L92.3 107.0L19.6 65.0Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.1s"><path class="sketch-photo" d="M110.1 19.5L129.0 30.4L102.0 46.0L83.1 35.1Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.4s"><path class="sketch-tag" d="M78.5 37.7L86.5 42.3L82.0 44.9L74.0 40.3Z M88.7 43.6L97.5 48.6L93.0 51.2L84.2 46.2Z M71.3 41.8L83.0 48.6L78.5 51.2L66.8 44.4Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.8s"><path class="sketch-name" d="M132.1 35.3L165.6 54.6"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:1.2s"><path class="sketch-role" d="M125.8 39.0L141.8 48.2"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:1.7s"><path class="sketch-text" d="M117.7 43.6L154.1 64.6 M111.4 47.3L144.9 66.6 M105.1 50.9L142.2 72.3 M98.8 54.6L122.1 68.0"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:2.3s"><path class="sketch-button is-mustard" d="M86.2 61.8L99.3 69.4L92.1 73.6L79.0 66.0Z"/><path class="sketch-button is-blue" d="M102.2 71.1L116.7 79.5L109.5 83.6L95.0 75.2Z"/></svg>
+      </div>
+      <!-- The note, with a pencil scribbling beside it; main.js changes the words -->
+      <p class="curtain-note">
+        <span id="curtain-note">Sharpening the pencils…</span>
+        <span class="note-pencil" aria-hidden="true">
+          <svg viewBox="0 0 12 52" width="9" height="39">
+            <path d="M1 7H11V40L6 51L1 40Z M1 40H11 M1 7V1.5H11V7"/>
+            <path class="note-lead" d="M4.4 47.5H7.6L6 51Z"/>
+          </svg>
+        </span>
+      </p>
+    </div>
+  </div>
+
   <!-- The toy table lies under the pages. Nothing on it carries content. -->
   <canvas id="table" aria-hidden="true"></canvas>
 
@@ -145,6 +193,7 @@
   <script>window.PORTFOLIO_SKIP_VIDEO_PRELOAD = true;</script>
   <script src="contributions.js"></script>
   <script src="projects.js"></script>
+  <script type="module" src="toy/curtain.js"></script>
   <script type="module" src="toy/main.js"></script>
 </body>
 </html>

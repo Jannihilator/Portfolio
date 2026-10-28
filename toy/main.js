@@ -64,10 +64,9 @@ function splashProgress() {
 }
 
 /** Paints the intro panel into a picture for the sheet on the table */
-async function paintSheet(table) {
+async function renderSheet() {
   const { default: html2canvas } = await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js");
-  const panel = $("about");
-  const picture = await html2canvas(panel, {
+  return html2canvas($("about"), {
     backgroundColor: null,
     scale: Math.min(2, window.devicePixelRatio || 1) * 1.25,
     logging: false,
@@ -81,18 +80,71 @@ async function paintSheet(table) {
       copy.querySelectorAll(".contact-links a").forEach((link) => (link.style.display = "inline-block"));
     },
   });
-  table.setSheet(picture, panel.offsetWidth / panel.offsetHeight);
+}
+
+const sheetAspect = () => $("about").offsetWidth / $("about").offsetHeight;
+
+async function paintSheet(table) {
+  const picture = await renderSheet();
+  table.setSheet(picture, sheetAspect());
   sheetTable = table;
   window.dispatchEvent(new Event("sheet-ready"));
 }
 
+// Until the table is up and the intro is painted, a bank of mist hides the
+// page (see #curtain in index.html) and the page cannot be scrolled. On it a
+// line sketch of the table, with a pencil at work on the intro. When all is
+// ready the mist lifts off.
+const curtain = $("curtain");
+let sheetLoading = !!curtain;
+const NOTES = ["Sharpening the pencils…", "Smoothing out the creases…", "Dusting off the résumé…", "Unfolding the intro…"];
+
+function startNotes() {
+  if (!curtain) return;
+  let n = 0;
+  const timer = setInterval(() => {
+    if (!sheetLoading || n >= NOTES.length - 1) return clearInterval(timer);
+    $("curtain-note").textContent = NOTES[++n];
+  }, 2200);
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The sketch's parts still to come fade in quickly, one after another; the
+ * whole sheet shows for a moment, then the mist lifts and the table shows
+ */
+async function openCurtain() {
+  if (!sheetLoading) return;
+  sheetLoading = false;
+  $("curtain-note").textContent = NOTES[NOTES.length - 1];
+  const fades = [...curtain.querySelectorAll(".sketch-layer")].flatMap((layer) => layer.getAnimations());
+  let next = 0;
+  for (const fade of fades) {
+    // Not yet begun: it starts soon, a beat after the one before it
+    if (fade.currentTime < fade.effect.getComputedTiming().delay) {
+      fade.effect.updateTiming({ delay: fade.currentTime + next * 160, duration: 320 });
+      next++;
+    }
+  }
+  if (reducedMotion) fades.forEach((fade) => fade.finish());
+  await Promise.all(fades.map((fade) => fade.finished));
+  // The whole sheet, for a moment, before it goes
+  await wait(reducedMotion ? 0 : 800);
+  curtain.classList.add("is-clearing");
+  document.documentElement.classList.remove("sheet-loading");
+  await wait(reducedMotion ? 350 : 2400);
+  curtain.remove();
+}
+
 async function startSheet(table) {
-  if (!splash.offsetHeight) return;
+  if (!splash.offsetHeight) return openCurtain();
   try {
     await document.fonts.ready;
     await paintSheet(table);
+    await openCurtain();
     $("table").addEventListener("pickup", () => {
-      if (splashProgress() >= 1) return;
+      if (sheetLoading || splashProgress() >= 1) return;
       window.scrollTo({ top: splash.offsetHeight, behavior: reducedMotion ? "auto" : "smooth" });
       $("about").focus({ preventScroll: true });
     });
@@ -105,6 +157,12 @@ async function startSheet(table) {
   } catch (error) {
     // The page keeps its plain panel
     console.warn("Intro sheet unavailable", error);
+    sheetTable = null;
+    table.clearSheet();
+    openCurtain();
+    intro.style.opacity = "";
+    intro.style.pointerEvents = "";
+    document.body.classList.remove("sheet-flying");
   }
 }
 
@@ -141,10 +199,14 @@ async function startTable() {
     // No WebGL or no network for the libraries: the page stands on its own
     console.warn("Toy table unavailable", error);
     $("table").remove();
+    openCurtain();
     return null;
   }
 }
 
+startNotes();
+// Never leave the page stuck behind the curtain
+setTimeout(() => openCurtain(), 45000);
 const table = await startTable();
 if (table) startSheet(table);
 

@@ -164,6 +164,11 @@ body.sheet-flying main {
   transition: opacity 0.2s ease, visibility 0s 0.2s;
 }
 
+/* The page holds still while the intro sheet is still being painted */
+html.sheet-loading {
+  overflow: hidden;
+}
+
 /* On a phone the table is too small to look at, so the page starts at the intro */
 @media (max-width: 760px), (hover: none) and (pointer: coarse) {
   .splash {
@@ -256,8 +261,10 @@ body.sheet-flying main {
 /* The intro is a card with the résumé on its back. Both faces share one
    grid cell; the card turns over, and grows to nearly a screen tall while
    the résumé is showing. */
+/* Narrower than the other panels, so on a big screen the intro stays a
+   page-shaped sheet, and lying on the table it clears the props beside it */
 .intro-flip {
-  width: var(--col);
+  width: min(var(--col), 880px);
   margin: 28px auto 30px;
   scroll-margin-top: 28px;
   display: grid;
@@ -1370,4 +1377,260 @@ body.toy-on label {
   box-shadow: 0 0 0 1.5px rgba(74, 50, 30, 0.7);
   filter: drop-shadow(3px 6px 4px rgba(50, 30, 12, 0.35));
   will-change: transform;
+}
+
+/* ------------------------------------------------------------- curtain */
+
+/* A bank of mist over everything while the table and the intro load. Every
+   moving part is a transform or opacity animation, so it stays smooth while
+   the page is busy building the table underneath. */
+#curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+/* The view the table stands in, before the table is there. The backdrop is
+   placed where the camera sees it (scene.js): its width is fixed by the
+   camera's level field of view, and its height runs from vw off the middle. */
+.curtain-view {
+  position: absolute;
+  inset: 0;
+  background: #9cc3e0;
+  transition: opacity 1.2s ease 0.5s;
+}
+
+.curtain-backdrop {
+  position: absolute;
+  left: 50%;
+  top: calc(50vh - 50.3vw);
+  width: 132.7vw;
+  height: 71.1vw;
+  margin-left: -66.35vw;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.curtain-view.is-painted .curtain-backdrop {
+  opacity: 1;
+}
+
+/* The table top, from its far edge to the bottom of the screen */
+.curtain-table {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50vh + 2.5vw);
+  bottom: 0;
+  background: linear-gradient(180deg, #c48d62, #b47b54);
+  filter: blur(6px);
+  margin: 0 -12px -12px;
+}
+
+#curtain.is-clearing .curtain-view {
+  opacity: 0;
+}
+
+/* Thin mist down most of its height, thinning out at the bottom edge, so
+   lifting it uncovers the table from the ground up */
+.curtain-fog {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 170vh;
+  background: linear-gradient(180deg, rgba(236, 242, 244, 0.55) 0%, rgba(242, 242, 236, 0.4) 45%, rgba(243, 241, 234, 0.3) 58%, rgba(243, 241, 234, 0) 100%);
+  will-change: transform;
+  transition: transform 2.2s cubic-bezier(0.55, 0, 0.35, 1), opacity 0.9s ease 1.4s;
+}
+
+/* Wisps that rise slowly and fade, over and over */
+.fog-puff {
+  position: absolute;
+  left: var(--l);
+  top: var(--t);
+  width: var(--w);
+  aspect-ratio: 1.6;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.25) 55%, rgba(255, 255, 255, 0) 100%);
+  animation: fog-rise var(--d) linear calc(var(--i) * -1.7s) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes fog-rise {
+  0% { transform: translate(calc(var(--x) * -1), 7vh) scale(0.92); opacity: 0; }
+  25% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--x), -9vh) scale(1.1); opacity: 0; }
+}
+
+#curtain.is-clearing {
+  pointer-events: none;
+}
+
+#curtain.is-clearing .curtain-fog {
+  transform: translateY(-170vh);
+  opacity: 0;
+}
+
+/* A line sketch of the table with the intro on it and a pencil at work, with
+   the note under it. They float up and away as the mist lifts. */
+.curtain-card {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+#curtain.is-clearing .curtain-card {
+  opacity: 0;
+  transform: translate(-50%, -50%) translateY(-6vh);
+}
+
+.sketch {
+  position: relative;
+  width: 202px;
+  height: 171px;
+}
+
+/* The table and the blank paper, then the intro's parts, each its own layer
+   so it can fade in on its own; opacity alone, so it stays smooth while the
+   page is busy */
+.sketch-base,
+.sketch-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #4a3526;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The intro's own colours: its paper, picture frame, tags, ink, the orange
+   of the role, and two of its block buttons for the row of them */
+.sketch-paper {
+  fill: #fffdf7;
+  stroke-width: 1.6;
+}
+
+/* Each part's delay is set in index.html; main.js brings in the rest once the page is ready */
+.sketch-layer {
+  opacity: 0;
+  animation: sketch-in 0.7s ease forwards;
+}
+
+@keyframes sketch-in {
+  to { opacity: 1; }
+}
+
+.sketch-photo {
+  fill: #eadfca;
+  stroke: none;
+}
+
+.sketch-tag {
+  fill: #f3e5c9;
+  stroke: #d6c19b;
+  stroke-width: 0.8;
+}
+
+.sketch-name {
+  stroke: #2c241d;
+  stroke-width: 2.6;
+}
+
+.sketch-role {
+  stroke: #b8500c;
+  stroke-width: 1.8;
+}
+
+.sketch-text {
+  stroke: rgba(44, 36, 29, 0.5);
+  stroke-width: 1.3;
+}
+
+.sketch-button {
+  stroke-width: 1;
+}
+
+.sketch-button.is-mustard {
+  fill: #f2c14e;
+  stroke: #b98a2a;
+}
+
+.sketch-button.is-blue {
+  fill: #8fb0de;
+  stroke: #4a6fa8;
+}
+
+/* A pencil beside the note, scribbling in place, as a transform, so it
+   stays smooth while the page is busy */
+.note-pencil {
+  display: block;
+  transform-origin: 50% 100%;
+  animation: sketch-scribble 0.32s ease-in-out infinite alternate;
+}
+
+.note-pencil svg {
+  display: block;
+  overflow: visible;
+  fill: #fffdf7;
+  stroke: #4a3526;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transform: rotate(28deg);
+  transform-origin: 50% 100%;
+}
+
+.note-lead {
+  fill: #4a3526;
+}
+
+@keyframes sketch-scribble {
+  from { transform: translate(-1px, 0) rotate(-2deg); }
+  to { transform: translate(1.5px, -2px) rotate(3deg); }
+}
+
+@media (max-width: 420px) {
+  .sketch {
+    scale: 0.8;
+  }
+}
+
+.curtain-note {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 0;
+  white-space: nowrap;
+  font-family: "Shantell Sans", var(--head);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #4a3526;
+  text-shadow: 0 1px 0 rgba(255, 250, 240, 0.9), 0 0 14px rgba(255, 250, 240, 0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fog-puff, .note-pencil {
+    animation: none;
+  }
+  .sketch-layer {
+    animation-duration: 0.01s;
+  }
+  .curtain-fog, .curtain-card {
+    transition: opacity 0.3s ease;
+  }
+  #curtain.is-clearing .curtain-fog {
+    transform: none;
+  }
 }
