@@ -17,8 +17,9 @@
   --yellow: #f2c14e;
   --green: #6fae66;
   --col: max(min(1180px, 66vw), min(100vw - 32px, 760px));
-  /* The project board fills nearly the whole screen */
-  --board-h: max(540px, calc(100vh - 36px));
+  /* The project board runs a little past the bottom of the screen: its
+     bottom border only shows once the page is scrolled on */
+  --board-h: max(540px, calc(100vh + 12px));
   --head: "Figtree", "Nunito", system-ui, sans-serif;
   --body: "Nunito", system-ui, sans-serif;
   color-scheme: light;
@@ -399,8 +400,7 @@ html.no-splash .splash {
   cursor: default;
 }
 
-.block-btn--blue,
-.block-btn--arrow {
+.block-btn--blue {
   --face: #8fb0de;
   --edge: #4a6fa8;
 }
@@ -413,12 +413,6 @@ html.no-splash .splash {
 .block-btn--green {
   --face: #aac68a;
   --edge: #6b8a4c;
-}
-
-.block-btn--arrow {
-  width: 44px;
-  padding: 0;
-  font-size: 0.9rem;
 }
 
 /* -------------------------------------------------------------- intro */
@@ -552,17 +546,9 @@ html.no-splash .splash {
   display: flex;
   flex-direction: column;
   border: 20px solid #cfa56c;
-  border-bottom: 0;
-  border-radius: 14px 14px 12px 12px;
+  border-radius: 14px;
   /* Inked at the edge, like the intro and More work sheets */
   box-shadow: 0 0 0 2.5px #5c4330, 0 14px 30px rgba(70, 40, 16, 0.28), 0 2px 4px rgba(70, 40, 16, 0.2);
-}
-
-.board-bar {
-  background: #cfa56c;
-  border-radius: 0 0 12px 12px;
-  margin: 0 -20px;
-  padding: 12px 20px 16px;
 }
 
 .board-track {
@@ -578,13 +564,6 @@ html.no-splash .splash {
 
 .board-track::-webkit-scrollbar {
   display: none;
-}
-
-.board-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 /* The projects are bookmarks sticking up from behind the board's top

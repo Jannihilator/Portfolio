@@ -10,7 +10,7 @@ import { estimate, SLOW_MS, showPart, stopSketch } from "./loading.js";
 const $ = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const carousel = initCarousel({ track: $("track"), tabs: $("tabs"), prev: $("prev"), next: $("next") });
+const carousel = initCarousel({ track: $("track"), tabs: $("tabs") });
 initOthers({ list: $("other-list"), dialog: $("peek"), body: $("peek-body"), close: $("peek-close") });
 initSurfaces();
 

@@ -105,7 +105,7 @@ function slideHtml(project, i, total) {
   </article>`;
 }
 
-export function initCarousel({ track, tabs, prev, next, onChange }) {
+export function initCarousel({ track, tabs, onChange }) {
   const projects = FEATURED.map((id) => P.find(id)).filter(Boolean);
   track.innerHTML = projects.map((p, i) => slideHtml(p, i, projects.length)).join("");
   tabs.innerHTML = projects
@@ -186,8 +186,6 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
       if (j === i && inView.has(video)) playHero(video);
       else if (j !== i) video.pause();
     });
-    prev.disabled = i <= 0;
-    next.disabled = i >= slides.length - 1;
     // The trailer only loads once someone is on its slide
     const project = projects[i];
     const host = slides[i].querySelector("[data-embed]");
@@ -220,8 +218,6 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
     settleTimer = setTimeout(() => setActive(current()), 90);
   });
 
-  prev.addEventListener("click", () => go(active - 1));
-  next.addEventListener("click", () => go(active + 1));
   tabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-slide]");
     if (button) go(Number(button.dataset.slide));
