@@ -2,6 +2,8 @@
  * The featured projects, one paper slide each, on a sideways track that
  * snaps. Every slide keeps its own vertical scroll for the beats.
  */
+import { afterLoading } from "./loading.js";
+
 const P = window.PortfolioProjects;
 
 export const FEATURED = ["xhaler", "borderless", "star-fishing", "renushu"];
@@ -12,6 +14,13 @@ const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 function splitTitle(title) {
   const match = String(title || "").match(/^(.*?)\s*\(\s*(in (?:progress|development))\s*\)\s*$/i);
   return match ? { name: match[1], status: "In development" } : { name: title, status: "" };
+}
+
+/** A still waiting in data-poster goes up */
+function showPoster(video) {
+  if (!video.dataset.poster) return;
+  video.setAttribute("poster", video.dataset.poster);
+  delete video.dataset.poster;
 }
 
 function heroImage(project) {
@@ -28,10 +37,10 @@ function heroHtml(project) {
   const image = heroImage(project);
   const video = heroVideo(project);
   if (video) {
-    // Plays only while its slide is on the board
+    // Plays only while its slide is on the board and in view; its still goes up once the board is near
     const fallback = video.fallback ? `data-fallback="${esc(video.fallback)}"` : "";
     return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none" ${fallback}
-      ${image ? `poster="${esc(image.src)}"` : ""} aria-label="${esc(project.title)} demo"><source src="${esc(video.src)}" type="video/mp4" /></video></figure>`;
+      ${image ? `data-poster="${esc(image.src)}"` : ""} aria-label="${esc(project.title)} demo"><source src="${esc(video.src)}" type="video/mp4" /></video></figure>`;
   }
   return image ? `<figure class="slide-hero"><img src="${esc(image.src)}" alt="${esc(image.alt || "")}" loading="lazy" decoding="async" /></figure>` : "";
 }
@@ -128,28 +137,36 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
     return active >= 0 ? slides[active].querySelector("video[data-hero]") : null;
   }
 
-  // Phones refuse the first play() while the board sits under the splash, so
-  // the first slide's reel tries again once it scrolls into view
+  // A reel only starts once it is in view, so nothing downloads while the
+  // board is still far down the page (and phones refuse a play() until then)
+  const heroes = slides.map((slide) => slide.querySelector("video[data-hero]")).filter(Boolean);
+  const inView = new Set("IntersectionObserver" in window ? [] : heroes);
   if ("IntersectionObserver" in window) {
     const heroWatch = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const video = entry.target;
+        if (entry.isIntersecting) inView.add(video);
+        else inView.delete(video);
         if (video !== activeHero()) return;
         if (entry.isIntersecting) {
           if (video.paused) playHero(video);
         } else video.pause();
       });
     }, { threshold: 0.25 });
-    slides.forEach((slide) => {
-      const video = slide.querySelector("video[data-hero]");
-      if (video) heroWatch.observe(video);
-    });
-  }
+    heroes.forEach((video) => heroWatch.observe(video));
+    // Every slide's still at once, as the board comes near, so paging along never shows an empty frame
+    const near = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      heroes.forEach(showPoster);
+      near.disconnect();
+    }, { rootMargin: "50% 0px" });
+    afterLoading(() => near.observe(track));
+  } else heroes.forEach(showPoster);
 
   // Low Power Mode on iOS holds muted autoplay until the first touch
   const wake = () => {
     const video = activeHero();
-    if (video && video.paused) playHero(video);
+    if (video && video.paused && inView.has(video)) playHero(video);
   };
   document.addEventListener("touchend", wake, { once: true, passive: true });
   document.addEventListener("click", wake, { once: true });
@@ -166,8 +183,8 @@ export function initCarousel({ track, tabs, prev, next, onChange }) {
     slides.forEach((slide, j) => {
       const video = slide.querySelector("video[data-hero]");
       if (!video) return;
-      if (j === i) playHero(video);
-      else video.pause();
+      if (j === i && inView.has(video)) playHero(video);
+      else if (j !== i) video.pause();
     });
     prev.disabled = i <= 0;
     next.disabled = i >= slides.length - 1;

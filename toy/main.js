@@ -5,6 +5,7 @@
 import { initCarousel } from "./carousel.js";
 import { initOthers } from "./others.js";
 import { initSurfaces, tickSurfaces } from "./surfaces.js";
+import { estimate, SLOW_MS, showPart, stopSketch } from "./loading.js";
 
 const $ = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -31,6 +32,9 @@ document.querySelectorAll("[data-goto]").forEach((button) => {
 // The sheet lands with the intro in the middle of the screen (near the top
 // when it is too tall for that), and the intro then holds still there for a
 // stretch of scrolling before the page moves on (.has-hold in toy.css).
+//
+// A load that would take too long skips the splash, as on a phone: the page
+// shows at once, and the table comes in under it when it is up.
 const splash = $("splash");
 const intro = $("intro-flip");
 const stage = $("intro-stage");
@@ -60,6 +64,10 @@ function splashProgress() {
   return raw > 0.995 ? 1 : Math.max(0, raw);
 }
 
+/** The painter for the sheet's picture starts downloading now, alongside the table */
+const painter = splash.offsetHeight ? import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js") : null;
+painter?.catch(() => {});
+
 /** Off once the card has been turned over, until the sheet is back on the table */
 let holdOff = false;
 
@@ -70,6 +78,7 @@ function placeRest() {
   stage.style.setProperty("--intro-rest", `${Math.round(introRest())}px`);
 }
 
+let queueUpdate = () => {};
 {
   let queued = false;
   const update = () => {
@@ -90,6 +99,7 @@ function placeRest() {
     if (!queued) requestAnimationFrame(update);
     queued = true;
   };
+  queueUpdate = queue;
   window.addEventListener("scroll", queue, { passive: true });
   window.addEventListener("resize", queue);
   window.addEventListener("sheet-ready", queue);
@@ -99,13 +109,17 @@ function placeRest() {
 
 /** Paints the intro panel into a picture for the sheet on the table */
 async function renderSheet() {
-  const { default: html2canvas } = await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.esm.js");
+  const { default: html2canvas } = await painter;
   return html2canvas($("about"), {
     backgroundColor: null,
     scale: Math.min(2, window.devicePixelRatio || 1) * 1.25,
     logging: false,
+    // The painter waits for every picture in what it copies, so it copies the intro card and
+    // the way down to it, never the project pictures and thumbnails further down the page
+    ignoreElements: (el) => !!el.closest?.("body") && !el.contains(intro) && !intro.contains(el),
     onclone: (doc) => {
       doc.getElementById("intro-flip").style.opacity = "1";
+      doc.getElementById("page").style.opacity = "1";
       // The panel's paper is drawn on its canvas, which may not be painted yet: plain paper instead
       const copy = doc.getElementById("about");
       copy.style.background = "#fffdf7";
@@ -127,55 +141,99 @@ async function paintSheet(table) {
 
 // Until the table is up and the intro is painted, a bank of mist hides the
 // page (see #curtain in index.html) and the page cannot be scrolled. On it a
-// line sketch of the table, with a pencil at work on the intro. When all is
-// ready the mist lifts off.
+// line sketch of the table, with a pencil at work on the intro: its parts
+// come in as the load gets along (loading.js). When all is ready the mist
+// lifts off.
+//
+// When the load looks like taking longer than SLOW_MS, it is not worth the
+// wait: the mist lifts at once and the page shows without the splash.
 const curtain = $("curtain");
+const view = $("view");
 let sheetLoading = !!curtain;
-const NOTES = ["Sharpening the pencils…", "Smoothing out the creases…", "Dusting off the résumé…", "Unfolding the intro…"];
-
-function startNotes() {
-  if (!curtain) return;
-  let n = 0;
-  const timer = setInterval(() => {
-    if (!sheetLoading || n >= NOTES.length - 1) return clearInterval(timer);
-    $("curtain-note").textContent = NOTES[++n];
-  }, 2200);
-}
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function watchLoading() {
+  if (!curtain) return;
+  const timer = setInterval(() => {
+    if (!sheetLoading) return clearInterval(timer);
+    const end = estimate();
+    if (performance.now() > SLOW_MS || (end != null && end > SLOW_MS)) {
+      clearInterval(timer);
+      skipSplash();
+    }
+  }, 150);
+}
+
+/** The table, once it is up, shows through where the blurred view stood */
+let tableUp = false;
+function revealTable() {
+  if (tableUp && !sheetLoading) view.classList.add("is-gone");
+}
+
+/** The mist lifts off and the page can scroll */
+async function liftCurtain() {
+  curtain.classList.add("is-clearing");
+  document.documentElement.classList.remove("sheet-loading");
+  revealTable();
+  queueUpdate();
+  await wait(reducedMotion ? 350 : 2400);
+  curtain.remove();
+}
+
+/** Too slow for the splash: the page shows at once, as on a phone */
+function skipSplash() {
+  if (!sheetLoading) return;
+  sheetLoading = false;
+  stopSketch();
+  document.documentElement.classList.add("no-splash");
+  window.scrollTo(0, 0);
+  liftCurtain();
+}
 
 /**
  * The sketch's parts still to come fade in quickly, one after another; the
  * whole sheet shows for a moment, then the mist lifts and the table shows
  */
 async function openCurtain() {
-  if (!sheetLoading) return;
+  if (!sheetLoading) return revealTable();
   sheetLoading = false;
-  $("curtain-note").textContent = NOTES[NOTES.length - 1];
-  const fades = [...curtain.querySelectorAll(".sketch-layer")].flatMap((layer) => layer.getAnimations());
-  let next = 0;
-  for (const fade of fades) {
-    // Not yet begun: it starts soon, a beat after the one before it
-    if (fade.currentTime < fade.effect.getComputedTiming().delay) {
-      fade.effect.updateTiming({ delay: fade.currentTime + next * 160, duration: 320 });
-      next++;
-    }
+  stopSketch();
+  while (showPart()) {
+    if (!reducedMotion) await wait(160);
   }
-  if (reducedMotion) fades.forEach((fade) => fade.finish());
-  await Promise.all(fades.map((fade) => fade.finished));
-  // The whole sheet, for a moment, before it goes
-  await wait(reducedMotion ? 0 : 800);
-  curtain.classList.add("is-clearing");
-  document.documentElement.classList.remove("sheet-loading");
-  await wait(reducedMotion ? 350 : 2400);
-  curtain.remove();
+  // The last part's fade, and the whole sheet for a moment, before it goes
+  await wait(reducedMotion ? 0 : 1100);
+  liftCurtain();
+}
+
+/** The icons' stylesheet loads on its own (index.html); the sheet's picture needs its fonts in */
+async function iconsReady() {
+  const link = $("icons");
+  if (link && link.media !== "all") {
+    await Promise.race([new Promise((resolve) => link.addEventListener("load", resolve, { once: true })), wait(5000)]);
+  }
+  await Promise.race([
+    Promise.all([document.fonts.load('900 1em "Font Awesome 6 Free"'), document.fonts.load('400 1em "Font Awesome 6 Brands"')]),
+    wait(5000),
+  ]).catch(() => {});
 }
 
 async function startSheet(table) {
   if (!splash.offsetHeight) return openCurtain();
   try {
+    await iconsReady();
     await document.fonts.ready;
     await paintSheet(table);
+    // Too late: the page went on without the splash
+    if (!splash.offsetHeight) {
+      sheetTable = null;
+      table.clearSheet();
+      document.body.classList.remove("sheet-flying");
+      intro.style.opacity = "";
+      intro.style.pointerEvents = "";
+      return;
+    }
     await openCurtain();
     $("table").addEventListener("pickup", () => {
       if (sheetLoading || splashProgress() >= 1) return;
@@ -193,6 +251,8 @@ async function startSheet(table) {
     console.warn("Intro sheet unavailable", error);
     sheetTable = null;
     document.documentElement.classList.remove("has-hold");
+    // Without the sheet there is nothing to see on the splash, so it goes
+    document.documentElement.classList.add("no-splash");
     table.clearSheet();
     openCurtain();
     intro.style.opacity = "";
@@ -232,6 +292,7 @@ async function startTable() {
     const skills = [...document.querySelectorAll(".skill-tags li")].map((li) => li.textContent.trim());
     const table = await createTable($("table"), { skills, reducedMotion });
     window.addEventListener("resize", () => table.resize());
+    tableUp = true;
     return table;
   } catch (error) {
     // No WebGL or no network for the libraries: the page stands on its own
@@ -242,9 +303,7 @@ async function startTable() {
   }
 }
 
-startNotes();
-// Never leave the page stuck behind the curtain
-setTimeout(() => openCurtain(), 45000);
+watchLoading();
 const table = await startTable();
 if (table) startSheet(table);
 

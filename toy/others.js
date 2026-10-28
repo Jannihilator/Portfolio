@@ -3,6 +3,7 @@
  * projects.js groups them. A thumbnail opens its project in a dialog.
  */
 import { FEATURED } from "./carousel.js";
+import { afterLoading } from "./loading.js";
 
 const P = window.PortfolioProjects;
 
@@ -20,7 +21,7 @@ function thumbHtml(project) {
   const line = String((data.awards || {})[project.id] || (data.taglines || {})[project.id] || "").trim();
   return `<li>
     <button type="button" class="thumb" data-peek="${esc(project.id)}">
-      <span class="thumb-shot">${shot ? `<img src="${esc(shot.src)}" alt="" loading="lazy" decoding="async" />` : ""}</span>
+      <span class="thumb-shot">${shot ? `<img data-src="${esc(shot.src)}" alt="" decoding="async" />` : ""}</span>
       <span class="thumb-name">${esc(project.title)}</span>
       ${line ? `<span class="thumb-line">${esc(line)}</span>` : ""}
     </button>
@@ -39,6 +40,27 @@ export function initOthers({ list, dialog, body, close }) {
       </section>`;
     })
     .join("");
+
+  // The browser's own lazy loading reaches a long way down the page, so the
+  // thumbnails wait until they are about a screen away (and the page is up)
+  const shots = [...list.querySelectorAll("img[data-src]")];
+  const showShot = (img) => {
+    img.src = img.dataset.src;
+    delete img.dataset.src;
+  };
+  if ("IntersectionObserver" in window) {
+    const near = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          showShot(entry.target);
+          near.unobserve(entry.target);
+        });
+      },
+      { rootMargin: "100% 0px" }
+    );
+    afterLoading(() => shots.forEach((img) => near.observe(img)));
+  } else shots.forEach(showShot);
 
   let opener = null;
 

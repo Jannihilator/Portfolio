@@ -1,13 +1,24 @@
 /**
  * Static server for the portfolio. Every response is uncached, and a save
  * of site code reloads the open tab. Media drops and git metadata do not.
+ *
+ *   node dev-server.js --slow=150   shares 150 KB/s across every response,
+ *                                   each after a 150 ms wait, to try a slow
+ *                                   connection; text is gzipped, as the real
+ *                                   host does (the CDN libraries stay fast)
  */
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const zlib = require("zlib");
 
 const root = __dirname;
 const port = 8765;
+const slowArg = process.argv.find((arg) => arg.startsWith("--slow="));
+/** Bytes per second for all responses together, or 0 for full speed */
+const slowRate = slowArg ? Number(slowArg.slice(7)) * 1024 : 0;
+/** When the shared line is next free (ms) */
+let lineFree = 0;
 const clients = new Set();
 let reloadTimer = 0;
 
@@ -53,11 +64,40 @@ fs.watch(root, { recursive: true }, (_event, filename) => {
 });
 
 function send(res, status, body, type) {
-  res.writeHead(status, {
+  const headers = {
     "Content-Type": type || "text/plain; charset=utf-8",
     "Cache-Control": "no-store",
-  });
-  res.end(body);
+  };
+  if (!slowRate) {
+    res.writeHead(status, headers);
+    res.end(body);
+    return;
+  }
+  let data = Buffer.isBuffer(body) ? body : Buffer.from(String(body));
+  if (/^(text|application\/json|image\/svg)/.test(headers["Content-Type"])) {
+    data = zlib.gzipSync(data);
+    headers["Content-Encoding"] = "gzip";
+  }
+  res.writeHead(status, headers);
+  // In small pieces, each taking its turn on the one shared line
+  const CHUNK = 16 * 1024;
+  let at = 0;
+  const next = () => {
+    if (res.destroyed) return;
+    if (at >= data.length) {
+      res.end();
+      return;
+    }
+    const piece = data.subarray(at, at + CHUNK);
+    at += piece.length;
+    const now = Date.now();
+    lineFree = Math.max(lineFree, now) + (piece.length / slowRate) * 1000;
+    setTimeout(() => {
+      res.write(piece);
+      next();
+    }, lineFree - now);
+  };
+  setTimeout(next, 150);
 }
 
 const server = http.createServer((req, res) => {
@@ -98,6 +138,8 @@ const server = http.createServer((req, res) => {
           return `${attr}="${url}${join}v=${v}"`;
         }
       );
+      // A preloaded module is imported without the stamp, so it keeps its plain address
+      html = html.replace(/(<link rel="modulepreload" href="[^"?]+)\?v=\d+/g, "$1");
       if (!html.includes("/__reload")) {
         html = html.replace("</body>", reloadSnippet + "\n</body>");
       }
@@ -110,4 +152,5 @@ const server = http.createServer((req, res) => {
 server.listen(port, "127.0.0.1", () => {
   console.log("Serving " + root + " at http://127.0.0.1:" + port);
   console.log("Cache disabled. Saving html, css, or js reloads the tab.");
+  if (slowRate) console.log(`Throttled to ${slowRate / 1024} KB/s.`);
 });

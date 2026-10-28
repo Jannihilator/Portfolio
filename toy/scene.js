@@ -317,7 +317,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   await RAPIER.init();
   // The skill bricks are painted with the page's own font
   try {
-    await Promise.race([Promise.all([document.fonts.load("600 40px Figtree"), document.fonts.load("600 40px \"Shantell Sans\"")]), new Promise((r) => setTimeout(r, 1500))]);
+    await Promise.race([Promise.all([document.fonts.load("600 40px Figtree"), document.fonts.load("600 40px \"Shantell Sans\""), document.fonts.load("400 40px \"Shantell Sans\"")]), new Promise((r) => setTimeout(r, 1500))]);
   } catch {
     // Painted in the fallback font instead
   }
@@ -1439,12 +1439,13 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     // seen at a low angle that squashes it, so the letters are stretched
     // up to read as normal from the camera
     const TALL = 1.9;
-    ctx.fillStyle = "#3d2b20";
+    // A light hand in soft ink, so the note is only a note beside the intro
+    ctx.fillStyle = "#6a5444";
     ctx.save();
     ctx.scale(1, TALL);
-    ctx.font = "600 92px \"Shantell Sans\", Figtree, sans-serif";
+    ctx.font = "400 92px \"Shantell Sans\", Figtree, sans-serif";
     ctx.fillText("toys:", 60, 180 / TALL);
-    ctx.font = "600 54px \"Shantell Sans\", Figtree, sans-serif";
+    ctx.font = "400 54px \"Shantell Sans\", Figtree, sans-serif";
     const words = "an object or system you play with just for the joy of tinkering around".split(" ");
     let line = "";
     let y = 310;

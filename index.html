@@ -17,26 +17,34 @@
   <link rel="manifest" href="./assets/favicon/site.webmanifest?v=meeple" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Shantell+Sans:wght@600&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Shantell+Sans:wght@400;600&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <!-- The icons never hold up the first paint; main.js waits for them before painting the intro sheet -->
+  <link rel="stylesheet" id="icons" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" media="print" onload="this.media='all'" />
   <link rel="stylesheet" href="toy.css" />
+  <!-- The minified builds; the module's own import of the full core is sent to the minified one too -->
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js",
+      "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js",
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/",
       "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js"
     }
   }
   </script>
+  <!-- The table's libraries start downloading now, not once main.js gets round to asking for them -->
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js" />
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.min.js" />
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.min.js" />
+  <link rel="modulepreload" href="toy/scene.js" />
+  <link rel="modulepreload" href="toy/backdrop.js" />
+  <link rel="modulepreload" href="toy/loading.js" />
 </head>
 <body>
   <!-- The curtain: a bank of mist over the page while the table and the intro load (main.js).
-       Under the mist, the view the table stands in; a little document writes itself out.
-       When all is ready the mist lifts off into the sky. -->
+       Under the mist, the view the table stands in (#view); a little document writes itself out
+       as the loading gets along. When all is ready the mist lifts off into the sky. -->
   <div id="curtain" role="status" aria-label="Loading">
-    <!-- The view the table will stand in, blurred: its backdrop (toy/curtain.js) over the table's colour -->
-    <div id="curtain-view" class="curtain-view" aria-hidden="true"><span class="curtain-table"></span></div>
     <div class="curtain-fog" aria-hidden="true">
       <span class="fog-puff" style="--l:11vw;--t:9vh;--w:68vw;--d:9.5s;--x:-4.5vw;--i:0"></span>
       <span class="fog-puff" style="--l:-19vw;--t:53vh;--w:46vw;--d:12.0s;--x:-4.0vw;--i:1"></span>
@@ -59,12 +67,12 @@
       <!-- A line sketch of the table with the intro lying on it, its parts appearing one by one -->
       <div class="sketch" aria-hidden="true">
           <svg class="sketch-base" viewBox="0 0 202 171"><path class="sketch-table" d="M109.7 4.0L198.0 55.0L92.3 116.0L4.0 65.0Z M4.0 65.0L4.0 72.0L92.3 123.0L198.0 62.0L198.0 55.0 M92.3 116.0L92.3 123.0 M4.0 72.0L4.0 116.0 M92.3 123.0L92.3 167.0 M198.0 62.0L198.0 106.0"/><path class="sketch-paper" d="M109.7 13.0L182.4 55.0L92.3 107.0L19.6 65.0Z"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.1s"><path class="sketch-photo" d="M110.1 19.5L129.0 30.4L102.0 46.0L83.1 35.1Z"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.4s"><path class="sketch-tag" d="M78.5 37.7L86.5 42.3L82.0 44.9L74.0 40.3Z M88.7 43.6L97.5 48.6L93.0 51.2L84.2 46.2Z M71.3 41.8L83.0 48.6L78.5 51.2L66.8 44.4Z"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:0.8s"><path class="sketch-name" d="M132.1 35.3L165.6 54.6"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:1.2s"><path class="sketch-role" d="M125.8 39.0L141.8 48.2"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:1.7s"><path class="sketch-text" d="M117.7 43.6L154.1 64.6 M111.4 47.3L144.9 66.6 M105.1 50.9L142.2 72.3 M98.8 54.6L122.1 68.0"/></svg>
-          <svg class="sketch-layer" viewBox="0 0 202 171" style="animation-delay:2.3s"><path class="sketch-button is-mustard" d="M86.2 61.8L99.3 69.4L92.1 73.6L79.0 66.0Z"/><path class="sketch-button is-blue" d="M102.2 71.1L116.7 79.5L109.5 83.6L95.0 75.2Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-photo" d="M110.1 19.5L129.0 30.4L102.0 46.0L83.1 35.1Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-tag" d="M78.5 37.7L86.5 42.3L82.0 44.9L74.0 40.3Z M88.7 43.6L97.5 48.6L93.0 51.2L84.2 46.2Z M71.3 41.8L83.0 48.6L78.5 51.2L66.8 44.4Z"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-name" d="M132.1 35.3L165.6 54.6"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-role" d="M125.8 39.0L141.8 48.2"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-text" d="M117.7 43.6L154.1 64.6 M111.4 47.3L144.9 66.6 M105.1 50.9L142.2 72.3 M98.8 54.6L122.1 68.0"/></svg>
+          <svg class="sketch-layer" viewBox="0 0 202 171"><path class="sketch-button is-mustard" d="M86.2 61.8L99.3 69.4L92.1 73.6L79.0 66.0Z"/><path class="sketch-button is-blue" d="M102.2 71.1L116.7 79.5L109.5 83.6L95.0 75.2Z"/></svg>
       </div>
       <!-- The note, with a pencil scribbling beside it; main.js changes the words -->
       <p class="curtain-note">
@@ -81,6 +89,9 @@
 
   <!-- The toy table lies under the pages. Nothing on it carries content. -->
   <canvas id="table" aria-hidden="true"></canvas>
+  <!-- The view the table stands in, blurred: its backdrop (toy/curtain.js) over the table's colour.
+       It covers the table until the table is up, and stays behind the pages if it never comes. -->
+  <div id="view" class="curtain-view" aria-hidden="true"><span class="curtain-table"></span></div>
 
   <div id="page">
     <!-- The splash: a screen of nothing but the table, with the intro's top edge peeking up from below.
@@ -93,7 +104,7 @@
       <div class="intro-flip" id="intro-flip">
         <header id="about" class="panel intro" data-panel data-outline>
           <figure class="intro-portrait">
-            <img src="./assets/profile-2026.jpg" alt="Yen Chun (James) Huang" width="1178" height="1563" decoding="async" />
+            <img src="./assets/profile-2026-web.jpg" alt="Yen Chun (James) Huang" width="600" height="796" decoding="async" />
             <ul class="skill-tags" aria-label="Skills">
               <li>Unity</li><li>Unreal</li><li>Godot</li><li>TouchDesigner</li><li>VR/XR</li>
               <li>C#</li><li>C/C++</li><li>OOP</li><li>Python</li><li>JavaScript</li><li>HTML/CSS</li>
@@ -194,10 +205,11 @@
   <div id="aim" aria-hidden="true"><span class="aim-ring"></span></div>
   <div id="fx" aria-hidden="true"></div>
 
+  <!-- None of these hold up the page; they run in this order once it is read, the curtain's first -->
   <script>window.PORTFOLIO_SKIP_VIDEO_PRELOAD = true;</script>
-  <script src="contributions.js"></script>
-  <script src="projects.js"></script>
   <script type="module" src="toy/curtain.js"></script>
+  <script defer src="contributions.js"></script>
+  <script defer src="projects.js"></script>
   <script type="module" src="toy/main.js"></script>
 </body>
 </html>

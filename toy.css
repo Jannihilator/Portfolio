@@ -183,12 +183,26 @@ body.sheet-flying main {
   height: 35vh;
 }
 
-/* The page holds still while the intro sheet is still being painted */
+/* The page holds still, and stays out of sight under the mist, while the
+   table and the intro sheet are still on their way */
 html.sheet-loading {
   overflow: hidden;
 }
 
-/* On a phone the table is too small to look at, so the page starts at the intro */
+#page {
+  transition: opacity 0.6s ease 0.3s;
+}
+
+html.sheet-loading #page {
+  opacity: 0;
+}
+
+/* On a phone the table is too small to look at, so the page starts at the
+   intro; so it does when the load is too slow for the splash (main.js) */
+html.no-splash .splash {
+  display: none;
+}
+
 @media (max-width: 760px), (hover: none) and (pointer: coarse) {
   .splash {
     display: none;
@@ -1480,14 +1494,18 @@ body.toy-on label {
   pointer-events: auto;
 }
 
-/* The view the table stands in, before the table is there. The backdrop is
-   placed where the camera sees it (scene.js): its width is fixed by the
-   camera's level field of view, and its height runs from vw off the middle. */
+/* The view the table stands in, before the table is there, and behind the
+   pages for good if it never comes. The backdrop is placed where the camera
+   sees it (scene.js): its width is fixed by the camera's level field of
+   view, and its height runs from vw off the middle. */
 .curtain-view {
-  position: absolute;
+  position: fixed;
   inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
   background: #9cc3e0;
-  transition: opacity 1.2s ease 0.5s;
+  transition: opacity 1.2s ease 0.5s, visibility 0s 1.7s;
 }
 
 .curtain-backdrop {
@@ -1517,8 +1535,9 @@ body.toy-on label {
   margin: 0 -12px -12px;
 }
 
-#curtain.is-clearing .curtain-view {
+#view.is-gone {
   opacity: 0;
+  visibility: hidden;
 }
 
 /* Thin mist down most of its height, thinning out at the bottom edge, so
@@ -1611,14 +1630,14 @@ body.toy-on label {
   stroke-width: 1.6;
 }
 
-/* Each part's delay is set in index.html; main.js brings in the rest once the page is ready */
+/* main.js brings each part in as the load gets along, and the rest once it is all in */
 .sketch-layer {
   opacity: 0;
-  animation: sketch-in 0.7s ease forwards;
+  transition: opacity 0.32s ease;
 }
 
-@keyframes sketch-in {
-  to { opacity: 1; }
+.sketch-layer.is-in {
+  opacity: 1;
 }
 
 .sketch-photo {
@@ -1713,7 +1732,7 @@ body.toy-on label {
     animation: none;
   }
   .sketch-layer {
-    animation-duration: 0.01s;
+    transition: none;
   }
   .curtain-fog, .curtain-card {
     transition: opacity 0.3s ease;

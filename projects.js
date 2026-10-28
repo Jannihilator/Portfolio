@@ -1148,9 +1148,10 @@ window.PORTFOLIO_PROJECTS = [
         block.alt || ""
       )}" loading="lazy" decoding="async"${shape} />`;
     } else {
-      const poster = block.poster ? ` poster="${escapeHtml(block.poster)}"` : "";
+      // Neither the clip nor its still loads until it comes near (bindBeatPlayers)
+      const poster = block.poster ? ` data-poster="${escapeHtml(block.poster)}"` : "";
       const fallback = block.fallback ? ` data-fallback="${escapeHtml(block.fallback)}"` : "";
-      media = `<video class="beat-video" muted loop playsinline autoplay preload="metadata"${poster}${fallback}${shape} src="${escapeHtml(
+      media = `<video class="beat-video" muted loop playsinline preload="none"${poster}${fallback}${shape} src="${escapeHtml(
         block.src
       )}"></video>`;
     }
@@ -1235,6 +1236,35 @@ window.PORTFOLIO_PROJECTS = [
   /** Loops the passes you can see. Offscreen clips stay paused, and a
    *  reduced-motion setting leaves them stopped with controls. */
   let beatObserver = null;
+  let posterObserver = null;
+
+  /** A still waiting in data-poster goes up */
+  function showPoster(video) {
+    if (!video.dataset.poster) return;
+    if (!video.getAttribute("poster")) video.setAttribute("poster", video.dataset.poster);
+    delete video.dataset.poster;
+  }
+
+  /** Stills go up once their clip is about a screen away, so a first visit
+   *  only downloads what it can see */
+  function watchPosters(videos) {
+    if (!("IntersectionObserver" in window)) {
+      videos.forEach(showPoster);
+      return null;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          showPoster(entry.target);
+          observer.unobserve(entry.target);
+        });
+      },
+      { rootMargin: "100% 0px" }
+    );
+    videos.forEach((video) => video.dataset.poster && observer.observe(video));
+    return observer;
+  }
 
   const STALL_MS = 8000;
 
@@ -1264,11 +1294,12 @@ window.PORTFOLIO_PROJECTS = [
       beatObserver.disconnect();
       beatObserver = null;
     }
+    if (posterObserver) posterObserver.disconnect();
     const videos = [...root.querySelectorAll("video.beat-video")];
+    posterObserver = watchPosters(videos);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       videos.forEach((video) => {
-        video.removeAttribute("autoplay");
         video.controls = true;
         video.pause();
       });
