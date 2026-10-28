@@ -209,6 +209,152 @@ html.no-splash .splash {
   }
 }
 
+/* On the splash, the sun lands on the intro sheet: a warm glow round it,
+   and the table round that in shade, so the sheet is where the eye goes.
+   The shade stops at the table's far edge, so the sky stays sunny. main.js
+   puts its middle on the sheet and fades it as the sheet comes up. */
+.splash-light {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.splash-light::before,
+.splash-light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.splash-light::before {
+  background: radial-gradient(
+    calc(var(--rx, 300px) * 2.1) calc(var(--ry, 200px) * 3.4) at var(--x, 50%) var(--y, 70%),
+    rgba(58, 32, 14, 0) 30%,
+    rgba(58, 32, 14, 0.44) 100%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent calc(50vh - 3vw), #000 calc(50vh + 9vw));
+  mask-image: linear-gradient(to bottom, transparent calc(50vh - 3vw), #000 calc(50vh + 9vw));
+}
+
+.splash-light::after {
+  background: radial-gradient(
+    calc(var(--rx, 300px) * 0.95) calc(var(--ry, 200px) * 1.6) at var(--x, 50%) var(--y, 70%),
+    rgba(255, 244, 214, 0.3) 0%,
+    rgba(255, 244, 214, 0.26) 50%,
+    rgba(255, 244, 214, 0) 100%
+  );
+}
+
+/* The sunbeam: a shaft of light from the hanging sun down onto the sheet.
+   main.js lays the shaft from the sun to past the sheet; it is narrow at
+   the sun and as wide as the sheet where it lands, brightest there. */
+.splash-beam {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(10px);
+}
+
+.splash-beam > div {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  clip-path: polygon(0 calc(50% - var(--near, 30px)), 100% 0, 100% 100%, 0 calc(50% + var(--near, 30px)));
+  background: linear-gradient(
+    to right,
+    rgba(255, 246, 220, 0.36) 0%,
+    rgba(255, 246, 220, 0.26) 22%,
+    rgba(255, 246, 220, 0.28) calc(var(--land, 75%) - 12%),
+    rgba(255, 246, 220, 0.42) var(--land, 75%),
+    rgba(255, 246, 220, 0.4) 92%,
+    rgba(255, 246, 220, 0) 100%
+  );
+}
+
+/* A note scribbled on the table just past the sheet, with an arrow down at
+   it. It writes itself out once and then stays still. */
+.splash-cue {
+  position: fixed;
+  z-index: 1;
+  margin: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+  opacity: 0;
+  font-family: "Shantell Sans", var(--head);
+  color: #3d2b20;
+  text-shadow: 0 1px 0 rgba(255, 250, 240, 0.9), 0 0 10px rgba(255, 246, 228, 0.95), 0 0 22px rgba(255, 246, 228, 0.7);
+  white-space: nowrap;
+}
+
+.cue-words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  transform: rotate(-2deg);
+  opacity: 0;
+  transition: opacity 0.4s ease 0.7s;
+}
+
+.cue-big {
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.cue-small {
+  font-size: 1.02rem;
+  font-weight: 400;
+}
+
+.cue-arrow {
+  width: 46px;
+  height: 43px;
+  flex: none;
+  overflow: visible;
+  fill: none;
+  stroke: #3d2b20;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(255, 246, 228, 0.95));
+  /* Drawn pointing up; turned to point down and to the left, onto the sheet */
+  transform: rotate(-135deg);
+}
+
+.cue-arrow path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.5s ease-in-out 0.3s;
+}
+
+.cue-arrow path + path {
+  transition-delay: 0.75s;
+  transition-duration: 0.2s;
+}
+
+.splash-cue.is-on .cue-words {
+  opacity: 1;
+}
+
+.splash-cue.is-on .cue-arrow path {
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue-words,
+  .cue-arrow path {
+    transition: none;
+  }
+}
+
 /* ------------------------------------------------------------- blocks */
 
 /* Buttons are painted wooden blocks: they press in when hit */

@@ -78,13 +78,87 @@ function placeRest() {
   stage.style.setProperty("--intro-rest", `${Math.round(introRest())}px`);
 }
 
+// On the splash, a beam of sun on the sheet, so the way in stands out from
+// all the toys, and for a visitor who still has not found it, a note on the
+// table pointing at it. All go as the sheet comes up.
+const light = $("splash-light");
+const beam = $("splash-beam");
+const cue = $("splash-cue");
+
+/** The note turns up only once the table has been in view this long */
+const CUE_AFTER = 10000;
+/** When the note may show, from when the table first came into view */
+let cueAt = 0;
+
+function placeCue(p) {
+  const box = !sheetLoading && sheetTable?.sheetOnScreen();
+  const fade = box ? 1 - Math.min(1, p / 0.12) : 0;
+  if (box && !cueAt) {
+    cueAt = performance.now() + CUE_AFTER;
+    setTimeout(() => queueUpdate(), CUE_AFTER);
+  }
+  const noted = !!cueAt && performance.now() >= cueAt;
+  light.style.opacity = beam.style.opacity = fade.toFixed(3);
+  cue.style.opacity = noted ? fade.toFixed(3) : "0";
+  cue.classList.toggle("is-on", noted && fade > 0);
+  if (!box || fade <= 0) return;
+  const cx = (box.left + box.right) / 2;
+  const cy = (box.top + box.bottom) / 2;
+  const w = box.right - box.left;
+  const h = box.bottom - box.top;
+  light.style.setProperty("--x", `${Math.round(cx)}px`);
+  light.style.setProperty("--y", `${Math.round(cy)}px`);
+  light.style.setProperty("--rx", `${Math.round(w)}px`);
+  light.style.setProperty("--ry", `${Math.round(h)}px`);
+  aimBeam();
+  // On the bare table just past the sheet's far edge, over its right half,
+  // clear of the chips and the "all in" marker beside it; the arrow at its
+  // left points down onto the sheet
+  cue.style.left = `${Math.round(box.left + w * 0.32)}px`;
+  cue.style.top = `${Math.round(box.top + h * 0.06 - cue.offsetHeight)}px`;
+}
+
+/** The last beam set, so a still sun costs nothing frame to frame */
+let beamAt = "";
+
+/**
+ * The sunbeam shines from the hanging sun down onto the sheet: narrow at
+ * the sun, wide enough to take in the whole sheet where it lands, and a
+ * little past it. It follows the sun when a dart sets it swinging.
+ */
+function aimBeam() {
+  if (!(+beam.style.opacity > 0)) return;
+  const box = sheetTable?.sheetOnScreen();
+  const sun = sheetTable?.sunOnScreen();
+  if (!box || !sun) return;
+  const cx = (box.left + box.right) / 2;
+  const cy = (box.top + box.bottom) / 2;
+  const w = box.right - box.left;
+  const h = box.bottom - box.top;
+  const reach = Math.hypot(cx - sun.x, cy - sun.y);
+  const length = reach + h * 0.8;
+  const wide = w * 1.25;
+  const key = [sun.x, sun.y, cx, cy, w].map(Math.round).join();
+  if (key === beamAt) return;
+  beamAt = key;
+  const shaft = beam.firstElementChild;
+  const angle = Math.atan2(cy - sun.y, cx - sun.x);
+  shaft.style.width = `${Math.round(length)}px`;
+  shaft.style.height = `${Math.round(wide)}px`;
+  shaft.style.transform = `translate(${sun.x.toFixed(1)}px, ${sun.y.toFixed(1)}px) rotate(${angle.toFixed(4)}rad) translateY(-50%)`;
+  shaft.style.setProperty("--near", `${Math.round(sun.r * 0.55)}px`);
+  // Where the beam reaches the sheet's near edge, as a share of its length
+  shaft.style.setProperty("--land", `${(((reach - h * 0.7) / length) * 100).toFixed(1)}%`);
+}
+
 let queueUpdate = () => {};
 {
   let queued = false;
   const update = () => {
     queued = false;
-    if (!sheetTable) return;
+    if (!sheetTable) return placeCue(1);
     const p = splashProgress();
+    placeCue(p);
     if (p < 0.9) holdOff = false;
     placeRest();
     // The panel's own place, which the sheet comes to rest on
@@ -255,6 +329,7 @@ async function startSheet(table) {
     document.documentElement.classList.add("no-splash");
     table.clearSheet();
     openCurtain();
+    placeCue(1);
     intro.style.opacity = "";
     intro.style.pointerEvents = "";
     document.body.classList.remove("sheet-flying");
@@ -327,6 +402,7 @@ function frame(now) {
   if (table) {
     table.update(dt);
     if (toy) toy.update(dt, now);
+    aimBeam();
     table.render();
   }
   requestAnimationFrame(frame);

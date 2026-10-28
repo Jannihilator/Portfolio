@@ -2164,7 +2164,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   hanging(cloudCanvas(8, true), 2.8, 2.1, new THREE.Vector3(-5, 8.8, -9.5));
   hanging(cloudCanvas(5), 3.4, 1.9, new THREE.Vector3(8.6, 8, -8));
   hanging(cloudCanvas(13, true), 2.3, 1.72, new THREE.Vector3(13.2, 6.4, -5.5));
-  hanging(sunCanvas(), 2.8, 2.8, new THREE.Vector3(12.2, 9.6, -10.5));
+  const sunCutout = hanging(sunCanvas(), 2.8, 2.8, new THREE.Vector3(12.2, 9.6, -10.5));
 
   function swingClouds(dt) {
     for (const c of clouds) {
@@ -2784,8 +2784,17 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     maxWidth: 3.1,
     /** How far in front of the eye the sheet meets the panel's place */
     depth: 4,
-    hover: { peel: 0.13, radius: 0.07 },
+    hover: { peel: 0.3, radius: 0.1 },
     peel: { peel: 0.62, radius: 0.2 },
+    /**
+     * Every few seconds, while it lies untouched, the sheet floats up like a
+     * magic page: after `rest` seconds on the table it rises `lift` sheet
+     * heights over `rise` seconds, glowing a little, hangs there for `hang`,
+     * and is let go. Then it simply drops: gravity against the air, so it
+     * soon falls at about `terminal` (world units a second), and settles flat
+     * when it lands.
+     */
+    flap: { rest: 1.6, rise: 0.8, hang: 0.35, lift: 0.16, gravity: 6, terminal: 0.5 },
   };
   const sheet = (() => {
     const geo = new THREE.PlaneGeometry(1, 1, 40, 40);
@@ -2815,6 +2824,42 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       shape: null,
     };
   })();
+
+  /**
+   * The float: which part of it the sheet is in, and its height, fall speed,
+   * tilt, ripple, droop and glow. Off the table, the sheet stops casting into
+   * the shadow map, which would then have to be redrawn every frame, and this
+   * soft shadow on the table stands in for it.
+   */
+  const float = { stage: "rest", t: 0, h: 0, v: 0, pitch: 0, pitchV: 0, roll: 0, rollV: 0, ripple: 0, phase: 0, cup: 0, glow: 0 };
+  const floatShadow = (() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const ctx = c.getContext("2d");
+    // A soft rectangle, drawn as the blurred shadow of one kept off the canvas
+    ctx.shadowColor = "#fff";
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetX = 1000;
+    ctx.fillRect(24 - 1000, 24, 80, 80);
+    const tex = new THREE.CanvasTexture(c);
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(128 / 80, 128 / 80),
+      new THREE.MeshBasicMaterial({ map: tex, color: 0x4a2c16, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, toneMapped: false })
+    );
+    m.visible = false;
+    scene.add(m);
+    return m;
+  })();
+  /** Which way, and how far per unit of height, a shadow falls along the table */
+  const shadowLean = sun.position.clone().sub(sun.target.position);
+  shadowLean.set(-shadowLean.x / shadowLean.y, 0, -shadowLean.z / shadowLean.y);
+
+  /** The sheet's own shadow on or off, redrawing the shadow map once for the change */
+  function castSheet(on) {
+    if (sheet.obj.children[0].castShadow === on) return;
+    for (const m of sheet.obj.children) m.castShadow = on;
+    shadowsDirty = true;
+  }
 
   /** Bends the flat sheet: a corner curl, a cup across it, and a ripple */
   function bendSheet(peel, radius, cup, wave, phase) {
@@ -2886,7 +2931,8 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const show = sheet.ready && p < 1 && sheet.rect;
     for (const m of sheet.obj.children) m.visible = !!show;
     dirty = true;
-    shadowsDirty = true;
+    if (sheet.obj.children[0].castShadow) shadowsDirty = true;
+    floatShadow.visible = false;
     if (!show) return;
     // The corner peels first, while the sheet still lies; it rolls back flat as the sheet arrives
     const peelIn = easeInOut(clamp01(p / 0.22));
@@ -2897,9 +2943,15 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     // The sheet itself comes up a beat behind and is flat on the panel's place by 0.9
     const q = easeInOut(clamp01((p - 0.12) / 0.78));
     const air = Math.sin(Math.PI * q);
-    const cup = 0.16 * air * (1 - q * 0.5);
-    const wave = 0.035 * air;
-    bendSheet(peel, radius, cup, wave, q * 7);
+    // Floating, its edges droop and ripples run through it, never so much
+    // that it dips through the table when it is low; the float gives way to
+    // the scroll
+    const fk = 1 - clamp01(p / 0.1);
+    const lyingSize = Math.min(SHEET.height, SHEET.maxWidth / sheet.aspect);
+    const room = 0.003 + float.h / lyingSize;
+    const cup = 0.16 * air * (1 - q * 0.5) - Math.min(-float.cup, 6 * room) * fk;
+    const wave = 0.035 * air + Math.min(float.ripple, room * 0.5) * fk;
+    bendSheet(peel, radius, cup, wave, q * 7 + float.phase);
 
     const target = screenPose(sheet.rect);
     const o = sheet.obj;
@@ -2910,26 +2962,111 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       new THREE.Euler(-0.35 * air * (1 - q), 0.25 * Math.sin(Math.PI * 2 * q) * (1 - q), 0.3 * Math.sin(Math.PI * 1.5 * q) * (1 - q))
     );
     o.quaternion.multiply(sway);
-    const lying = Math.min(SHEET.height, SHEET.maxWidth / sheet.aspect);
-    o.scale.setScalar(THREE.MathUtils.lerp(lying, target.height, q));
-    // Off the table, it never dips through it
-    o.updateMatrixWorld();
-    let low = Infinity;
-    for (const [x, y] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0, -0.5]]) {
-      low = Math.min(low, corner.set(x * sheet.aspect, y, 0).applyMatrix4(o.matrixWorld).y);
+    o.scale.setScalar(THREE.MathUtils.lerp(lyingSize, target.height, q));
+    // Up off the table, tilted as the air has it
+    const floating = float.stage !== "rest" && fk > 0;
+    if (floating) {
+      o.position.y += float.h * fk;
+      o.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(float.pitch * fk, float.roll * fk, 0)));
     }
-    if (q > 0 && low < SHEET.at.y) o.position.y += SHEET.at.y - low;
+    // It never dips through the table: no point of the bent paper, tilted,
+    // drooping or rippling, goes lower than where it lies flat
+    o.updateMatrixWorld();
+    const m = o.matrixWorld.elements;
+    const pos = sheet.geo.attributes.position.array;
+    let low = Infinity;
+    for (let i = 0; i < pos.length; i += 3) low = Math.min(low, m[1] * pos[i] + m[5] * pos[i + 1] + m[9] * pos[i + 2] + m[13]);
+    if (low < SHEET.at.y) o.position.y += SHEET.at.y - low;
+    // Its stand-in shadow, falling away from the sun and spreading and
+    // fading the higher it is
+    if (floating && !sheet.obj.children[0].castShadow) {
+      const up = o.position.y - SHEET.at.y;
+      const spread = 1 + (0.7 * up) / lyingSize;
+      floatShadow.visible = true;
+      floatShadow.position.set(SHEET.at.x + shadowLean.x * up, 0.004, SHEET.at.z + shadowLean.z * up);
+      floatShadow.quaternion.copy(sheet.qLie);
+      floatShadow.scale.set(lyingSize * sheet.aspect * spread, lyingSize * spread, 1);
+      floatShadow.material.opacity = (0.42 * fk * clamp01(up / (0.02 * lyingSize))) / spread;
+    }
     // Lit by the room on the table, it turns into the page's own flat paper as it arrives
     const glow = easeInOut(clamp01((q - 0.55) / 0.45));
     sheet.front.color.setScalar(1 - glow);
-    sheet.front.emissiveIntensity = glow;
+    sheet.front.emissiveIntensity = glow + 0.16 * float.glow * fk * (1 - glow);
+  }
+
+  /** Moves the float on by dt, in small steps so it runs the same at any frame rate */
+  function stepFloat(dt, lying) {
+    const F = SHEET.flap;
+    const f = float;
+    const top = F.lift * Math.min(SHEET.height, SHEET.maxWidth / sheet.aspect);
+    const steps = Math.max(1, Math.ceil(dt * 240));
+    const h = dt / steps;
+    const drag = F.gravity / (F.terminal * F.terminal);
+    const go = (stage) => {
+      f.stage = stage;
+      f.t = 0;
+    };
+    for (let i = 0; i < steps; i++) {
+      f.t += h;
+      f.phase += h * 4.5;
+      if (f.stage === "rest") {
+        // A new float only starts on a sheet lying there untouched
+        if (!lying || sheet.hover || reducedMotion) f.t = 0;
+        else if (f.t >= F.rest) {
+          go("rise");
+          castSheet(false);
+        }
+      } else if (f.stage === "rise") {
+        // Lifted, slowing as it reaches the top, then held there a moment
+        const k = clamp01(f.t / F.rise);
+        f.h = top * (1 - (1 - k) ** 3);
+        if (f.t >= F.rise + F.hang) go("fall");
+      } else if (f.stage === "fall") {
+        // Gravity against the air: it soon falls at its slow, steady speed
+        f.v += (-F.gravity - drag * f.v * Math.abs(f.v)) * h;
+        f.h += f.v * h;
+        if (f.h <= 0) {
+          f.h = 0;
+          f.v = 0;
+          go("settle");
+        }
+      }
+      // Tilt springs back to flat, softly in the air and firmly once down.
+      // Rising, it sways a little.
+      const inAir = f.stage === "rise" || f.stage === "fall";
+      const [w, damp] = inAir ? [5, 3] : [11, 9];
+      const sway = f.stage === "rise" ? 0.025 : 0;
+      f.pitchV += (-w * w * (f.pitch - sway * Math.sin(f.phase * 0.6)) - damp * f.pitchV) * h;
+      f.rollV += (-w * w * (f.roll + sway * Math.sin(f.phase * 0.45 + 1)) - damp * f.rollV) * h;
+      f.pitch += f.pitchV * h;
+      f.roll += f.rollV * h;
+      // In the air it ripples a little and its edges droop; on the table both
+      // die away. It glows only while held up.
+      const ease = Math.min(1, h * (inAir ? 5 : 9));
+      f.ripple += ((inAir ? 0.015 : 0) - f.ripple) * ease;
+      f.cup += ((inAir ? -0.025 : 0) - f.cup) * ease;
+      f.glow += ((f.stage === "rise" ? 1 : 0) - f.glow) * Math.min(1, h * 4);
+    }
+    const still = Math.abs(f.pitch) + Math.abs(f.roll) + Math.abs(f.pitchV) + Math.abs(f.rollV) + f.ripple - f.cup + f.glow;
+    if (f.stage === "settle" && still < 0.002) {
+      Object.assign(f, { stage: "rest", t: 0, pitch: 0, roll: 0, pitchV: 0, rollV: 0, ripple: 0, cup: 0, glow: 0, phase: 0 });
+      return true;
+    }
+    return f.stage !== "rest";
   }
 
   function animateSheet(dt) {
     if (!sheet.ready) return;
+    const lying = sheet.progress < 0.05;
+    const floated = stepFloat(dt, lying);
+    // Back on the table, or scrolled off it, the sheet casts its real shadow again
+    if (!lying || float.stage === "rest") castSheet(true);
     // The hover curl springs up with a little bounce, and settles back down
-    const goal = sheet.hover && sheet.progress < 0.05 ? 1 : 0;
-    if (Math.abs(goal - sheet.hoverK) < 0.001 && Math.abs(sheet.hoverV) < 0.001) return;
+    const goal = sheet.hover && lying ? 1 : 0;
+    if (Math.abs(goal - sheet.hoverK) < 0.001 && Math.abs(sheet.hoverV) < 0.001) {
+      if (floated) poseSheet();
+      return;
+    }
     if (reducedMotion) {
       sheet.hoverK = goal;
       sheet.hoverV = 0;
@@ -3172,8 +3309,35 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       poseSheet();
     },
     sheetAt,
+    /** Where the sheet lies on the screen while it is on the table: its bounding box in pixels */
+    sheetOnScreen() {
+      if (!sheet.ready) return null;
+      const lying = new THREE.Matrix4().compose(SHEET.at, sheet.qLie, new THREE.Vector3().setScalar(Math.min(SHEET.height, SHEET.maxWidth / sheet.aspect)));
+      const box = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+      for (const [x, y] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
+        const p = corner.set(x * sheet.aspect, y, 0).applyMatrix4(lying).project(camera);
+        const sx = (p.x + 1) * 0.5 * window.innerWidth;
+        const sy = (1 - p.y) * 0.5 * window.innerHeight;
+        box.left = Math.min(box.left, sx);
+        box.right = Math.max(box.right, sx);
+        box.top = Math.min(box.top, sy);
+        box.bottom = Math.max(box.bottom, sy);
+      }
+      return box;
+    },
     hoverSheet(on) {
       sheet.hover = on;
+    },
+    /** Where the hanging sun is on the screen: its middle and its radius in pixels */
+    sunOnScreen() {
+      const toScreen = (v) => {
+        v.project(camera);
+        return [(v.x + 1) * 0.5 * window.innerWidth, (1 - v.y) * 0.5 * window.innerHeight];
+      };
+      const middle = sunCutout.mesh.getWorldPosition(new THREE.Vector3());
+      const [x, y] = toScreen(middle.clone());
+      const [ex] = toScreen(middle.add(new THREE.Vector3(1.4, 0, 0)));
+      return { x, y, r: Math.abs(ex - x) };
     },
     render() {
       if (!dirty) return;

@@ -97,6 +97,14 @@
     <!-- The splash: a screen of nothing but the table, with the intro's top edge peeking up from below.
          The way in is the Enter target on the table, or a scroll. -->
     <div class="splash" id="splash" aria-hidden="true"></div>
+    <!-- On the splash, a pool of sun on the intro sheet, and a note scribbled on the table pointing at it
+         (placed by main.js where the sheet lies) -->
+    <div class="splash-light" id="splash-light" aria-hidden="true"></div>
+    <div class="splash-beam" id="splash-beam" aria-hidden="true"><div></div></div>
+    <p class="splash-cue" id="splash-cue" aria-hidden="true">
+      <svg class="cue-arrow" viewBox="0 0 60 56"><path pathLength="1" d="M36 53C25 42 22 25 29 6"/><path pathLength="1" d="M17 16L29 5L41 15"/></svg>
+      <span class="cue-words"><span class="cue-big">Start here!</span><span class="cue-small">click my intro, or scroll down</span></span>
+    </p>
 
     <!-- The intro's stage: where it holds still for a while once the sheet has landed -->
     <div class="intro-stage" id="intro-stage">

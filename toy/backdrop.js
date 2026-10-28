@@ -13,23 +13,87 @@ export function rng(seed) {
 
 let painted = null;
 
-/** Safari draws a canvas filter as nothing at all, so there the blur is made by scaling down and up */
-const FILTERS = typeof CanvasRenderingContext2D !== "undefined" && "filter" in CanvasRenderingContext2D.prototype;
+/** Whether a canvas filter really blurs: Safari has no canvas filters, so there the blur is done by hand */
+const FILTERS = (() => {
+  if (typeof document === "undefined") return false;
+  const c = document.createElement("canvas");
+  c.width = c.height = 12;
+  const t = c.getContext("2d");
+  if (!("filter" in t)) return false;
+  t.filter = "blur(2px)";
+  t.fillRect(5, 5, 2, 2);
+  return t.getImageData(2, 5, 1, 1).data[3] > 0;
+})();
 
-/** Draws a picture onto ctx softened by about radius px: halved over and over, then stretched back */
-function drawSoft(ctx, picture, radius) {
-  let src = picture;
-  for (let k = 2; k <= radius / 1.5; k *= 2) {
-    const c = document.createElement("canvas");
-    c.width = Math.ceil(picture.width / k);
-    c.height = Math.ceil(picture.height / k);
-    const small = c.getContext("2d");
-    small.imageSmoothingQuality = "high";
-    small.drawImage(src, 0, 0, c.width, c.height);
-    src = c;
+/** Widths of three box blurs that together come close to a Gaussian of sigma */
+function boxesFor(sigma) {
+  let low = Math.floor(Math.sqrt(4 * sigma * sigma + 1));
+  if (low % 2 === 0) low--;
+  const lows = Math.round((12 * sigma * sigma - 3 * low * low - 12 * low - 9) / (-4 * low - 4));
+  return [0, 1, 2].map((i) => (i < lows ? low : low + 2));
+}
+
+/** One box blur along each of `lines` lines of `len` pixels, `step` pixels apart */
+function boxPass(src, dst, len, lines, r, step, lineStep) {
+  const scale = 1 / (2 * r + 1);
+  const s = step * 4;
+  for (let line = 0; line < lines; line++) {
+    const base = line * lineStep * 4;
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+    let alpha = 0;
+    for (let i = -r; i <= r; i++) {
+      const j = base + Math.min(len - 1, Math.max(0, i)) * s;
+      red += src[j];
+      green += src[j + 1];
+      blue += src[j + 2];
+      alpha += src[j + 3];
+    }
+    for (let i = 0; i < len; i++) {
+      const o = base + i * s;
+      dst[o] = red * scale;
+      dst[o + 1] = green * scale;
+      dst[o + 2] = blue * scale;
+      dst[o + 3] = alpha * scale;
+      const add = base + Math.min(len - 1, i + r + 1) * s;
+      const sub = base + Math.max(0, i - r) * s;
+      red += src[add] - src[sub];
+      green += src[add + 1] - src[sub + 1];
+      blue += src[add + 2] - src[sub + 2];
+      alpha += src[add + 3] - src[sub + 3];
+    }
   }
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(src, 0, 0, picture.width, picture.height);
+}
+
+/** Blurs a canvas in place by sigma px, with its see-through parts lending no colour to their neighbours */
+function blurCanvas(canvas, sigma) {
+  const { width: w, height: h } = canvas;
+  const ctx = canvas.getContext("2d");
+  const image = ctx.getImageData(0, 0, w, h);
+  const px = image.data;
+  const a = new Float32Array(px.length);
+  const b = new Float32Array(px.length);
+  for (let i = 0; i < px.length; i += 4) {
+    const alpha = px[i + 3] / 255;
+    a[i] = px[i] * alpha;
+    a[i + 1] = px[i + 1] * alpha;
+    a[i + 2] = px[i + 2] * alpha;
+    a[i + 3] = px[i + 3];
+  }
+  for (const size of boxesFor(sigma)) {
+    const r = (size - 1) / 2;
+    boxPass(a, b, w, h, r, 1, w);
+    boxPass(b, a, h, w, r, w, 1);
+  }
+  for (let i = 0; i < px.length; i += 4) {
+    const alpha = a[i + 3] / 255;
+    px[i] = alpha ? a[i] / alpha : 0;
+    px[i + 1] = alpha ? a[i + 1] / alpha : 0;
+    px[i + 2] = alpha ? a[i + 2] / alpha : 0;
+    px[i + 3] = a[i + 3];
+  }
+  ctx.putImageData(image, 0, 0);
 }
 
 /**
@@ -56,13 +120,20 @@ function paintBackdrop() {
       ctx.filter = "none";
       return;
     }
+    // Without a canvas filter: drawn small, where the blur is a few pixels
+    // wide, blurred there, and stretched back
+    const k = 2 ** Math.floor(Math.log2(radius / 2));
     const layer = document.createElement("canvas");
-    layer.width = c.width;
-    layer.height = c.height;
-    ctx = layer.getContext("2d");
+    layer.width = Math.ceil(c.width / k);
+    layer.height = Math.ceil(c.height / k);
+    ctx = layer.getContext("2d", { willReadFrequently: true });
+    ctx.scale(1 / k, 1 / k);
     draw();
     ctx = whole;
-    drawSoft(whole, layer, radius);
+    // Stretching it back softens it a little more, so the blur here is that much less
+    blurCanvas(layer, Math.sqrt((radius / k) ** 2 - 0.25));
+    whole.imageSmoothingQuality = "high";
+    whole.drawImage(layer, 0, 0, layer.width * k, layer.height * k);
   }
   const rand = rng(21);
   const sky = ctx.createLinearGradient(0, 0, 0, 1024);
