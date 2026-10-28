@@ -330,6 +330,8 @@ export function createToy({ table, aim, fx, reducedMotion }) {
       if (table.takeCheers().length) sound.swish();
       for (const kind of table.takeLandings()) {
         if (kind === "target") sound.ding();
+        else if (kind === "train") sound.whistle();
+        else if (kind === "meeple") sound.squeal();
         else sound.stick();
       }
       // What is under a still pointer changes too: a dialog opens, a page scrolls

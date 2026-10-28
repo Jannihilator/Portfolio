@@ -65,6 +65,90 @@ function tone({ type = "sine", from, to, attack = 0.002, decay, peak, at = 0 }) 
 
 const vary = (x, amount = 0.12) => x * (1 + (Math.random() - 0.5) * amount * 2);
 
+const pick = (set) => Object.values(set)[Math.floor(Math.random() * Object.keys(set).length)];
+
+/** A whistle: two slightly detuned voices with a flutter and a breath of steam */
+function toot(freq, len, peak = 0.16, bend = 1) {
+  const t = ctx.currentTime;
+  for (const detune of [1, 1.012]) {
+    const osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq * detune * 0.97, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * detune, t + 0.04);
+    if (bend !== 1) osc.frequency.exponentialRampToValueAtTime(freq * detune * bend, t + len);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = vary(7, 0.2);
+    const depth = ctx.createGain();
+    depth.gain.value = freq * 0.006;
+    lfo.connect(depth).connect(osc.frequency);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.03);
+    g.gain.setValueAtTime(peak, t + Math.max(0.03, len - 0.08));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    osc.connect(g).connect(master);
+    osc.start(t);
+    lfo.start(t);
+    osc.stop(t + len + 0.05);
+    lfo.stop(t + len + 0.05);
+  }
+  burst({ type: "bandpass", freq: freq * 2.5, q: 1.5, attack: 0.02, decay: len, peak: 0.05 });
+}
+
+/**
+ * A funny vocal "wuah", a little like a frog: a buzzy sawtooth that dips in
+ * pitch, run through two vowel-like filters that slide from "oo" to "ah",
+ * with a fast croaky flutter in the volume.
+ */
+function frogWah({ pitch, drop = 0.7, len = 0.4, croak = 26, sweep = [500, 1300], peak = 1.2 }) {
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(pitch * 1.15, t);
+  osc.frequency.exponentialRampToValueAtTime(pitch, t + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(pitch * drop, t + len);
+  const mix = ctx.createGain();
+  // Two vowel formants that open up like a mouth saying "wah"
+  [[1, 1], [2.6, 0.5]].forEach(([mult, level]) => {
+    const f = ctx.createBiquadFilter();
+    f.type = "bandpass";
+    f.Q.value = 5;
+    f.frequency.setValueAtTime(sweep[0] * mult, t);
+    f.frequency.exponentialRampToValueAtTime(sweep[1] * mult, t + len * 0.35);
+    f.frequency.exponentialRampToValueAtTime(sweep[0] * 1.2 * mult, t + len);
+    const lv = ctx.createGain();
+    lv.gain.value = level;
+    osc.connect(f).connect(lv).connect(mix);
+  });
+  // The croak: the volume flutters quickly
+  const flutter = ctx.createGain();
+  flutter.gain.value = 0.65;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = croak;
+  const lfoDepth = ctx.createGain();
+  lfoDepth.gain.value = 0.35;
+  lfo.connect(lfoDepth).connect(flutter.gain);
+  const g = ctx.createGain();
+  env(g, t, 0.025, len, peak);
+  mix.connect(flutter).connect(g).connect(master);
+  osc.start(t);
+  lfo.start(t);
+  osc.stop(t + len + 0.1);
+  lfo.stop(t + len + 0.1);
+}
+
+/** Each is one sound that starts at once. Named so the sample page can play them one by one. */
+export const TRAIN_SOUNDS = {
+  longWhistle: () => toot(vary(880, 0.1), 0.7, 0.17, 0.96),
+  shortToot: () => toot(vary(990, 0.1), 0.22),
+};
+
+export const MEEPLE_SOUNDS = {
+  frogWah: () => frogWah({ pitch: vary(260, 0.2) }),
+  longWah: () => frogWah({ pitch: vary(220, 0.2), len: 0.6, drop: 0.55, croak: 20, sweep: [450, 1100] }),
+  quickWah: () => frogWah({ pitch: vary(330, 0.2), len: 0.4, drop: 0.75, croak: 30, sweep: [600, 1500] }),
+};
+
 export const sound = {
   pop() {
     if (!ready()) return;
@@ -160,6 +244,14 @@ export const sound = {
     tone({ from: vary(720), to: 260, decay: 0.06, peak: 0.22 });
     tone({ type: "triangle", from: 1320, to: 1300, attack: 0.004, decay: 0.35, peak: 0.16, at: 0.03 });
     tone({ type: "sine", from: 1980, to: 1960, attack: 0.004, decay: 0.25, peak: 0.07, at: 0.03 });
+  },
+  /** A dart on the train's body but not a target: a random toot, honk or squeak */
+  whistle() {
+    pick(TRAIN_SOUNDS)();
+  },
+  /** A dart on the big yellow meeple with the face: a random silly noise */
+  squeal() {
+    pick(MEEPLE_SOUNDS)();
   },
   /** Nothing but net: a swish, then a bright little three-note cheer */
   swish() {

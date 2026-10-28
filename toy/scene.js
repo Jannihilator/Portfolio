@@ -783,11 +783,15 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     face.position.set(0, 0.665, 0.152);
     m.add(face);
   }
+  const talkers = [];
   function meeple(x, z, color, rotY, size = 1, face = false) {
     const m = new THREE.Mesh(meepleGeo, mat(color));
     if (face) uglyFace(m);
     m.scale.setScalar(size);
-    return addProp(m, [RAPIER.ColliderDesc.cuboid(0.36 * size, 0.41 * size, 0.15 * size).setTranslation(0, 0.41 * size, 0)], new THREE.Vector3(x, 0, z), rotY);
+    const prop = addProp(m, [RAPIER.ColliderDesc.cuboid(0.36 * size, 0.41 * size, 0.15 * size).setTranslation(0, 0.41 * size, 0)], new THREE.Vector3(x, 0, z), rotY);
+    // The one with a face yelps when a dart hits it
+    if (face) talkers.push(prop);
+    return prop;
   }
 
   function pipCanvas(n, face, pip) {
@@ -2546,6 +2550,8 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     d.arc = 0;
     d.state = "loose";
     d.scored = false;
+    d.trainHit = false;
+    d.talkerHit = null;
     d.obj.userData.hit = { kind: "prop", prop: d };
     props.push(d);
     hittables.push(d.obj);
@@ -3106,6 +3112,43 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     basket();
   }
 
+  const carBox = new THREE.Box3();
+  // A dart's middle stops about this far short of what it hits (the cup is at its tip)
+  const DART_REACH = 0.32;
+  // The meeple's yelp stands in for the usual knock of a dart landing
+  let hushKnocks = 0;
+
+  /**
+   * A loose dart that meets one of the train's cars, wherever it was aimed
+   * and however weakly it was thrown, is heard once as a train hit
+   */
+  function checkTrain(prop) {
+    if (prop.trainHit || prop.state !== "loose") return;
+    for (const c of train.cars) {
+      c.obj.updateWorldMatrix(true, true);
+      carBox.setFromObject(c.obj).expandByScalar(DART_REACH);
+      if (carBox.containsPoint(prop.p1)) {
+        prop.trainHit = true;
+        landings.push("train");
+        return;
+      }
+    }
+  }
+
+  /** A loose dart that hits a meeple with a face is heard once, per dart */
+  function checkTalkers(dart) {
+    for (const m of talkers) {
+      if (dart.talkerHit === m) continue;
+      carBox.setFromObject(m.obj).expandByScalar(DART_REACH);
+      if (carBox.containsPoint(dart.p1)) {
+        dart.talkerHit = m;
+        hushKnocks = performance.now() + 350;
+        landings.push("meeple");
+        return;
+      }
+    }
+  }
+
   function stepOnce() {
     placeMills();
     if (train.moving) {
@@ -3150,15 +3193,19 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       prop.moving = true;
       const v = body.linvel();
       const speed = Math.hypot(v.x, v.y, v.z);
+      if (prop.dart && prop.state === "loose") checkTalkers(prop);
       // A sudden stop is a block landing on something
       const drop = prop.speed - speed;
       if (drop > 1.6) prop.arc = 0;
-      if (drop > 1.6 && now - prop.lastKnock > 110) {
+      if (drop > 1.6 && now - prop.lastKnock > 110 && now > hushKnocks) {
         prop.lastKnock = now;
         knocks.push({ strength: Math.min(1, drop / 9), small: Boolean(prop.dart) || body.mass() < 0.25 });
       }
       prop.speed = speed;
-      if (prop.dart) checkBasket(prop);
+      if (prop.dart) {
+        checkBasket(prop);
+        checkTrain(prop);
+      }
       // Round things would roll on for ages: once barely moving for a
       // second, they stop and settle
       if (speed < 0.6) prop.slow = (prop.slow || 0) + STEP;
