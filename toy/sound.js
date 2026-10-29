@@ -247,10 +247,12 @@ export const sound = {
   },
   /** A dart on the train's body but not a target: a random toot, honk or squeak */
   whistle() {
+    if (!ready()) return;
     pick(TRAIN_SOUNDS)();
   },
   /** A dart on the big yellow meeple with the face: a random silly noise */
   squeal() {
+    if (!ready()) return;
     pick(MEEPLE_SOUNDS)();
   },
   /** Nothing but net: a swish, then a bright little three-note cheer */
@@ -262,5 +264,79 @@ export const sound = {
   bounce() {
     if (!ready()) return;
     tone({ type: "triangle", from: vary(500), to: 380, decay: 0.04, peak: 0.15 });
+  },
+  /**
+   * The clock's tick as time is wound. On: a crisp tick that dies away.
+   * Back: the same tick played backwards, swelling up out of nothing and
+   * cut off dead, so it sounds sucked in rather than struck.
+   */
+  tick(back = false) {
+    if (!ready()) return;
+    if (!back) {
+      burst({ freq: vary(4200, 0.06), q: 5, decay: 0.03, peak: 0.3 });
+      tone({ type: "triangle", from: vary(1900, 0.05), to: 1500, decay: 0.035, peak: 0.08 });
+      return;
+    }
+    const t = ctx.currentTime;
+    const rise = vary(0.07, 0.15);
+    const src = ctx.createBufferSource();
+    src.buffer = noise;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.value = 5;
+    filter.frequency.setValueAtTime(2600, t);
+    filter.frequency.exponentialRampToValueAtTime(vary(4400, 0.06), t + rise);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.32, t + rise);
+    g.gain.linearRampToValueAtTime(0, t + rise + 0.004);
+    src.connect(filter).connect(g).connect(master);
+    src.start(t, Math.random() * 0.3);
+    src.stop(t + rise + 0.02);
+  },
+  /**
+   * Time starts to wind: a tape warping. Back, it slides down with a
+   * wobble, like a reel dragged backwards; on, it slides up.
+   */
+  warp(back = true) {
+    if (!ready()) return;
+    const t = ctx.currentTime;
+    const len = 0.42;
+    const [from, to] = back ? [880, 160] : [180, 900];
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(from, t);
+    osc.frequency.exponentialRampToValueAtTime(to, t + len);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 9;
+    const depth = ctx.createGain();
+    depth.gain.value = 26;
+    lfo.connect(depth).connect(osc.frequency);
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 1400;
+    const g = ctx.createGain();
+    env(g, t, 0.04, len, 0.12);
+    osc.connect(filter).connect(g).connect(master);
+    osc.start(t);
+    lfo.start(t);
+    osc.stop(t + len + 0.08);
+    lfo.stop(t + len + 0.08);
+    burst({ type: "bandpass", freq: back ? 1800 : 3200, q: 0.8, attack: 0.05, decay: len, peak: 0.08 });
+  },
+  /** Time runs again: the alarm bell's hammer gives one light tap */
+  ring() {
+    if (!ready()) return;
+    tone({ type: "triangle", from: vary(700), to: 420, decay: 0.03, peak: 0.12 });
+    [1568, 2349, 3136].forEach((f, i) => tone({ from: f, to: f * 0.998, attack: 0.003, decay: 0.7 - i * 0.18, peak: 0.1 - i * 0.025, at: 0.01 }));
+  },
+  /**
+   * A dart on the clock: one ding of its alarm bell. The same bell as
+   * ring(), struck harder, so it is louder and rings a little longer.
+   */
+  bell() {
+    if (!ready()) return;
+    tone({ type: "triangle", from: vary(760), to: 420, decay: 0.03, peak: 0.16 });
+    [1568, 2349, 3136].forEach((f, i) => tone({ from: vary(f, 0.01), to: f * 0.998, attack: 0.003, decay: 0.9 - i * 0.22, peak: 0.17 - i * 0.04, at: 0.01 }));
   },
 };

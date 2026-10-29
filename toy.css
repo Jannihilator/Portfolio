@@ -1462,6 +1462,113 @@ body.toy-on #aim.is-shown {
   border-color: var(--orange);
 }
 
+/* Over the clock, the crosshair turns into a mouse wheel, with the clock's
+   line and what the wheel does beside it */
+.aim-wheel,
+.aim-note {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.aim-wheel {
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 42px;
+  margin: -21px 0 0 -15px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wheel-body {
+  fill: #fff;
+  stroke: rgba(44, 30, 16, 0.85);
+  stroke-width: 2.5;
+}
+
+.wheel-roller {
+  fill: var(--orange);
+  stroke: rgba(44, 30, 16, 0.85);
+  stroke-width: 1.5;
+}
+
+.wheel-arrow {
+  stroke: #fff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 1.5px rgba(44, 30, 16, 0.9));
+}
+
+.aim-note {
+  left: calc(50% + 26px);
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  gap: 2px;
+  font-family: "Shantell Sans", var(--head);
+  color: #3d2b20;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 250, 240, 0.9), 0 0 10px rgba(255, 246, 228, 0.95), 0 0 22px rgba(255, 246, 228, 0.7);
+}
+
+.aim-quote {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.aim-unless {
+  font-size: 14px;
+  color: #6a4e38;
+}
+
+#aim.is-clock .aim-ring {
+  opacity: 0;
+}
+
+#aim.is-clock .aim-wheel,
+#aim.is-clock .aim-note {
+  opacity: 1;
+}
+
+/* While time winds, the roller turns the way it is going, and that arrow lights up */
+html.time-back .wheel-roller {
+  animation: roll-down 0.28s linear infinite;
+}
+
+html.time-on .wheel-roller {
+  animation: roll-up 0.28s linear infinite;
+}
+
+html.time-back .wheel-down,
+html.time-on .wheel-up {
+  stroke: var(--orange);
+}
+
+@keyframes roll-down {
+  from { translate: 0 -3px; }
+  to { translate: 0 4px; }
+}
+
+@keyframes roll-up {
+  from { translate: 0 4px; }
+  to { translate: 0 -3px; }
+}
+
+/* The table goes old-photo warm while time is wound */
+#table {
+  transition: filter 0.35s ease-out;
+}
+
+html.time-winding #table {
+  filter: sepia(0.42) saturate(1.25) contrast(1.04) brightness(1.02);
+}
+
+html.time-on #table {
+  filter: sepia(0.25) saturate(1.45) contrast(1.06) brightness(1.04);
+}
+
 /* The crosshair stands in for the pointer everywhere, buttons and links
    included: they are pressed by a dart */
 body.toy-on,
@@ -1525,8 +1632,13 @@ body.toy-on label {
   .intro-flip > .panel,
   .block-btn,
   .thumb,
-  #aim {
+  #aim,
+  #table {
     transition: none;
+  }
+
+  html.time-winding .wheel-roller {
+    animation: none;
   }
 }
 

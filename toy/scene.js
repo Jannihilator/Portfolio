@@ -12,7 +12,7 @@
  */
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import RAPIER from "rapier";
 import { LAYOUT } from "./layout.js";
 import { backdropCanvas, rng } from "./backdrop.js";
@@ -45,6 +45,12 @@ const MAX_PIXELS = 2.2e6;
  */
 const WEAK = { below: 0.6, arc: 0.12, past: -0.6 };
 const QUILLS_MAX = 240;
+/**
+ * Winding time with the clock: how many physics steps are kept to wind
+ * back to (30 a second, so two minutes), how far the clock's minute hand
+ * runs for each step wound (seconds), and how often old steps are dropped
+ */
+const REWIND = { keep: 30 * 120, clockSeconds: 20, trimEvery: 600 };
 /** The track's path across the table (x, z), winding in the open strips either side of the pages */
 const TRACK = [
   [-34, -3.4], [-18, -3.6], [-13.4, -3.4], [-11, -2.2], [-11.8, -0.4], [-10.6, 1], [-8.6, 0.8], [-7.6, -0.6],
@@ -224,6 +230,79 @@ function bullseyeCanvas() {
     ctx.fill();
   });
   return c;
+}
+
+/** An alarm clock's dial: minute marks, the quarter hours in numbers, and a motto */
+function clockFaceCanvas() {
+  const c = document.createElement("canvas");
+  c.width = c.height = 512;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fffaf0";
+  ctx.beginPath();
+  ctx.arc(256, 256, 256, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#4a3526";
+  ctx.lineCap = "round";
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2;
+    const big = i % 5 === 0;
+    const r0 = big ? 196 : 214;
+    ctx.lineWidth = big ? 11 : 4;
+    ctx.beginPath();
+    ctx.moveTo(256 + Math.sin(a) * r0, 256 - Math.cos(a) * r0);
+    ctx.lineTo(256 + Math.sin(a) * 232, 256 - Math.cos(a) * 232);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#4a3526";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "800 68px Figtree, Nunito, sans-serif";
+  for (const h of [12, 3, 6, 9]) {
+    const a = ((h % 12) / 12) * Math.PI * 2;
+    ctx.fillText(String(h), 256 + Math.sin(a) * 148, 262 - Math.cos(a) * 148);
+  }
+  ctx.fillStyle = "#9a6b3c";
+  ctx.font = "italic 600 30px Georgia, 'Times New Roman', serif";
+  ctx.fillText("tempus fugit", 256, 168);
+  return c;
+}
+
+/** The brass plate on the clock's plinth, with a line engraved on it */
+function plaqueCanvas() {
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 160;
+  const ctx = c.getContext("2d");
+  const brass = ctx.createLinearGradient(0, 0, 0, 160);
+  brass.addColorStop(0, "#f0cf7a");
+  brass.addColorStop(0.5, "#d6a947");
+  brass.addColorStop(1, "#b9872f");
+  ctx.fillStyle = brass;
+  ctx.fillRect(0, 0, 1024, 160);
+  ctx.strokeStyle = "rgba(90, 58, 20, 0.55)";
+  ctx.lineWidth = 6;
+  ctx.strokeRect(10, 10, 1004, 140);
+  ctx.fillStyle = "#4a2e12";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "italic 600 54px Georgia, 'Times New Roman', serif";
+  ctx.fillText("“Lost time is never found again.”", 512, 66);
+  ctx.font = "600 28px Georgia, 'Times New Roman', serif";
+  ctx.fillText("— BENJAMIN FRANKLIN", 512, 122);
+  return c;
+}
+
+/**
+ * A copy of a geometry for its outline: one normal per corner, averaged
+ * over the faces that meet there, so the pushed-out shell has no cracks
+ */
+function outlineGeometry(g) {
+  const plain = new THREE.BufferGeometry();
+  plain.setAttribute("position", g.attributes.position.clone());
+  if (g.index) plain.setIndex(g.index.clone());
+  const merged = mergeVertices(plain, 1e-4);
+  merged.computeVertexNormals();
+  return merged;
 }
 
 /** Strands of wound yarn, wrapped round a ball */
@@ -1643,7 +1722,9 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     onShelf(left, 2, -0.6, (x, z, yaw) => book(x, 0.11, z, 1.1, 0.75, 0.22, COLORS.red, yaw + 0.1));
     onShelf(left, 2, -0.6, (x, z, yaw) => book(x, 0.31, z, 1.0, 0.7, 0.18, COLORS.blue, yaw - 0.15));
     onShelf(left, 2, 0.8, (x, z, yaw) => mug(x, z, COLORS.coral, yaw + 2.2));
-    onShelf(left, 3, 0.4, (x, z, yaw) => meeple(x, z, COLORS.sage, yaw - 0.3, 1.5));
+    // On top, the clock that winds time, and a little desk calendar beside it
+    onShelf(left, 3, -0.62, alarmClock, 0);
+    onShelf(left, 3, 0.92, (x, z, yaw) => deskCalendar(x, z, yaw - 0.35));
 
     onShelf(right, 0, -0.7, (x, z, yaw) => book(x, 0.11, z, 1.1, 0.8, 0.22, COLORS.navy, yaw + 0.15));
     onShelf(right, 0, -0.7, (x, z, yaw) => book(x, 0.31, z, 1.0, 0.74, 0.18, COLORS.coral, yaw - 0.12));
@@ -2025,6 +2106,170 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       new THREE.Vector3(x, 0, z),
       Math.atan2(-x, camera.position.z - z) + ((seed * 0.37) % 0.3) - 0.15
     );
+  }
+
+  // ---------------------------------------------------------------- clock
+  /**
+   * A wind-up alarm clock with two bells, on a wooden plinth with a brass
+   * plate. It is fixed where it stands: darts bounce off and nothing knocks
+   * it over. Its hands keep the visitor's own time, and run backwards or
+   * forwards as the wheel winds time over it (see rewind below). An outline
+   * round it says it can be used; under the pointer the outline turns orange.
+   */
+  const CLOCK_EDGE = { idle: 0xfff3dc, hover: 0xff7a1f };
+  const outlineMat = new THREE.ShaderMaterial({
+    uniforms: { color: { value: new THREE.Color(CLOCK_EDGE.idle) }, thickness: { value: 0.0026 } },
+    // Pushed out along its normals by the same few pixels however far away it is
+    vertexShader: /* glsl */ `
+      uniform float thickness;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        mv.xyz += normalize(normalMatrix * normal) * thickness * -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 color;
+      void main() {
+        gl_FragColor = vec4(color, 1.0);
+        #include <colorspace_fragment>
+      }`,
+    side: THREE.BackSide,
+  });
+  const clockState = { obj: null, hands: null, hover: false, shown: "" };
+
+  function alarmClock(x, z, yaw, s = 1.15) {
+    const g = new THREE.Group();
+    g.position.set(x, standOn, z);
+    g.rotation.y = yaw;
+    const outlined = [];
+    const add = (geom, material, px, py, pz, edge = true) => {
+      const m = new THREE.Mesh(geom, material);
+      m.position.set(px * s, py * s, pz * s);
+      m.scale.setScalar(s);
+      m.castShadow = m.receiveShadow = true;
+      g.add(m);
+      if (edge) outlined.push(m);
+      return m;
+    };
+    // The plinth, its brass plate and two little feet
+    add(new RoundedBoxGeometry(1.5, 0.26, 0.72, 2, 0.06), mat(COLORS.wood), 0, 0.13, 0);
+    add(new THREE.PlaneGeometry(1.3, 0.2), canvasMaterial(plaqueCanvas()), 0, 0.13, 0.362, false);
+    for (const side of [-1, 1]) add(new THREE.SphereGeometry(0.1, 12, 8).scale(1, 0.7, 1), mat(COLORS.mustard), side * 0.36, 0.31, 0);
+    // The drum, facing you, with a brass bezel round the dial
+    const cy = 0.98;
+    add(new THREE.CylinderGeometry(0.66, 0.66, 0.36, 40).rotateX(Math.PI / 2), mat(COLORS.navy), 0, cy, 0);
+    add(new THREE.TorusGeometry(0.54, 0.045, 10, 40), mat(COLORS.mustard), 0, cy, 0.18);
+    add(new THREE.CircleGeometry(0.53, 48), canvasMaterial(clockFaceCanvas()), 0, cy, 0.182, false);
+    // Two bells on top, and the hammer that rings them between
+    for (const side of [-1, 1]) {
+      const a = side * 0.72;
+      const bell = add(new THREE.SphereGeometry(0.24, 20, 12).scale(1, 0.82, 1), mat(COLORS.mustard), Math.sin(a) * 0.7, cy + Math.cos(a) * 0.7, 0);
+      bell.rotation.z = -a;
+    }
+    add(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 8), mat(COLORS.ink), 0, cy + 0.78, 0);
+    add(new THREE.SphereGeometry(0.065, 12, 8), mat(COLORS.ink), 0, cy + 0.94, 0);
+    // The hands turn about the middle of the dial; they cast no shadow, so
+    // turning them never has the shadow map redrawn
+    const hand = (len, w, color, dz) => {
+      const pivot = new THREE.Group();
+      pivot.position.set(0, cy * s, (0.19 + dz) * s);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, len, 0.014).translate(0, len / 2 - 0.07, 0), mat(color));
+      m.scale.setScalar(s);
+      pivot.add(m);
+      g.add(pivot);
+      return pivot;
+    };
+    clockState.hands = { hour: hand(0.32, 0.07, COLORS.ink, 0.01), minute: hand(0.46, 0.045, COLORS.ink, 0.026), second: hand(0.5, 0.02, COLORS.red, 0.042) };
+    add(new THREE.SphereGeometry(0.05, 12, 8), mat(COLORS.mustard), 0, cy, 0.24, false);
+    for (const m of outlined) {
+      const edge = new THREE.Mesh(outlineGeometry(m.geometry), outlineMat);
+      edge.raycast = () => {};
+      m.add(edge);
+    }
+    g.userData.hit = { kind: "clock" };
+    scene.add(g);
+    hittables.push(g);
+    clockState.obj = g;
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(x, standOn, z).setRotation(q));
+    const facing = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2);
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.75 * s, 0.13 * s, 0.36 * s).setTranslation(0, 0.13 * s, 0), body);
+    world.createCollider(RAPIER.ColliderDesc.cylinder(0.18 * s, 0.66 * s).setTranslation(0, cy * s, 0).setRotation(facing), body);
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.66 * s, 0.22 * s, 0.2 * s).setTranslation(0, (cy + 0.7) * s, 0), body);
+    return g;
+  }
+
+  /** A tear-off page of the desk calendar: the month on a red band, the day big, and its weekday */
+  const calendarPage = (() => {
+    const c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 224;
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = anisotropy;
+    return { canvas: c, tex, day: "" };
+  })();
+
+  /** Paints the page for a date (read in UTC: the time is already shifted to the visitor's own) */
+  function paintCalendar(date) {
+    const ctx = calendarPage.canvas.getContext("2d");
+    ctx.fillStyle = "#fffaf0";
+    ctx.fillRect(0, 0, 256, 224);
+    ctx.fillStyle = css(COLORS.red);
+    ctx.fillRect(0, 0, 256, 58);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fffaf0";
+    ctx.font = "800 40px Figtree, Nunito, sans-serif";
+    ctx.fillText(date.toLocaleString("en", { month: "short", timeZone: "UTC" }).toUpperCase(), 128, 32);
+    ctx.fillStyle = "#4a3526";
+    ctx.font = "800 108px Figtree, Nunito, sans-serif";
+    ctx.fillText(String(date.getUTCDate()), 128, 128);
+    ctx.fillStyle = "#8a6a4a";
+    ctx.font = "600 28px Figtree, Nunito, sans-serif";
+    ctx.fillText(date.toLocaleString("en", { weekday: "long", timeZone: "UTC" }), 128, 196);
+    calendarPage.tex.needsUpdate = true;
+  }
+
+  /**
+   * A small tent-shaped desk calendar, its pages bound by wire rings along
+   * the top. It shows the day the clock's hands are on, so winding the clock
+   * back far enough turns it back a day. A toy like any other: it can be
+   * knocked over.
+   */
+  function deskCalendar(x, z, rotY) {
+    const w = 0.56;
+    const h = 0.5;
+    const lean = 0.32;
+    const g = new THREE.Group();
+    const board = geo("calBoard", () => new RoundedBoxGeometry(w, h, 0.03, 2, 0.012));
+    for (const side of [1, -1]) {
+      const panel = new THREE.Group();
+      panel.position.set(0, (Math.cos(lean) * h) / 2, (side * Math.sin(lean) * h) / 2);
+      panel.rotation.x = -side * lean;
+      const back = new THREE.Mesh(board, mat(COLORS.wood));
+      back.castShadow = back.receiveShadow = true;
+      panel.add(back);
+      if (side > 0) {
+        const page = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.06, h - 0.07), new THREE.MeshStandardMaterial({ map: calendarPage.tex, roughness: 0.9 }));
+        page.position.set(0, -0.02, 0.017);
+        page.receiveShadow = true;
+        panel.add(page);
+      }
+      g.add(panel);
+    }
+    // The wire rings that bind the pages, along the top
+    const top = Math.cos(lean) * h;
+    for (let i = 0; i < 5; i++) {
+      const ring = new THREE.Mesh(geo("calRing", () => new THREE.TorusGeometry(0.035, 0.008, 6, 14)), mat(0x8c8a86));
+      ring.rotation.y = Math.PI / 2;
+      ring.position.set(-w * 0.36 + i * w * 0.18, top - 0.01, 0);
+      g.add(ring);
+    }
+    paintCalendar(new Date(Date.now() - new Date().getTimezoneOffset() * 60000));
+    const dz = Math.sin(lean) * h;
+    const pts = new Float32Array([-w / 2, 0, dz, w / 2, 0, dz, -w / 2, 0, -dz, w / 2, 0, -dz, -w / 2, top, 0, w / 2, top, 0]);
+    return addProp(g, [RAPIER.ColliderDesc.convexHull(pts).setDensity(0.6)], new THREE.Vector3(x, 0, z), rotY);
   }
 
   // A toy table laid out for its own sake. The pages lie on top of it.
@@ -2529,6 +2774,9 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     d.obj.userData.hit = null;
     d.state = "idle";
     d.moving = false;
+    // Its past goes with it: wound back, a dart already gone stays gone
+    logged.delete(d);
+    d.log = null;
     if (toPool) pool.push(d);
     dirty = shadowsDirty = true;
   }
@@ -2557,6 +2805,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     d.scored = false;
     d.trainHit = false;
     d.talkerHit = null;
+    d.clockHit = false;
     d.obj.userData.hit = { kind: "prop", prop: d };
     props.push(d);
     hittables.push(d.obj);
@@ -2737,6 +2986,8 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
 
   /** The dart reaches the table. Returns what it met, for the sound. */
   function shoot(ndcX, ndcY, force = 1, hand = [0.3, -0.72]) {
+    // A shot lets time run again first, from wherever it was wound to
+    releaseTime();
     const { hit, dist, weak: isWeak } = aim(ndcX, ndcY, force);
     const dir = hit.dir;
     if (isWeak) {
@@ -3097,6 +3348,309 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     return !!hit && rootHit(hit.object)?.kind === "sheet";
   }
 
+  // -------------------------------------------------------------- rewind
+  /**
+   * Time, kept so the clock can wind it back. Each physics step is
+   * numbered (tick). A toy keeps a log of itself only while it is awake,
+   * one row a step: the step, where it was, how it was turned, its speed
+   * and its spin. A toy at rest writes nothing, so a still table costs
+   * nothing, and a toy waking first notes where it lay. The train and the
+   * pinwheels share one small ring, a few numbers a step.
+   *
+   * Winding only moves what you see; the physics waits. When the wheel is
+   * let go, every toy is put back exactly as it was at the step shown,
+   * moving as it was moving then, and the future it had is dropped. Time
+   * winds forward again only as far as now, never past it.
+   */
+  const LOG = 14;
+  const RING = 2 + 2 * mills.length;
+  const ring = new Float32Array(REWIND.keep * RING);
+  /** Every toy that has a log */
+  const logged = new Set();
+  let tick = 0;
+  /** The earliest step time can still be wound back to */
+  let oldest = 0;
+  const time = { scrubbing: false, cursor: 0, goal: 0, still: 0, dir: 0, beat: 0, offset: 0, secOffset: 0 };
+  /** Clock ticks and the start and end of a wind, for their sounds */
+  const timeEvents = [];
+  /** A tick is heard every this many steps wound */
+  const TICK_EVERY = 5;
+  const pA = new THREE.Vector3();
+  const pB = new THREE.Vector3();
+  const qA = new THREE.Quaternion();
+  const qB = new THREE.Quaternion();
+  const vA = new THREE.Vector3();
+  const wA = new THREE.Vector3();
+  const still = { x: 0, y: 0, z: 0 };
+
+  function put(log, step, p, q, v, w) {
+    if ((log.n + 1) * LOG > log.data.length) {
+      const more = new Float32Array(log.data.length * 2);
+      more.set(log.data);
+      log.data = more;
+    }
+    const d = log.data;
+    let k = log.n++ * LOG;
+    d[k++] = step;
+    d[k++] = p.x;
+    d[k++] = p.y;
+    d[k++] = p.z;
+    d[k++] = q.x;
+    d[k++] = q.y;
+    d[k++] = q.z;
+    d[k++] = q.w;
+    d[k++] = v.x;
+    d[k++] = v.y;
+    d[k++] = v.z;
+    d[k++] = w.x;
+    d[k++] = w.y;
+    d[k] = w.z;
+  }
+
+  /** An awake toy's row for this step; t and r are where physics has it */
+  function record(prop, t, r) {
+    if (!prop.log) prop.log = { data: new Float32Array(LOG * 32), n: 0 };
+    const log = prop.log;
+    logged.add(prop);
+    // Just woken (or just thrown): where it lay the step before
+    if (!log.n || log.data[(log.n - 1) * LOG] < tick - 1) put(log, tick - 1, prop.p0, prop.q0, still, still);
+    put(log, tick, t, r, prop.body.linvel(), prop.body.angvel());
+  }
+
+  function recordWorld() {
+    let k = (tick % REWIND.keep) * RING;
+    ring[k++] = train.s;
+    ring[k++] = train.wait;
+    for (const m of mills) {
+      ring[k++] = m.angle;
+      ring[k++] = m.spin;
+    }
+    oldest = Math.max(oldest, tick - REWIND.keep + 1);
+    if (tick % REWIND.trimEvery === 0) trimLogs();
+  }
+
+  /** The last row at or before a step, or -1 if the log starts after it */
+  function logIndex(log, step) {
+    let lo = 0;
+    let hi = log.n - 1;
+    let found = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (log.data[mid * LOG] <= step) {
+        found = mid;
+        lo = mid + 1;
+      } else hi = mid - 1;
+    }
+    return found;
+  }
+
+  function readPose(log, i, p, q) {
+    const d = log.data;
+    const k = i * LOG;
+    p.set(d[k + 1], d[k + 2], d[k + 3]);
+    q.set(d[k + 4], d[k + 5], d[k + 6], d[k + 7]);
+  }
+
+  /** Steps too old to wind back to are dropped; a toy keeps the row it lay in then */
+  function trimLogs() {
+    for (const prop of logged) {
+      if (prop.goneAt && prop.goneAt <= oldest) {
+        logged.delete(prop);
+        prop.log = null;
+        dropFrom(props, prop);
+        prop.obj.removeFromParent();
+        world.removeRigidBody(prop.body);
+        continue;
+      }
+      const log = prop.log;
+      const i = logIndex(log, oldest);
+      if (i > 0) {
+        log.data.copyWithin(0, i * LOG, log.n * LOG);
+        log.n -= i;
+      }
+    }
+  }
+
+  function placeWheels() {
+    for (const w of train.wheels) w.rotation.z = -train.s / 0.22;
+  }
+
+  /** Shows the table as it was at step S (between steps, part way) */
+  function showAt(S) {
+    const s0 = Math.floor(S);
+    const k = S - s0;
+    for (const prop of logged) {
+      const log = prop.log;
+      let a = logIndex(log, s0);
+      if (prop.goneAt) prop.obj.visible = S < prop.goneAt;
+      if (a < 0) {
+        // A dart not yet thrown is not there; a toy not yet woken lies where it lay
+        if (prop.dart) {
+          prop.obj.visible = false;
+          continue;
+        }
+        a = 0;
+      } else if (prop.dart) prop.obj.visible = true;
+      readPose(log, a, pA, qA);
+      const b = k > 0 ? logIndex(log, s0 + 1) : a;
+      if (b > a) {
+        readPose(log, b, pB, qB);
+        pA.lerp(pB, k);
+        qA.slerp(qB, k);
+      }
+      prop.obj.position.copy(pA);
+      prop.obj.quaternion.copy(qA);
+    }
+    const r0 = (s0 % REWIND.keep) * RING;
+    const r1 = s0 + 1 <= tick ? ((s0 + 1) % REWIND.keep) * RING : r0;
+    // The train runs smoothly between steps, but jumps back to the start of its run in one
+    const sNext = Math.abs(ring[r1] - ring[r0]) < 2 ? ring[r1] : ring[r0];
+    train.s = THREE.MathUtils.lerp(ring[r0], sNext, k);
+    train.wait = ring[r0 + 1];
+    placeTrain(false);
+    placeWheels();
+    mills.forEach((m, i) => {
+      m.angle = THREE.MathUtils.lerp(ring[r0 + 2 + i * 2], ring[r1 + 2 + i * 2], k);
+      m.sails.quaternion.copy(m.q).multiply(qSpin.setFromAxisAngle(zAxis, m.angle));
+    });
+    dirty = shadowsDirty = true;
+  }
+
+  /** Puts a toy back exactly as it was at step C, and forgets its future */
+  function settleAt(prop, C) {
+    const log = prop.log;
+    const body = prop.body;
+    let i = logIndex(log, C);
+    if (i < 0) {
+      if (prop.dart) return release(prop);
+      i = 0;
+    }
+    readPose(log, i, pA, qA);
+    // Not moved since C: the physics already has it right, and touching it
+    // would only wake whatever it leans on
+    if (i === log.n - 1 && log.data[i * LOG] <= C) {
+      prop.obj.position.copy(prop.p1);
+      prop.obj.quaternion.copy(prop.q1);
+      prop.obj.visible = !prop.goneAt;
+      return;
+    }
+    const d = log.data;
+    const k = i * LOG;
+    vA.set(d[k + 8], d[k + 9], d[k + 10]);
+    wA.set(d[k + 11], d[k + 12], d[k + 13]);
+    // No row at C means it lay still then
+    const resting = d[k] < C || vA.lengthSq() + wA.lengthSq() < 1e-6;
+    if (prop.goneAt && C < prop.goneAt) {
+      prop.goneAt = 0;
+      body.setEnabled(true);
+      hittables.push(prop.obj);
+    }
+    prop.obj.visible = !prop.goneAt;
+    body.setTranslation(pA, false);
+    body.setRotation(qA, false);
+    body.setLinvel(resting ? still : vA, false);
+    body.setAngvel(resting ? still : wA, false);
+    if (resting) body.sleep();
+    else body.wakeUp();
+    prop.p0.copy(pA);
+    prop.p1.copy(pA);
+    prop.q0.copy(qA);
+    prop.q1.copy(qA);
+    prop.obj.position.copy(pA);
+    prop.obj.quaternion.copy(qA);
+    prop.moving = false;
+    prop.speed = resting ? 0 : vA.length();
+    prop.slow = 0;
+    prop.arc = 0;
+    log.n = i + 1;
+    if (d[k] > C) d[k] = C;
+  }
+
+  /** The wheel turned over the clock: steps back (-) or on (+) */
+  function scrubTime(steps) {
+    if (!steps) return;
+    if (!time.scrubbing) {
+      // Now is as far on as time goes: there is no winding on from it
+      if (steps > 0) return;
+      time.scrubbing = true;
+      time.cursor = time.goal = tick;
+      time.beat = Math.floor(tick / TICK_EVERY);
+      timeEvents.push({ kind: "start", dir: -1 });
+    }
+    // Back as far as is kept; on, only as far as now
+    time.goal = THREE.MathUtils.clamp(time.goal + steps, oldest, tick);
+    time.dir = Math.sign(steps);
+    time.still = 0;
+  }
+
+  /** While winding: the shown time eases after the wheel */
+  function scrub(dt) {
+    time.still += dt;
+    time.cursor += (time.goal - time.cursor) * (1 - Math.exp(-dt * 10));
+    if (Math.abs(time.goal - time.cursor) < 0.02) time.cursor = time.goal;
+    showAt(time.cursor);
+    const beat = Math.floor(time.cursor / TICK_EVERY);
+    if (beat !== time.beat) {
+      timeEvents.push({ kind: "tick", dir: Math.sign(beat - time.beat) });
+      time.beat = beat;
+    }
+    // A moment after the wheel stops, time runs again from where it was left
+    if (time.still > 0.7 && Math.abs(time.goal - time.cursor) < 0.05) releaseTime();
+  }
+
+  /** Time runs again from the step shown */
+  function releaseTime() {
+    if (!time.scrubbing) return;
+    time.scrubbing = false;
+    const C = THREE.MathUtils.clamp(Math.round(time.cursor), oldest, tick);
+    // The clock keeps the time it was wound to
+    time.offset += (C - tick) * REWIND.clockSeconds;
+    time.secOffset += C - tick;
+    for (const prop of [...logged]) settleAt(prop, C);
+    const r = (C % REWIND.keep) * RING;
+    train.s = ring[r];
+    train.wait = ring[r + 1];
+    train.moving = false;
+    placeTrain(true);
+    placeWheels();
+    mills.forEach((m, i) => {
+      m.angle = ring[r + 2 + i * 2];
+      m.spin = ring[r + 3 + i * 2];
+    });
+    tick = C;
+    acc = 0;
+    active = true;
+    dirty = shadowsDirty = true;
+    timeEvents.push({ kind: "resume" });
+  }
+
+  /** The hands: the visitor's own time, plus however far it has been wound */
+  function turnClock() {
+    const h = clockState.hands;
+    if (!h) return;
+    const wound = time.scrubbing ? time.cursor - tick : 0;
+    const local = Date.now() / 1000 - new Date().getTimezoneOffset() * 60;
+    const t = local + time.offset + wound * REWIND.clockSeconds;
+    // The second hand ticks; while winding it sweeps, a second a step
+    const sec = local + time.secOffset + wound;
+    const shown = time.scrubbing ? sec : Math.floor(sec);
+    const key = `${Math.round(t)}|${shown.toFixed(2)}`;
+    if (key === clockState.shown) return;
+    clockState.shown = key;
+    const turn = (v, period) => -(((v % period) + period) % period) / period * Math.PI * 2;
+    h.second.rotation.z = turn(shown, 60);
+    h.minute.rotation.z = turn(t, 3600);
+    h.hour.rotation.z = turn(t, 43200);
+    // The calendar beside it turns its page when the hands pass midnight
+    const day = Math.floor(t / 86400);
+    if (day !== calendarPage.day) {
+      calendarPage.day = day;
+      paintCalendar(new Date(day * 86400000));
+    }
+    dirty = true;
+  }
+  recordWorld();
+
   // ---------------------------------------------------------------- loop
   let acc = 0;
   const knocks = [];
@@ -3140,6 +3694,18 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     }
   }
 
+  /** The clock never moves, so the space round it is worked out once */
+  const clockBox = new THREE.Box3();
+  /** A loose dart that hits the clock rings its bells, once per dart */
+  function checkClock(dart) {
+    if (dart.clockHit || !clockState.obj) return;
+    if (clockBox.isEmpty()) clockBox.setFromObject(clockState.obj).expandByScalar(DART_REACH);
+    if (!clockBox.containsPoint(dart.p1)) return;
+    dart.clockHit = true;
+    hushKnocks = performance.now() + 350;
+    landings.push("clock");
+  }
+
   /** A loose dart that hits a meeple with a face is heard once, per dart */
   function checkTalkers(dart) {
     for (const m of talkers) {
@@ -3152,6 +3718,19 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         return;
       }
     }
+  }
+
+  /**
+   * A toy off the edge of the table is put away out of sight, not thrown
+   * out: winding time back past its fall brings it back. Once that moment
+   * is older than time can be wound back, it goes for good.
+   */
+  function vanish(prop) {
+    prop.goneAt = tick;
+    prop.obj.visible = false;
+    prop.moving = false;
+    dropFrom(hittables, prop.obj);
+    prop.body.setEnabled(false);
   }
 
   function stepOnce() {
@@ -3170,10 +3749,12 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       prop.body.setAngvel({ x: 0, y: 0, z: 0 }, false);
     }
     world.step();
+    tick++;
     const now = performance.now();
     let awake = 0;
     for (let i = props.length - 1; i >= 0; i--) {
       const prop = props[i];
+      if (prop.goneAt) continue;
       const body = prop.body;
       if (body.isSleeping()) {
         if (prop.moving) {
@@ -3198,7 +3779,10 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       prop.moving = true;
       const v = body.linvel();
       const speed = Math.hypot(v.x, v.y, v.z);
-      if (prop.dart && prop.state === "loose") checkTalkers(prop);
+      if (prop.dart && prop.state === "loose") {
+        checkTalkers(prop);
+        checkClock(prop);
+      }
       // A sudden stop is a block landing on something
       const drop = prop.speed - speed;
       if (drop > 1.6) prop.arc = 0;
@@ -3221,16 +3805,13 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         body.setAngvel({ x: 0, y: 0, z: 0 }, false);
         body.sleep();
       }
+      record(prop, t, r);
       if (t.y < -12 || t.z < -40 || Math.abs(t.x) > 45) {
         if (prop.dart) release(prop);
-        else {
-          dropFrom(props, prop);
-          dropFrom(hittables, prop.obj);
-          prop.obj.removeFromParent();
-          world.removeRigidBody(prop.body);
-        }
+        else vanish(prop);
       }
     }
+    recordWorld();
     if (awake === 0 && !train.moving) active = false;
   }
 
@@ -3313,19 +3894,51 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     },
     update(dt) {
       const now = performance.now();
-      if (!reducedMotion) runTrain(dt);
-      stepPhysics(dt);
-      flyPinned(dt);
-      settleQuills(dt);
-      ageDarts(now);
+      if (time.scrubbing) {
+        scrub(dt);
+        // A dart's ten seconds wait while time is being wound
+        for (const d of live) {
+          d.born += dt * 1000;
+          if (d.dying) d.dying += dt * 1000;
+        }
+      } else {
+        if (!reducedMotion) runTrain(dt);
+        stepPhysics(dt);
+        flyPinned(dt);
+        settleQuills(dt);
+        ageDarts(now);
+        turnMills(dt);
+      }
       animateTrainBits(dt);
       swingClouds(dt);
       animateHoop(dt);
       animateNote(dt);
-      turnMills(dt);
       waveFlags(now);
+      turnClock();
       watchFrames(dt);
       animateSheet(dt);
+    },
+    /** Whether the clock is at this point on the screen */
+    clockAt(ndcX, ndcY) {
+      return pick(ndcX, ndcY).kind === "clock";
+    },
+    /** The clock's outline turns orange under the pointer */
+    hoverClock(on) {
+      if (clockState.hover === on) return;
+      clockState.hover = on;
+      outlineMat.uniforms.color.value.set(on ? CLOCK_EDGE.hover : CLOCK_EDGE.idle);
+      dirty = true;
+    },
+    scrubTime,
+    releaseTime,
+    /** Whether time is being wound, and which way: -1 back, 1 on */
+    timeState() {
+      if (!time.scrubbing) return { scrubbing: false, dir: 0 };
+      const ahead = time.goal - time.cursor;
+      return { scrubbing: true, dir: Math.abs(ahead) > 0.05 ? Math.sign(ahead) : time.dir };
+    },
+    takeTimeEvents() {
+      return timeEvents.splice(0);
     },
     /** The intro's picture, for the sheet on the table; aspect is width over height */
     setSheet(picture, aspect) {
@@ -3416,6 +4029,13 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         cloudHits: clouds.map((c) => c.hits),
         sheet: { shown: sheet.obj.children[0].visible, at: sheet.obj.position.toArray().map((v) => Math.round(v * 100) / 100), scale: Math.round(sheet.obj.scale.x * 100) / 100, aspect: sheet.aspect, progress: sheet.progress },
         active,
+        rewind: {
+          tick,
+          oldest,
+          logged: logged.size,
+          gone: props.filter((p) => p.goneAt).length,
+          kb: Math.round(([...logged].reduce((n, p) => n + p.log.data.length, 0) * 4 + ring.length * 4) / 1024),
+        },
         quality: Math.round(quality * 100) / 100,
         buffer: [renderer.domElement.width, renderer.domElement.height],
         calls: renderer.info.render.calls,

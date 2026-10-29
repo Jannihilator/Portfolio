@@ -25,6 +25,14 @@ const PAGE_SIZE = 18;
  * speed itself is DART_SPEED in scene.js, and how a lob arcs is WEAK there.
  */
 const SHOT = { weakChance: 0.25, weak: [0.6, 0.6], normal: [0.65, 0.95] };
+/**
+ * The wheel over the clock winds time: this many physics steps (30 a
+ * second) for each pixel the wheel scrolls, so one notch of a mouse wheel
+ * (about 100 px) is half a second. Down winds back, up winds on.
+ */
+const WHEEL_STEPS = 0.15;
+/** Clock ticks are heard no closer together than this (ms) */
+const TICK_GAP = 45;
 
 function shotForce() {
   const [lo, hi] = Math.random() < SHOT.weakChance ? SHOT.weak : SHOT.normal;
@@ -40,6 +48,10 @@ export function createToy({ table, aim, fx, reducedMotion }) {
   let tapShownUntil = 0;
   let launch = { x: 0, y: 0 };
   let force = 1;
+  /** The pointer is over the clock: the wheel winds time */
+  let onClock = false;
+  let lastTick = 0;
+  let timeShown = "";
 
   function toNdc(x, y) {
     return [(x / window.innerWidth) * 2 - 1, -(y / window.innerHeight) * 2 + 1];
@@ -72,18 +84,41 @@ export function createToy({ table, aim, fx, reducedMotion }) {
     return { kind: "table" };
   }
 
+  /** Over the clock the crosshair turns into a mouse wheel, and leaving it lets time run */
+  function hoverClock(on) {
+    if (on === onClock) return;
+    onClock = on;
+    table.hoverClock(on);
+    aim.classList.toggle("is-clock", on);
+    if (!on) table.releaseTime();
+  }
+
   function updateHover() {
     if (!pointer.inside) {
       if (performance.now() > tapShownUntil) aim.classList.remove("is-shown");
       table.hoverSheet(false);
+      hoverClock(false);
       return;
     }
     const t = targetAt(pointer.x, pointer.y);
     // The intro lying on the table is a thing to pick up: its corner lifts under the crosshair
     const onSheet = t.kind === "table" && table.sheetAt(...toNdc(pointer.x, pointer.y));
     table.hoverSheet(onSheet);
+    hoverClock(t.kind === "table" && !onSheet && table.clockAt(...toNdc(pointer.x, pointer.y)));
     aim.classList.toggle("is-shown", t.kind !== "none");
     aim.classList.toggle("is-target", t.kind === "button" || t.kind === "dart" || onSheet);
+  }
+
+  /** The table, and the wheel on the crosshair, show which way time is going */
+  function showTime() {
+    const { scrubbing, dir } = table.timeState();
+    const state = scrubbing ? (dir < 0 ? "back" : "on") : "";
+    if (state === timeShown) return;
+    timeShown = state;
+    const root = document.documentElement;
+    root.classList.toggle("time-winding", scrubbing);
+    root.classList.toggle("time-back", state === "back");
+    root.classList.toggle("time-on", state === "on");
   }
 
   /** The crosshair pops on every shot */
@@ -271,6 +306,18 @@ export function createToy({ table, aim, fx, reducedMotion }) {
     fire(e.clientX, e.clientY);
   });
 
+  // The wheel over the clock winds time instead of scrolling the page
+  window.addEventListener(
+    "wheel",
+    (e) => {
+      if (!onClock || e.ctrlKey) return;
+      e.preventDefault();
+      const px = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+      table.scrubTime(-px * WHEEL_STEPS);
+    },
+    { passive: false }
+  );
+
   // On a touch screen, once scrolled all the way down to the table, a tap
   // fires: the crosshair shows where it landed and pops, like a click.
   // A touch that drags is a scroll, and fires nothing.
@@ -332,8 +379,18 @@ export function createToy({ table, aim, fx, reducedMotion }) {
         if (kind === "target") sound.ding();
         else if (kind === "train") sound.whistle();
         else if (kind === "meeple") sound.squeal();
+        else if (kind === "clock") sound.bell();
         else sound.stick();
       }
+      for (const e of table.takeTimeEvents()) {
+        if (e.kind === "start") sound.warp(e.dir < 0);
+        else if (e.kind === "resume") sound.ring();
+        else if (now - lastTick > TICK_GAP) {
+          lastTick = now;
+          sound.tick(e.dir < 0);
+        }
+      }
+      showTime();
       // What is under a still pointer changes too: a dialog opens, a page scrolls
       if (now - lastHover > 150) {
         lastHover = now;
