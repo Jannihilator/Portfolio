@@ -25,11 +25,13 @@ function thumbHtml(project) {
   const shot = (project.media || []).find((item) => item.type === "image");
   const data = window.PROJECT_CONTRIBUTIONS || {};
   const line = String((data.awards || {})[project.id] || (data.taglines || {})[project.id] || "").trim();
+  const tags = project.stack || [];
   return `<li>
     <button type="button" class="thumb" data-peek="${esc(project.id)}">
       <span class="thumb-shot">${shot ? `<img data-src="${esc(thumbSrc(shot.src))}" data-full="${esc(shot.src)}" alt="" decoding="async" />` : ""}</span>
       <span class="thumb-name">${esc(project.title)}</span>
       ${line ? `<span class="thumb-line">${esc(line)}</span>` : ""}
+      ${tags.length ? `<span class="thumb-tags">${tags.map((tag) => `<span>${esc(tag)}</span>`).join("")}</span>` : ""}
     </button>
   </li>`;
 }

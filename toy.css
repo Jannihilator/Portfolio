@@ -33,6 +33,20 @@ html {
   background: var(--wall);
 }
 
+/* Darts and clicks land all over the page, so nothing should highlight by
+   accident; form fields stay selectable */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -1286,6 +1300,23 @@ html.no-splash .splash {
   margin-top: 3px;
   color: var(--accent);
   font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.thumb-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.thumb-tags span {
+  padding: 0.12em 0.55em;
+  border-radius: 999px;
+  border: 1.5px solid rgba(var(--accent-rgb), 0.55);
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
