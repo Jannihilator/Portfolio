@@ -359,6 +359,14 @@ export function createToy({ table, aim, fx, reducedMotion }) {
     true
   );
 
+  // Time is wound by hovering the clock and turning a mouse wheel. A touch
+  // screen has neither, so there the clock is only a clock: no outline
+  // inviting a hover that can never come.
+  const touchOnly = window.matchMedia("(hover: none) and (pointer: coarse)");
+  const edgeClock = () => table.clockEdge(!touchOnly.matches);
+  edgeClock();
+  touchOnly.addEventListener("change", edgeClock);
+
   // A modal dialog sits in the top layer, so the crosshair, the darts and
   // the blaster move in with it while it is open
   const overlay = [aim, fx];

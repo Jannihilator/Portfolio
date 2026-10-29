@@ -3929,6 +3929,11 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       outlineMat.uniforms.color.value.set(on ? CLOCK_EDGE.hover : CLOCK_EDGE.idle);
       dirty = true;
     },
+    /** The clock's outline on or off: off where there is no pointer to hover it with */
+    clockEdge(on) {
+      outlineMat.visible = on;
+      dirty = true;
+    },
     scrubTime,
     releaseTime,
     /** Whether time is being wound, and which way: -1 back, 1 on */
