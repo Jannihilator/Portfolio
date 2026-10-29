@@ -22,6 +22,25 @@ document.querySelectorAll("[data-goto]").forEach((button) => {
   });
 });
 
+// Many visitors have no mail app set up, so a mailto link opens nothing useful
+// (or a stray built-in client): copy the address instead, and keep the link as
+// the fallback for when the clipboard is not available.
+document.querySelectorAll('a[href^="mailto:"]').forEach((link) => {
+  const label = link.querySelector("span");
+  const address = link.getAttribute("href").slice("mailto:".length);
+  link.title = address;
+  link.addEventListener("click", async (event) => {
+    event.preventDefault();
+    try {
+      await navigator.clipboard.writeText(address);
+    } catch {
+      window.location.href = link.getAttribute("href");
+      return;
+    }
+    label.textContent = "Copied " + address;
+  });
+});
+
 // The splash is the table, with the intro lying on it as a real sheet of
 // paper in the 3D scene (see the sheet in scene.js). Scrolling peels it up
 // off the table until it lies exactly over the intro panel's place; a dart
