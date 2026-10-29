@@ -93,19 +93,48 @@ export const SLOW_MS = 8000;
 // The curtain's sketch: its parts come in as the load gets along, by the
 // clock toward when it should be in (or by what has come in, when that is
 // further on). The last part waits for the end (main.js).
-const NOTES = ["Sharpening the pencils…", "Smoothing out the creases…", "Dusting off the résumé…", "Unfolding the intro…"];
 const parts = [...document.querySelectorAll("#curtain .sketch-layer")];
 let shown = 0;
 let pacer = 0;
+
+// The curtain's note: it starts on the first words (index.html) and ends on
+// the last. The ones between come only when the load drags on, each once the
+// load has gone on that long. Whichever is up stays for HOLD_MS at least.
+const MIDDLE_NOTES = [
+  { at: 2600, text: "Sharpening the pencils…" },
+  { at: 4800, text: "Smoothing out the creases…" },
+];
+const LAST_NOTE = "Leaving it on the desk…";
+const HOLD_MS = 1400;
+let noteSince = 0;
+let noteChain = Promise.resolve();
+let lastSaid = false;
+let middleSaid = 0;
+
+/** Puts the words up once the one before has had its time; resolves when they are up */
+function say(text, force) {
+  noteChain = noteChain.then(async () => {
+    if (lastSaid && !force) return;
+    const left = noteSince + HOLD_MS - performance.now();
+    if (left > 0) await new Promise((resolve) => setTimeout(resolve, left));
+    const note = document.getElementById("curtain-note");
+    if (note) note.textContent = text;
+    noteSince = performance.now();
+  });
+  return noteChain;
+}
+
+/** The last words, for the end: resolves once they have been up long enough to read */
+export async function sayLast() {
+  lastSaid = true;
+  await say(LAST_NOTE, true);
+  await new Promise((resolve) => setTimeout(resolve, HOLD_MS));
+}
 
 /** Brings in the sketch's next part; false once they are all in */
 export function showPart() {
   if (shown >= parts.length) return false;
   parts[shown++].classList.add("is-in");
-  // The note moves on with the sketch, keeping the last one for the end
-  const n = shown >= parts.length ? NOTES.length - 1 : Math.min(NOTES.length - 2, Math.floor((shown / parts.length) * (NOTES.length - 1)));
-  const note = document.getElementById("curtain-note");
-  if (note) note.textContent = NOTES[n];
   return true;
 }
 
@@ -114,6 +143,7 @@ export function paceSketch() {
   let pace = 0;
   pacer = setInterval(() => {
     const now = performance.now();
+    if (middleSaid < MIDDLE_NOTES.length && now >= MIDDLE_NOTES[middleSaid].at) say(MIDDLE_NOTES[middleSaid++].text);
     const end = estimate();
     pace = Math.max(pace, Math.min(0.8, Math.max(now / Math.max(end ?? SLOW_MS, now + 500), loaded())));
     // One part at a time, so a late start still draws them in one after another

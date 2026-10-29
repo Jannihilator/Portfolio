@@ -5,7 +5,7 @@
 import { initCarousel } from "./carousel.js";
 import { initOthers } from "./others.js";
 import { initSurfaces, tickSurfaces } from "./surfaces.js";
-import { estimate, SLOW_MS, showPart, stopSketch } from "./loading.js";
+import { estimate, SLOW_MS, sayLast, showPart, stopSketch } from "./loading.js";
 
 const $ = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -273,11 +273,13 @@ async function openCurtain() {
   if (!sheetLoading) return revealTable();
   sheetLoading = false;
   stopSketch();
+  const last = sayLast();
   while (showPart()) {
     if (!reducedMotion) await wait(160);
   }
-  // The last part's fade, and the whole sheet for a moment, before it goes
-  await wait(reducedMotion ? 0 : 1100);
+  // The last part's fade, and the whole sheet for a moment, before it goes;
+  // and the last words, which stay up long enough to be read
+  await Promise.all([wait(reducedMotion ? 0 : 1100), last]);
   liftCurtain();
 }
 

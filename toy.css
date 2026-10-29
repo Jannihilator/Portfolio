@@ -1518,11 +1518,6 @@ body.toy-on #aim.is-shown {
   font-weight: 600;
 }
 
-.aim-unless {
-  font-size: 14px;
-  color: #6a4e38;
-}
-
 #aim.is-clock .aim-ring {
   opacity: 0;
 }
