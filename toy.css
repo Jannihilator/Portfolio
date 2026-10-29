@@ -1683,6 +1683,27 @@ body.toy-on label {
   }
 }
 
+/* Medium windows: the intro is one column, so the tags sit beside the portrait
+   instead of under it, filling the space the narrow photo leaves */
+@media (min-width: 641px) and (max-width: 1000px) {
+  .intro-portrait {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+  }
+
+  .intro-portrait img {
+    flex: none;
+    width: 200px;
+    max-width: none;
+  }
+
+  .intro-portrait .skill-tags {
+    margin: 0;
+    gap: 8px;
+  }
+}
+
 /* Phones: side-by-side passes are too thin to read, so each row stacks
    and its arrows point down */
 @media (max-width: 640px) {
