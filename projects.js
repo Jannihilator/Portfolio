@@ -490,55 +490,242 @@ window.PORTFOLIO_PROJECTS = [
         timeline: "Aug–Dec 2025",
         href: "https://projects.etc.cmu.edu/renushu/",
         iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
-        // PLACEHOLDER beats: same shape as star-fishing. Replace the text
-        // and media with the real thinking process, then drop `placeholder`.
-        placeholder: true,
         beats: [
           {
-            heading: "Placeholder: where it started",
+            heading: "Turning therapy into something patients want to return to",
             blocks: [
               {
-                type: "text",
-                text: "Placeholder beat. What problem the physical therapists had, and the first idea for the smart shoes.",
-              },
-              {
                 type: "row",
-                cols: 2,
+                float: "right",
                 items: [
                   {
                     type: "image",
-                    src: "./assets/renushu-pt.jpeg",
-                    alt: "Camp Movewell physical therapy session",
-                    caption: "Placeholder caption",
-                    note: "Placeholder note about this step.",
+                    src: "./assets/Camp_Movewell_Medias/web/nominee.jpg",
+                    alt: "The Games for Change Awards nominee card for Camp Movewell, Best in Health and Wellness",
+                    ratio: "auto",
                   },
+                ],
+              },
+              {
+                type: "text",
+                text: "ReNUSHU is a student project at CMU’s Entertainment Technology Center, made with Magnes AG, the creator of the NuShu smart shoes. The intent is simple: turn physical therapy from a repetitive medical routine into a game-driven journey that patients want to come back to. Camp Movewell is our prototype of that idea, a growing collection of small exergames where each one is built around a single therapy movement, like heel raises, reactive stepping or balance shifts. Every game is its own system, so new ones can be added and exercises swapped without rebuilding the rest.",
+              },
+              {
+                type: "callout",
+                label: "Nominated",
+                text: "Camp Movewell was nominated for Best in Health & Wellness at the 2026 Games for Change Awards.",
+              },
+            ],
+          },
+          {
+            heading: "From the shoe to the game",
+            blocks: [
+              {
+                type: "text",
+                text: "The first step was getting the shoe talking to the game. We took the Bluetooth setup from Magnes’ codebase to read the sensors, then streamed that data into Unity and mapped the shoe’s movement in physical space to the virtual game space.",
+              },
+              {
+                type: "row",
+                ratio: "16 / 9",
+                items: [
                   {
-                    type: "image",
-                    src: "./assets/renushu-game.png",
-                    alt: "Camp Movewell gameplay",
-                    caption: "Placeholder caption",
-                    note: "Placeholder note about this step.",
+                    type: "video",
+                    src: "./assets/Camp_Movewell_Medias/web/goldspike.mp4",
+                    poster: "./assets/Camp_Movewell_Medias/web/posters/goldspike.jpg",
+                    caption: "Shoe to Unity",
+                    note: "Moving the shoe moves the object in the game.",
                   },
                 ],
               },
             ],
           },
           {
-            heading: "Placeholder: what changed",
+            heading: "First exercise: the heel raise",
             blocks: [
               {
                 type: "text",
-                text: "Placeholder beat. A problem found in playtests and how the design changed because of it.",
+                text: "We started with the heel raise because it is used in a lot of PT sessions, and its movement is easy to detect with a gyroscope. The game idea is that a fence blocks your view, so you raise your heels to peek over it and see what is behind.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "16 / 9",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/butterfly-draft.jpg",
+                    alt: "A draft of the heel raise scene: a fence in front with a butterfly behind it",
+                    caption: "Early draft",
+                    note: "The fence hides what is behind it until you rise.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Camp_Movewell_Medias/web/heelraise.mp4",
+                    poster: "./assets/Camp_Movewell_Medias/web/posters/heelraise.jpg",
+                    caption: "Heel raise",
+                    note: "Raising your heels lifts the camera over the fence.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "A web interface for the therapist",
+            blocks: [
+              {
+                type: "text",
+                text: "Besides the game on the PC, there is a web interface the therapist opens by scanning a QR code. They can adjust the exercise’s metrics and monitor the patient’s progress. It can also interact with the game: spawning new objects into the scene turns the heel raise into a spot-the-difference game, giving the patient a reason to keep looking over the fence.",
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/pt-interface.jpg",
+                    alt: "The therapist web interface showing exercise settings and progress",
+                    ratio: "4 / 3",
+                    caption: "Therapist interface",
+                    note: "Adjust the exercise and watch progress.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Camp_Movewell_Medias/web/add-object-demo.mp4",
+                    poster: "./assets/Camp_Movewell_Medias/web/posters/add-object-demo.jpg",
+                    ratio: "824 / 480",
+                    caption: "Spawning an object",
+                    note: "Added from the web, found in the game.",
+                  },
+                ],
+              },
+              {
+                type: "text",
+                text: "We demoed it live to an audience at school and got positive feedback, and licensed therapists verified the exercise. That gave us the confidence to build more mini-games for other exercises.",
               },
               {
                 type: "row",
                 items: [
                   {
                     type: "image",
-                    src: "./assets/g4c.jpeg",
-                    alt: "The Camp Movewell team at the 2026 Games for Change Awards",
-                    caption: "Placeholder caption",
-                    note: "Placeholder note about this step.",
+                    src: "./assets/Camp_Movewell_Medias/web/live-demo.jpg",
+                    alt: "The live demo of Camp Movewell in front of an audience at school",
+                    ratio: "16 / 9",
+                    caption: "Live demo",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "A modular system between shoe, game and web",
+            blocks: [
+              {
+                type: "text",
+                text: "To support more games, the shoe, the game and the web interface talk through serialized structured data. Each mini-game registers its own handler, so the web can change its parameters and the game can send back its state without the rest of the system knowing the details.",
+              },
+              {
+                type: "row",
+                match: "height",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/heelraise-system.png",
+                    alt: "System diagram of the heel raise game: shoe data flows into HeelRaiseSystem, while NetworkManager and WebSocketDispatcher connect it to the web interface",
+                    ratio: "2048 / 624",
+                    caption: "Heel raise system",
+                    note: "Shoe data drives the game, and the web changes its parameters through a registered handler.",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/message.jpg",
+                    alt: "C# code for GameMessage and HeelRaiseMessage with raise count, fail count, color mode and spawned objects",
+                    ratio: "941 / 777",
+                    caption: "Structured messages",
+                    note: "Each game defines the data it shares with the web.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "Counting reps and charging a power meter",
+            blocks: [
+              {
+                type: "text",
+                text: "The next problem was gameplay. Making what you do in the game match what the exercise is doing is hard, especially when the shoe has limits on real-time tracking. So we tried counting the successful reps of a movement and mapping the count to a power meter that does something once enough reps accumulate. The example is a mini golf game: you take vertical steps to charge, then swing your leg to hit the ball.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "16 / 9",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/golf.jpg",
+                    alt: "The mini golf game with a power meter",
+                    caption: "Mini golf",
+                    note: "Steps charge the meter.",
+                  },
+                  {
+                    type: "video",
+                    src: "./assets/Camp_Movewell_Medias/web/golf.mp4",
+                    poster: "./assets/Camp_Movewell_Medias/web/posters/golf.jpg",
+                    caption: "Swing",
+                    note: "Swing the leg to swing the club.",
+                  },
+                ],
+              },
+              {
+                type: "callout",
+                label: "What we learned",
+                text: "Players would rather have the movement mapped directly to the game than go through a layer of counting in between.",
+              },
+            ],
+          },
+          {
+            heading: "Testing with patients",
+            blocks: [
+              {
+                type: "text",
+                text: "With that finding, we made reactive stepping and leg raising games where the movement drives the game directly, and brought the whole package to a PT clinic to test with patients. It was rewarding to see the game raise their interest and give them more feedback while they did the exercise, and the therapist appreciated how easy the web interface made controlling it.",
+              },
+              {
+                type: "row",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/playtest.jpg",
+                    alt: "A patient playing Camp Movewell with smart shoes at a physical therapy clinic",
+                    ratio: "16 / 9",
+                    caption: "Playtest at the PT clinic",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            heading: "What I took away",
+            blocks: [
+              {
+                type: "text",
+                text: "This project taught me how to design a scalable system and how to manage networking data. It also moved me to see what transformational, serious games can do for real people.",
+              },
+              {
+                type: "row",
+                cols: 2,
+                ratio: "4 / 3",
+                items: [
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/extra-zoom-james.jpg",
+                    alt: "James on stage presenting the Camp Movewell smart shoes",
+                    caption: "On stage",
+                  },
+                  {
+                    type: "image",
+                    src: "./assets/Camp_Movewell_Medias/web/working.jpg",
+                    alt: "Working on Camp Movewell",
+                    caption: "Working on it",
                   },
                 ],
               },
@@ -1179,6 +1366,8 @@ window.PORTFOLIO_PROJECTS = [
     }
     if (block.arrow) classes.push("pass-row--arrow");
     if (block.width === "narrow") classes.push("pass-row--narrow");
+    // Put the row before the text that should wrap around it
+    if (block.float === "right") classes.push("pass-row--float");
     const parts = items.map((item) => passItemHtml(item, block.ratio));
     return `<div class="${classes.join(" ")}"${style}>${parts.join(block.arrow ? ROW_ARROW : "")}</div>`;
   }
