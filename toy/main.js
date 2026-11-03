@@ -10,16 +10,71 @@ import { estimate, SLOW_MS, sayLast, showPart, stopSketch } from "./loading.js";
 const $ = (id) => document.getElementById(id);
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const carousel = initCarousel({ track: $("track"), tabs: $("tabs") });
+const carousel = initCarousel({ track: $("track"), tabs: $("tabs"), prev: $("prev-project"), next: $("next-project") });
 initOthers({ list: $("other-list"), dialog: $("peek"), body: $("peek-body"), close: $("peek-close") });
 initSurfaces();
 
+/**
+ * A quick glide down (or up) the page, in place of the browser's slow
+ * smooth scroll: the paper unfolds on the way. Any touch of the wheel, a
+ * key or a finger takes the page back.
+ */
+let glideFrame = 0;
+function glideTo(top) {
+  cancelAnimationFrame(glideFrame);
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const to = Math.max(0, Math.min(max, Math.round(top)));
+  const from = window.scrollY;
+  const dist = Math.abs(to - from);
+  if (reducedMotion || dist < 4) return window.scrollTo({ top: to, behavior: "instant" });
+  const time = Math.min(1300, 550 + dist * 0.16);
+  const start = performance.now();
+  const step = (now) => {
+    const k = Math.min(1, (now - start) / time);
+    const ease = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    window.scrollTo({ top: from + (to - from) * ease, behavior: "instant" });
+    if (k < 1) glideFrame = requestAnimationFrame(step);
+  };
+  glideFrame = requestAnimationFrame(step);
+}
+for (const type of ["wheel", "touchstart", "keydown"]) {
+  window.addEventListener(type, () => cancelAnimationFrame(glideFrame), { passive: true });
+}
+
+/** Where the page scrolls to put a section at the top (the intro rests mid-screen) */
+function sectionTop(id) {
+  const el = $(id);
+  if (id === "about" && splash.offsetHeight) return landing();
+  return el.getBoundingClientRect().top + window.scrollY - (id === "about" ? introRest() : 16);
+}
+
+/** Takes the viewer to a section; the résumé is the back of the intro card */
+function goTo(id) {
+  const card = $("intro-flip");
+  if (id === "resume") {
+    if (!card.classList.contains("is-flipped")) $("flip-resume").click();
+    else glideTo(card.getBoundingClientRect().top + window.scrollY);
+    return;
+  }
+  if (card.classList.contains("is-flipped") && id === "about") $("flip-back").click();
+  if (id === "about") return glideTo(sectionTop("about"));
+  glideTo(sectionTop(id));
+}
+
 document.querySelectorAll("[data-goto]").forEach((button) => {
   button.addEventListener("click", () => {
-    const target = $(button.dataset.goto);
-    if (!target) return;
-    target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    if ($(button.dataset.goto)) goTo(button.dataset.goto);
   });
+});
+
+document.querySelectorAll("[data-nav]").forEach((button) => {
+  button.addEventListener("click", () => goTo(button.dataset.nav));
+});
+
+// The clouds on the table are the page's nav: a dart that hits one sends the
+// viewer to its section, once the cloud has had a moment to swing
+$("table").addEventListener("cloudnav", (event) => {
+  setTimeout(() => goTo(event.detail), reducedMotion ? 0 : 450);
 });
 
 // Many visitors have no mail app set up, so a mailto link opens nothing useful
@@ -375,7 +430,7 @@ async function startSheet(table) {
     // A card that is turning and changing height no longer holds still
     holdOff = true;
     placeRest();
-    card.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    glideTo(card.getBoundingClientRect().top + window.scrollY);
   };
   open.addEventListener("click", () => turn(true));
   $("flip-back").addEventListener("click", () => turn(false));

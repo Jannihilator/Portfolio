@@ -125,6 +125,14 @@
        It covers the table until the table is up, and stays behind the pages if it never comes. -->
   <div id="view" class="curtain-view" aria-hidden="true"><span class="curtain-table"></span></div>
 
+  <!-- The clouds on the table are the nav for a mouse; this is the same nav for the keyboard -->
+  <nav class="cloud-nav" aria-label="Sections">
+    <button type="button" data-nav="about">About</button>
+    <button type="button" data-nav="featured">Projects</button>
+    <button type="button" data-nav="other">More work</button>
+    <button type="button" data-nav="resume">Résumé</button>
+  </nav>
+
   <div id="page">
     <!-- The splash: a screen of nothing but the table, with the intro's top edge peeking up from below.
          The way in is the Enter target on the table, or a scroll. -->
@@ -211,6 +219,9 @@
         aria-roledescription="carousel" aria-label="Featured projects">
         <!-- Bookmarks sticking out from behind the board's edge, one per project -->
         <div class="board-tabs" id="tabs" role="group" aria-label="Choose a project"></div>
+        <!-- Arrows on the frame's sides: the board pages like a book -->
+        <button type="button" class="page-turn page-turn--prev" id="prev-project" aria-label="Previous project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg></button>
+        <button type="button" class="page-turn page-turn--next" id="next-project" aria-label="Next project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg></button>
         <div class="board-track" id="track" tabindex="-1"></div>
       </section>
 

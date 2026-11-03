@@ -6,7 +6,7 @@ import { afterLoading } from "./loading.js";
 
 const P = window.PortfolioProjects;
 
-export const FEATURED = ["xhaler", "borderless", "star-fishing", "renushu"];
+export const FEATURED = ["renushu", "borderless", "xhaler", "star-fishing"];
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -39,7 +39,9 @@ function heroHtml(project) {
   if (video) {
     // Plays only while its slide is on the board and in view; its still goes up once the board is near
     const fallback = video.fallback ? `data-fallback="${esc(video.fallback)}"` : "";
-    return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none" ${fallback}
+    // A lighter clip to play instead when this one is slow to start
+    const lighter = video.lighter ? `data-lighter="${esc(video.lighter)}"` : "";
+    return `<figure class="slide-hero"><video data-hero muted loop playsinline preload="none" ${fallback} ${lighter}
       ${image ? `data-poster="${esc(image.src)}"` : ""} aria-label="${esc(project.title)} demo"><source src="${esc(video.src)}" type="video/mp4" /></video></figure>`;
   }
   return image ? `<figure class="slide-hero"><img src="${esc(image.src)}" alt="${esc(image.alt || "")}" loading="lazy" decoding="async" /></figure>` : "";
@@ -105,7 +107,7 @@ function slideHtml(project, i, total) {
   </article>`;
 }
 
-export function initCarousel({ track, tabs, onChange }) {
+export function initCarousel({ track, tabs, prev, next, onChange }) {
   const projects = FEATURED.map((id) => P.find(id)).filter(Boolean);
   track.innerHTML = projects.map((p, i) => slideHtml(p, i, projects.length)).join("");
   tabs.innerHTML = projects
@@ -122,8 +124,28 @@ export function initCarousel({ track, tabs, onChange }) {
 
   P.bindBeatPlayers(track);
 
+  const LIGHTER_MS = 3500;
+
+  /** A reel that has not started after a few seconds gives way to its lighter clip */
+  function watchSlow(video) {
+    const lighter = video.dataset.lighter;
+    if (!lighter || video.dataset.slowWatch) return;
+    video.dataset.slowWatch = "1";
+    const swap = () => {
+      video.querySelector("source").src = lighter;
+      video.load();
+      video.play().catch(() => {});
+    };
+    const timer = setTimeout(() => {
+      if (video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) swap();
+    }, LIGHTER_MS);
+    video.addEventListener("canplay", () => clearTimeout(timer), { once: true });
+    video.addEventListener("error", () => { clearTimeout(timer); swap(); }, { once: true });
+  }
+
   function playHero(video) {
     if (reduceMotion.matches) return;
+    watchSlow(video);
     P.watchStall(video);
     // A clip that never got its source going (a play() while the board was
     // still hidden) starts its fetch again
@@ -180,6 +202,8 @@ export function initCarousel({ track, tabs, onChange }) {
       slide.setAttribute("aria-hidden", j !== i ? "true" : "false");
     });
     tabButtons.forEach((b, j) => b.setAttribute("aria-current", j === i ? "true" : "false"));
+    if (prev) prev.disabled = i === 0;
+    if (next) next.disabled = i === slides.length - 1;
     slides.forEach((slide, j) => {
       const video = slide.querySelector("video[data-hero]");
       if (!video) return;
@@ -222,6 +246,9 @@ export function initCarousel({ track, tabs, onChange }) {
     const button = event.target.closest("[data-slide]");
     if (button) go(Number(button.dataset.slide));
   });
+
+  if (prev) prev.addEventListener("click", () => go(active - 1));
+  if (next) next.addEventListener("click", () => go(active + 1));
 
   // Left and right page the board whenever focus is on it
   track.closest(".board").addEventListener("keydown", (event) => {

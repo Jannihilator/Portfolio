@@ -91,34 +91,26 @@ const css = (hex) => `#${hex.toString(16).padStart(6, "0")}`;
 
 
 /**
- * A paper cloud: soft lumps with a cartoon outline. A tall one is fatter:
- * four bigger lumps on a deeper sheet.
+ * A paper cloud: soft lumps with a cartoon outline, drawn from a spec.
+ *   lumps   [x, y, r] circles on the 320-wide canvas
+ *   body    [x0, y0, x1, y1, round] a filled block joining the lumps, its
+ *           corners rounded by round (0 for square)
+ *   shade   y where the underside shading starts
+ *   labelY  where the label sits
  */
-function cloudCanvas(seed, tall = false) {
+function cloudCanvas(spec, label = "") {
   const c = document.createElement("canvas");
   c.width = 320;
-  c.height = tall ? 240 : 180;
+  c.height = spec.tall ? 240 : 180;
   const ctx = c.getContext("2d");
-  const rand = rng(seed);
-  const lumps = [];
-  const base = tall ? 150 : 110;
-  const count = tall ? 4 : 5;
-  for (let i = 0; i < count; i++) {
-    if (tall) {
-      const middle = i === 1 || i === 2;
-      lumps.push({ x: 78 + i * 55 + (rand() - 0.5) * 12, y: base - (middle ? 38 : 8) - rand() * 10, r: 44 + rand() * 12 + (middle ? 22 : 0) });
-    } else {
-      lumps.push({ x: 60 + i * 50 + (rand() - 0.5) * 16, y: base - (i % 2 ? 22 : 0) - (i === 2 ? 18 : 0), r: 38 + rand() * 16 + (i === 2 ? 12 : 0) });
-    }
-  }
   const shape = () => {
     ctx.beginPath();
-    for (const l of lumps) {
-      ctx.moveTo(l.x + l.r, l.y);
-      ctx.arc(l.x, l.y, l.r, 0, Math.PI * 2);
+    for (const [x, y, r] of spec.lumps) {
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
     }
-    if (tall) ctx.rect(62, base - 10, 196, 52);
-    else ctx.rect(50, base - 10, 220, 46);
+    const [x0, y0, x1, y1, round = 0] = spec.body;
+    ctx.roundRect(x0, y0, x1 - x0, y1 - y0, round);
   };
   ctx.lineWidth = 8;
   ctx.lineJoin = "round";
@@ -132,12 +124,23 @@ function cloudCanvas(seed, tall = false) {
   ctx.save();
   shape();
   ctx.clip();
-  const shade = ctx.createLinearGradient(0, base - 20, 0, base + 40);
+  const shade = ctx.createLinearGradient(0, spec.shade, 0, spec.shade + 60);
   shade.addColorStop(0, "rgba(226, 210, 186, 0)");
   shade.addColorStop(1, "rgba(226, 210, 186, 0.9)");
   ctx.fillStyle = shade;
-  ctx.fillRect(0, base - 20, 320, 70);
+  ctx.fillRect(0, spec.shade, 320, 80);
   ctx.restore();
+  // The label a nav cloud carries, inked on the paper
+  if (label) {
+    const font = (size) => `600 ${size}px "Shantell Sans", "Comic Sans MS", sans-serif`;
+    ctx.fillStyle = "#4a3526";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = font(44);
+    const width = ctx.measureText(label).width;
+    if (width > spec.room) ctx.font = font(Math.floor((44 * spec.room) / width));
+    ctx.fillText(label, spec.labelX ?? 160, spec.labelY);
+  }
   return c;
 }
 
@@ -2380,7 +2383,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
    */
   const STRING = 30;
   const SWAY = 10 / STRING;
-  function hanging(canvasEl, w, h, pos) {
+  function hanging(canvasEl, w, h, pos, nav = "", repaint = null) {
     const tex = new THREE.CanvasTexture(canvasEl);
     tex.colorSpace = THREE.SRGBColorSpace;
     const pivot = new THREE.Group();
@@ -2403,16 +2406,53 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       pivot.add(s);
     }
     scene.add(pivot);
-    const cloud = { pivot, mesh, canvas: canvasEl, ax: 0, ay: 0, az: 0, vx: 0, vy: 0, vz: 0, hits: 0 };
+    // The label's font may arrive after the table: ink it again when it has
+    if (repaint) document.fonts.ready.then(() => { repaint(); tex.needsUpdate = true; dirty = true; });
+    const cloud = { nav, pivot, mesh, canvas: canvasEl, ax: 0, ay: 0, az: 0, vx: 0, vy: 0, vz: 0, hits: 0 };
     mesh.userData.hit = { kind: "cloud", cloud };
     hittables.push(mesh);
     clouds.push(cloud);
     return cloud;
   }
-  hanging(cloudCanvas(3), 3.6, 2, new THREE.Vector3(-11.5, 7.6, -7.5));
-  hanging(cloudCanvas(8, true), 2.8, 2.1, new THREE.Vector3(-5, 8.8, -9.5));
-  hanging(cloudCanvas(5), 3.4, 1.9, new THREE.Vector3(8.6, 8, -8));
-  hanging(cloudCanvas(13, true), 2.3, 1.72, new THREE.Vector3(13.2, 6.4, -5.5));
+  // Four nav clouds, hung in one row (same height and depth, so the same
+  // height on the screen), each a different cloud: the dart that hits one
+  // sets it swinging and takes the page to its section (see "cloudnav").
+  // How high the row hangs is LAYOUT.clouds.y (layout.js).
+  const NAV_Y = LAYOUT.clouds.y;
+  const NAV_Z = -8;
+  const NAV = [
+    // A long, low bank, higher on its right
+    {
+      label: "About", nav: "about", x: -10.2, w: 3.8, h: 2.14,
+      spec: { lumps: [[58, 108, 32], [108, 88, 42], [166, 74, 44], [226, 92, 40], [266, 112, 28]], body: [58, 100, 266, 136], shade: 100, labelY: 104, room: 190 },
+    },
+    // A tall tower of puffs, narrow at the foot
+    {
+      label: "Projects", nav: "featured", x: -3.5, w: 3.1, h: 2.33,
+      spec: { tall: true, lumps: [[96, 150, 40], [150, 96, 58], [218, 118, 52], [226, 176, 34], [112, 186, 30]], body: [100, 150, 226, 208], shade: 160, labelY: 138, room: 160 },
+    },
+    // A classic cumulus: one big dome a little left of middle, smaller puffs
+    // stepping down either side, on a soft-cornered base
+    {
+      label: "More work", nav: "other", x: 3.2, w: 3.9, h: 2.19,
+      spec: { lumps: [[78, 108, 26], [118, 88, 36], [168, 66, 48], [222, 82, 38], [260, 106, 24]], body: [54, 96, 284, 132, 18], shade: 98, labelY: 106, room: 180 },
+    },
+    // A lopsided one, a big puff on the left and a small wisp trailing off to the right
+    {
+      label: "Résumé", nav: "resume", x: 9.4, w: 3.0, h: 2.25,
+      spec: { tall: true, lumps: [[104, 120, 62], [178, 104, 50], [236, 152, 34], [58, 168, 30]], body: [58, 150, 236, 192], shade: 150, labelY: 130, labelX: 140, room: 160 },
+    },
+  ];
+  for (const n of NAV) {
+    const canvasEl = cloudCanvas(n.spec, n.label);
+    // Same cloud, redrawn onto its own canvas once the font is in
+    const repaint = () => {
+      const ctx = canvasEl.getContext("2d");
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      ctx.drawImage(cloudCanvas(n.spec, n.label), 0, 0);
+    };
+    hanging(canvasEl, n.w, n.h, new THREE.Vector3(n.x, NAV_Y, NAV_Z), n.nav, repaint);
+  }
   const sunCutout = hanging(sunCanvas(), 2.8, 2.8, new THREE.Vector3(12.2, 9.6, -10.5));
 
   function swingClouds(dt) {
@@ -3003,6 +3043,11 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       c.vz += (dir.x * 0.3 + (Math.random() - 0.5) * 0.12) * SWAY;
       c.vy += off * 2.4;
       c.hits++;
+      if (c.nav) {
+        // A nav cloud swings hard, then the page follows it
+        c.vx += -dir.z * 0.5 * SWAY;
+        canvas.dispatchEvent(new CustomEvent("cloudnav", { detail: c.nav }));
+      }
       spawnDart(hit.point.clone().addScaledVector(dir, -0.15), dir.clone().multiplyScalar(-5).add(new THREE.Vector3(0, -1.5, 0)));
       return "cloud";
     }

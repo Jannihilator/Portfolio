@@ -12,6 +12,10 @@
  * Sizes and colours stay in scene.js.
  */
 export const LAYOUT = {
+  // The row of four nav clouds. y is how high they hang (bigger is higher; the
+  // strings run off the top of the screen either way)
+  clouds: { y: 8 },
+
   // The intro sheet, lying flat before it is peeled up
   sheet: { x: -0.65, z: 5.6 },
 

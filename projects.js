@@ -466,6 +466,12 @@ window.PORTFOLIO_PROJECTS = [
         title: "Camp Movewell",
         size: "big",
         media: [
+          { type: "image", src: "./assets/Camp_Movewell_Medias/web/posters/trailer.jpg", alt: "Camp Movewell trailer" },
+          {
+            type: "video",
+            src: "./assets/Camp_Movewell_Medias/web/trailer.mp4",
+            lighter: "./assets/Camp_Movewell_Medias/web/balloon.mp4",
+          },
           { type: "image", src: "./assets/renushu-game.png", alt: "Camp Movewell gameplay" },
           { type: "image", src: "./assets/renushu-pt.jpeg", alt: "Camp Movewell physical therapy" },
           {
@@ -489,7 +495,7 @@ window.PORTFOLIO_PROJECTS = [
         duties: "Game design, prototyping, web interface",
         timeline: "Aug–Dec 2025",
         href: "https://projects.etc.cmu.edu/renushu/",
-        iframe: "https://www.youtube.com/embed/Ba08R8ydzJk?si=unLnzsuObv6Sbwyk",
+        iframe: "https://www.youtube.com/embed/lHze_fAXCA0",
         beats: [
           {
             heading: "Turning therapy into something patients want to return to",
