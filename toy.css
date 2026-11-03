@@ -1332,9 +1332,15 @@ html.no-splash .splash {
   font-weight: 700;
 }
 
+/* The two awards stay plain lines, set apart only by colour */
 .about-marks {
   margin: 0.6em 0;
   padding-left: 1.15rem;
+  color: var(--accent);
+}
+
+.about-marks li::marker {
+  color: var(--accent);
 }
 
 .skill-tags {
