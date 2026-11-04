@@ -485,7 +485,7 @@ html.no-splash .splash {
 }
 
 .intro-flip.is-flipped {
-  height: calc(100vh - var(--tab-room) - 24px);
+  height: var(--flip-h, calc(100vh - var(--tab-room) - 24px));
 }
 
 .intro-flip > .panel {
@@ -506,6 +506,21 @@ html.no-splash .splash {
 }
 
 .intro-flip > .panel.no-turn {
+  transition: none;
+}
+
+/* A page's words fade apart from its paper (the canvas), so one page's
+   words are gone before the next page's come */
+.intro-flip > .panel > :not(.panel-canvas) {
+  transition: opacity 0.25s ease;
+}
+
+.intro-flip > .panel.text-hide > :not(.panel-canvas) {
+  opacity: 0;
+  transition-duration: 0.15s;
+}
+
+.intro-flip > .panel.no-turn > :not(.panel-canvas) {
   transition: none;
 }
 

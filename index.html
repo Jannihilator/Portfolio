@@ -220,7 +220,7 @@
               <h3>Multiplayer and networking</h3>
               <ul>
                 <li>Built host-client networking over custom UDP/TCP sockets for <strong>Borderless</strong>, a 4-phone co-op game.</li>
-                <li>The phones' clocks disagreed, so the same animation started about 8 seconds apart on average. Clock-offset sync and starts scheduled on the host clock brought that under 20 ms.</li>
+                <li>Optimized cross-device animation timing from up to 8 seconds of drift to consistently under 20 ms using clock-offset sync and host-scheduled starts.</li>
                 <li>Streamed live sensor data over WebSockets to the game and a therapist web app at once in <strong>Camp Movewell</strong>.</li>
               </ul>
             </section>
@@ -232,11 +232,11 @@
               </ul>
             </section>
             <section class="exp-group">
-              <h3>New kinds of input</h3>
+              <h3>Novel inputs</h3>
               <ul>
                 <li>Turned breathing into VR controls for <strong>XHaler</strong> with sensor smoothing, slope detection, hysteresis and per-player calibration.</li>
                 <li>Mapped NuShu smart-shoe movement over Bluetooth into Unity, filtering outlier samples so a bad reading never jumps the game.</li>
-                <li>Built a cross-phone pinch gesture, MediaPipe hand gestures and 3D Rudder foot controls.</li>
+                <li>Built a cross-phone pinch gesture, audio control and 3D Rudder foot controls.</li>
               </ul>
             </section>
             <section class="exp-group">

@@ -544,6 +544,18 @@ let showFace = () => {};
   let at = 0;
   let putAway = 0;
   let resizeEnd = 0;
+  // The other pages are a screen tall, or as tall as About when About is the
+  // longer one on a small screen, so they never cut About's height short
+  const flippedHeight = () => Math.max(window.innerHeight - TAB_ROOM - 24, faces[0].offsetHeight);
+  const syncHeight = () => card.style.setProperty("--flip-h", `${flippedHeight()}px`);
+  syncHeight();
+  window.addEventListener("resize", syncHeight);
+  // With a change of height, the words fade out before the card moves on and
+  // fade in once it has its new size, so none sit on a page they don't belong to
+  const TEXT_OUT = 160;
+  const RESIZE_TIME = 420;
+  let swapPage = 0;
+  let showText = 0;
   showFace = (id, focus) => {
     const to = faces.findIndex((face) => face.id === id);
     if (to < 0) return;
@@ -567,12 +579,38 @@ let showFace = () => {};
     coming.classList.remove("is-away");
     void coming.offsetWidth;
     coming.classList.remove("no-turn");
-    coming.dataset.side = "front";
-    going.dataset.side = "behind";
-    putAway = setTimeout(() => {
+    const resizing = (from === 0) !== (to === 0);
+    syncHeight();
+    clearTimeout(swapPage);
+    clearTimeout(showText);
+    faces.forEach((face) => face.classList.remove("text-hide"));
+    if (!reducedMotion) {
+      // The words of the page going fade out first, on its paper, with the
+      // page coming lying bare under it. Only then, and once the card has
+      // any new size, do the new words fade in: no words ever lie on top of
+      // another page's words.
+      const heightChanges = resizing && flippedHeight() !== faces[0].offsetHeight;
+      going.dataset.side = "front";
+      coming.classList.add("no-turn", "text-hide");
+      coming.dataset.side = "behind";
+      void coming.offsetWidth;
+      coming.classList.remove("no-turn");
+      going.classList.add("text-hide");
+      swapPage = setTimeout(() => {
+        coming.dataset.side = "front";
+        going.dataset.side = "away";
+      }, TEXT_OUT);
+      putAway = setTimeout(() => {
+        going.dataset.side = "away";
+        going.classList.add("is-away");
+        going.classList.remove("text-hide");
+      }, TEXT_OUT + 300);
+      showText = setTimeout(() => coming.classList.remove("text-hide"), heightChanges ? RESIZE_TIME : TEXT_OUT);
+    } else {
+      coming.dataset.side = "front";
       going.dataset.side = "away";
       going.classList.add("is-away");
-    }, reducedMotion ? 0 : 300);
+    }
     at = to;
     // About is as tall as its page, the other pages a screen tall: the card
     // eases between the two, from and to fixed heights, then lets go again
@@ -581,7 +619,7 @@ let showFace = () => {};
       card.style.height = `${card.offsetHeight}px`;
       void card.offsetHeight;
       card.classList.toggle("is-flipped", to !== 0);
-      card.style.height = to === 0 ? `${faces[0].offsetHeight}px` : "calc(100vh - var(--tab-room) - 24px)";
+      card.style.height = to === 0 ? `${faces[0].offsetHeight}px` : `${flippedHeight()}px`;
       resizeEnd = setTimeout(() => (card.style.height = ""), reducedMotion ? 0 : 450);
     }
     marks.forEach((mark) => mark.setAttribute("aria-current", String(mark.dataset.face === id)));
