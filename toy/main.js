@@ -218,8 +218,15 @@ function placeCue(p) {
     settledAt = null;
     timer = setTimeout(() => (settledAt = window.scrollY), ms);
   };
+  /** Close enough to the bottom that pushing on counts as trying to scroll further */
+  const BOTTOM_SLACK = 80;
+  const nearBottom = () =>
+    document.documentElement.scrollHeight - window.innerHeight - window.scrollY <= BOTTOM_SLACK;
   const goAway = () => {
-    if (goneAt !== null || settledAt === null) return;
+    // The settle timer only protects the note while it is still writing itself out;
+    // a visitor already at (or near) the bottom pushing on has plainly seen it
+    if (goneAt !== null || !endCue.classList.contains("is-on")) return;
+    if (settledAt === null && !nearBottom()) return;
     goneAt = window.scrollY;
     endCue.classList.add("is-gone");
   };
@@ -257,11 +264,11 @@ function placeCue(p) {
   let touchY = null;
   const onTouch = (e) => {
     const y = e.touches[0]?.clientY;
-    if (touchY !== null && settledAt !== null && touchY - y > ON_BY) goAway();
+    if (touchY !== null && touchY - y > ON_BY) goAway();
     if (touchY === null) touchY = y;
   };
   window.addEventListener("touchstart", () => (touchY = null), { passive: true });
-  const onKey = (e) => settledAt !== null && ["ArrowDown", "PageDown", "End", " "].includes(e.key) && goAway();
+  const onKey = (e) => ["ArrowDown", "PageDown", "End", " "].includes(e.key) && goAway();
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("wheel", onWheel, { passive: true });
   window.addEventListener("touchmove", onTouch, { passive: true });
