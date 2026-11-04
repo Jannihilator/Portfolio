@@ -126,29 +126,34 @@ a {
 /* Room past the last page, where the table is all there is */
 .table-room {
   height: 100vh;
-  padding-top: 36px;
+  /* The note sits just under the last page, where it shows as that page's
+     bottom edge comes up the screen */
+  padding-top: 20px;
   text-align: center;
 }
 
-.table-tag {
-  display: inline-block;
-  margin: 0;
-  padding: 0.45em 1em;
-  border-radius: 6px;
-  background: var(--page);
-  box-shadow: 0 0 0 2px #5c4330, 0 6px 12px rgba(70, 40, 16, 0.25);
-  font-family: var(--head);
-  font-size: 0.95rem;
-  color: var(--ink-soft);
-  transform: rotate(-1.5deg);
+/* Same scribbled note as the splash's, shown once the visitor first scrolls
+   all the way down (main.js) */
+.splash-cue.end-cue {
+  position: static;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 1;
+}
+
+.end-cue .cue-words {
+  margin-bottom: 0;
+  align-items: center;
+}
+
+.end-cue .cue-arrow {
+  transform: rotate(180deg);
 }
 
 /* Only on a touch screen, where aiming the toy is clumsy */
 .table-tag-pc {
   display: none;
-  margin-top: 0.15em;
-  font-size: 0.78em;
-  opacity: 0.8;
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -357,6 +362,30 @@ html.no-splash .splash {
 
 .splash-cue.is-on .cue-words {
   opacity: 1;
+}
+
+/* End note: words fade up, then the arrow draws down, all done in about a
+   second. Once it has said its piece, scrolling on fades the whole note. */
+.end-cue .cue-words {
+  transition: opacity 0.6s ease;
+}
+
+.end-cue .cue-arrow path {
+  transition-delay: 0.35s;
+  transition-duration: 0.45s;
+}
+
+.end-cue .cue-arrow path + path {
+  transition-delay: 0.8s;
+  transition-duration: 0.2s;
+}
+
+.splash-cue.end-cue {
+  transition: opacity 0.5s ease;
+}
+
+.splash-cue.end-cue.is-gone {
+  opacity: 0;
 }
 
 .splash-cue.is-on .cue-arrow path {

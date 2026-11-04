@@ -158,7 +158,7 @@ const beam = $("splash-beam");
 const cue = $("splash-cue");
 
 /** The note turns up only once the table has been in view this long */
-const CUE_AFTER = 10000;
+const CUE_AFTER = 5000;
 /** When the note may show, from when the table first came into view */
 let cueAt = 0;
 
@@ -171,9 +171,12 @@ function placeCue(p) {
   }
   const noted = !!cueAt && performance.now() >= cueAt;
   light.style.opacity = beam.style.opacity = fade.toFixed(3);
-  cue.style.opacity = noted ? fade.toFixed(3) : "0";
-  cue.classList.toggle("is-on", noted && fade > 0);
-  if (!box || fade <= 0) return;
+  // The note stays through a stray scroll and goes only once the visitor is
+  // about halfway up to the intro
+  const noteFade = box ? 1 - Math.min(1, Math.max(0, (p - 0.45) / 0.1)) : 0;
+  cue.style.opacity = noted ? noteFade.toFixed(3) : "0";
+  cue.classList.toggle("is-on", noted && noteFade > 0);
+  if (!box || (fade <= 0 && noteFade <= 0)) return;
   const cx = (box.left + box.right) / 2;
   const cy = (box.top + box.bottom) / 2;
   const w = box.right - box.left;
@@ -188,6 +191,81 @@ function placeCue(p) {
   // left points down onto the sheet
   cue.style.left = `${Math.round(box.left + w * 0.32)}px`;
   cue.style.top = `${Math.round(box.top + h * 0.06 - cue.offsetHeight)}px`;
+}
+
+// The note at the far end of the page writes itself out the first time the
+// visitor scrolls all the way down. Once it has finished, scrolling on down
+// (or trying to, at the very bottom) fades it away. Visitors scroll up and
+// down hard to make sure they've seen the end, so going back up brings the
+// note back, ready to be found again on the way down.
+{
+  const endCue = $("end-cue");
+  const room = endCue.parentElement;
+  /** How long the note takes to write itself out, before it can be waved off */
+  const SETTLE = 1200;
+  /** How long it stays put after coming back, before it can be waved off again */
+  const RESETTLE = 700;
+  /** How far the visitor scrolls on, either way, to send the note off or bring it back */
+  const ON_BY = 60;
+  /** Scroll position the note settled at, once it can be waved off */
+  let settledAt = null;
+  /** Scroll position the note went at, while it is away */
+  let goneAt = null;
+  let timer = 0;
+
+  const settleIn = (ms) => {
+    clearTimeout(timer);
+    settledAt = null;
+    timer = setTimeout(() => (settledAt = window.scrollY), ms);
+  };
+  const goAway = () => {
+    if (goneAt !== null || settledAt === null) return;
+    goneAt = window.scrollY;
+    endCue.classList.add("is-gone");
+  };
+  const comeBack = () => {
+    goneAt = null;
+    endCue.classList.remove("is-gone");
+    settleIn(RESETTLE);
+  };
+  const onScroll = () => {
+    const y = window.scrollY;
+    if (goneAt !== null) {
+      if (y < goneAt - ON_BY) comeBack();
+      return;
+    }
+    // The last page's bottom edge has come up into the lower part of the screen
+    const inView = room.getBoundingClientRect().top <= window.innerHeight * 0.8;
+    if (!endCue.classList.contains("is-on")) {
+      if (!inView) return;
+      endCue.classList.add("is-on");
+      settleIn(SETTLE);
+      return;
+    }
+    // Gone back up out of reach: start over the next time it comes into view
+    if (!inView) {
+      clearTimeout(timer);
+      settledAt = null;
+      timer = 0;
+      return;
+    }
+    if (settledAt === null && !timer) settleIn(RESETTLE);
+    if (settledAt !== null && y > settledAt + ON_BY) goAway();
+  };
+  // At the very bottom the page can't scroll, so the attempt itself counts
+  const onWheel = (e) => e.deltaY > 0 && goAway();
+  let touchY = null;
+  const onTouch = (e) => {
+    const y = e.touches[0]?.clientY;
+    if (touchY !== null && settledAt !== null && touchY - y > ON_BY) goAway();
+    if (touchY === null) touchY = y;
+  };
+  window.addEventListener("touchstart", () => (touchY = null), { passive: true });
+  const onKey = (e) => settledAt !== null && ["ArrowDown", "PageDown", "End", " "].includes(e.key) && goAway();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("wheel", onWheel, { passive: true });
+  window.addEventListener("touchmove", onTouch, { passive: true });
+  window.addEventListener("keydown", onKey);
 }
 
 /** The last beam set, so a still sun costs nothing frame to frame */
