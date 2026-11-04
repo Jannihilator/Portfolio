@@ -126,6 +126,9 @@ function landing() {
   return Math.max(1, top - introRest());
 }
 
+/** How far up the scroll to the intro's rest the sheet has handed over to the real panel */
+const HANDOFF = 0.8;
+
 function splashProgress() {
   if (!splash.offsetHeight) return 1;
   // A scroll can stop a fraction of a pixel short; that counts as up
@@ -230,13 +233,17 @@ let queueUpdate = () => {};
     placeCue(p);
     if (p < 0.9) holdOff = false;
     placeRest();
-    // The panel's own place, which the sheet comes to rest on
-    sheetTable.setSheetProgress(p, $("about").getBoundingClientRect());
-    const show = Math.min(1, Math.max(0, (p - 0.9) / 0.1));
+    // The sheet's flight runs over the first HANDOFF of the scroll, so the
+    // real panel has taken over a little before the intro reaches its rest.
+    // The panel's own place, which the sheet comes to rest on, moves with
+    // the scroll, so the sheet stays on it to the end.
+    const flight = Math.min(1, p / HANDOFF);
+    sheetTable.setSheetProgress(flight, $("about").getBoundingClientRect());
+    const show = Math.min(1, Math.max(0, (flight - 0.9) / 0.1));
     intro.style.opacity = show < 1 ? show.toFixed(3) : "";
-    intro.style.pointerEvents = p < 1 ? "none" : "";
+    intro.style.pointerEvents = flight < 1 ? "none" : "";
     // The work below waits until the intro is upright, so it never shows up beside the flying sheet
-    document.body.classList.toggle("sheet-flying", p < 1);
+    document.body.classList.toggle("sheet-flying", flight < 1);
   };
   const queue = () => {
     if (!queued) requestAnimationFrame(update);
@@ -275,9 +282,48 @@ async function renderSheet() {
 
 const sheetAspect = () => $("about").offsetWidth / $("about").offsetHeight;
 
+/** Headroom painted over the bookmarks, for the open one that sticks up past the rest */
+const TAB_LIFT = 14;
+
+/**
+ * Paints the bookmarks on the intro's top edge, so they come up off the
+ * table on the sheet rather than turning up only once it has landed. Where
+ * they sit is given in the sheet's own measure: its height is 1, its middle
+ * the origin, y up.
+ */
+async function renderTabs() {
+  const { default: html2canvas } = await painter;
+  const tabs = $("intro-tabs");
+  const picture = await html2canvas(tabs, {
+    backgroundColor: null,
+    scale: Math.min(2, window.devicePixelRatio || 1) * 1.25,
+    logging: false,
+    ignoreElements: (el) => !!el.closest?.("body") && !el.contains(intro) && !intro.contains(el),
+    onclone: (doc) => {
+      doc.getElementById("intro-flip").style.opacity = "1";
+      doc.getElementById("page").style.opacity = "1";
+      // Grown upward, since it is held by its bottom edge, so nothing sticking up is cut off
+      doc.getElementById("intro-tabs").style.paddingTop = `${TAB_LIFT}px`;
+    },
+  });
+  const panel = $("about").getBoundingClientRect();
+  const box = tabs.getBoundingClientRect();
+  const midX = panel.left + panel.width / 2;
+  const midY = panel.top + panel.height / 2;
+  const top = (midY - (box.top - TAB_LIFT)) / panel.height;
+  const bottom = (midY - box.bottom) / panel.height;
+  return {
+    picture,
+    x: (box.left + box.width / 2 - midX) / panel.height,
+    y: (top + bottom) / 2,
+    w: box.width / panel.height,
+    h: top - bottom,
+  };
+}
+
 async function paintSheet(table) {
-  const picture = await renderSheet();
-  table.setSheet(picture, sheetAspect());
+  const [picture, tabs] = await Promise.all([renderSheet(), renderTabs().catch(() => null)]);
+  table.setSheet(picture, sheetAspect(), tabs);
   sheetTable = table;
   window.dispatchEvent(new Event("sheet-ready"));
 }

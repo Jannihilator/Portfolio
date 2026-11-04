@@ -466,12 +466,8 @@ window.PORTFOLIO_PROJECTS = [
         title: "Camp Movewell",
         size: "big",
         media: [
-          { type: "image", src: "./assets/Camp_Movewell_Medias/web/posters/trailer.jpg", alt: "Camp Movewell trailer" },
-          {
-            type: "video",
-            src: "./assets/Camp_Movewell_Medias/web/trailer.mp4",
-            lighter: "./assets/Camp_Movewell_Medias/web/balloon.mp4",
-          },
+          { type: "image", src: "./assets/Camp_Movewell_Medias/web/posters/balloon.jpg", alt: "Camp Movewell leg raise game, played in the smart shoes" },
+          { type: "video", src: "./assets/Camp_Movewell_Medias/web/balloon.mp4" },
           { type: "image", src: "./assets/renushu-game.png", alt: "Camp Movewell gameplay" },
           { type: "image", src: "./assets/renushu-pt.jpeg", alt: "Camp Movewell physical therapy" },
           {

@@ -3118,13 +3118,21 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const back = new THREE.MeshStandardMaterial({ color: 0xf3ead8, roughness: 0.95, side: THREE.BackSide });
     const faceMesh = new THREE.Mesh(geo, front);
     const backMesh = new THREE.Mesh(geo, back);
+    // The bookmarks on the intro's top edge: a strip tucked in just under
+    // the sheet, bent with it, wearing a picture of them (see setSheet)
+    const tabsGeo = new THREE.PlaneGeometry(1, 1, 40, 2);
+    const tabsBase = tabsGeo.attributes.position.array.slice();
+    const tabsMat = new THREE.MeshStandardMaterial({ roughness: 0.92, alphaTest: 0.5, emissive: 0xffffff, emissiveIntensity: 0 });
+    const tabsMesh = new THREE.Mesh(tabsGeo, tabsMat);
     const obj = new THREE.Group();
-    obj.add(faceMesh, backMesh);
+    obj.add(faceMesh, backMesh, tabsMesh);
     for (const m of [faceMesh, backMesh]) {
-      m.castShadow = true;
-      m.receiveShadow = true;
       m.userData.hit = { kind: "sheet" };
       hittables.push(m);
+    }
+    for (const m of obj.children) {
+      m.castShadow = true;
+      m.receiveShadow = true;
     }
     // Hidden mesh by mesh, since the darts' ray only skips hidden meshes
     for (const m of obj.children) m.visible = false;
@@ -3134,6 +3142,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
       .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2));
     return {
       obj, geo, base, front, qLie,
+      tabsMesh, tabsGeo, tabsBase, tabsMat, tabs: null,
       aspect: 1, ready: false, progress: 0, rect: null,
       hover: false, hoverK: 0, hoverV: 0,
       shape: null,
@@ -3189,10 +3198,10 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const dx = A / 2 / len;
     const dy = 0.5 / len;
     const line = len - peel;
-    for (let i = 0; i < pos.length; i += 3) {
-      let u = b[i] * A;
-      let v = b[i + 1];
-      let z = cup * (b[i] * b[i] - 1 / 12) + wave * Math.sin(Math.PI * 2 * (0.7 * b[i] + 0.45 * b[i + 1]) + phase);
+    /** One point of the paper at (u, v), in sheet heights, bent; dz sets it under the sheet */
+    const bend = (out, i, u, v, dz) => {
+      const s = u / A;
+      let z = cup * (s * s - 1 / 12) + wave * Math.sin(Math.PI * 2 * (0.7 * s + 0.45 * v) + phase) + dz;
       const t = u * dx + v * dy - line;
       if (peel > 0 && t > 0) {
         const phi = t / radius;
@@ -3210,14 +3219,25 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         v += dy * shift;
         z += lift;
       }
-      pos[i] = u;
-      pos[i + 1] = v;
-      pos[i + 2] = z;
+      out[i] = u;
+      out[i + 1] = v;
+      out[i + 2] = z;
+    };
+    for (let i = 0; i < pos.length; i += 3) bend(pos, i, b[i] * A, b[i + 1], 0);
+    const parts = [sheet.geo];
+    const tabs = sheet.tabs;
+    if (tabs) {
+      const tp = sheet.tabsGeo.attributes.position.array;
+      const tb = sheet.tabsBase;
+      for (let i = 0; i < tp.length; i += 3) bend(tp, i, tabs.x + tb[i] * tabs.w, tabs.y + tb[i + 1] * tabs.h, -0.003);
+      parts.push(sheet.tabsGeo);
     }
-    sheet.geo.attributes.position.needsUpdate = true;
-    sheet.geo.computeVertexNormals();
-    sheet.geo.computeBoundingSphere();
-    sheet.geo.computeBoundingBox();
+    for (const g of parts) {
+      g.attributes.position.needsUpdate = true;
+      g.computeVertexNormals();
+      g.computeBoundingSphere();
+      g.computeBoundingBox();
+    }
   }
 
   const camRight = new THREE.Vector3();
@@ -3245,6 +3265,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const p = sheet.progress;
     const show = sheet.ready && p < 1 && sheet.rect;
     for (const m of sheet.obj.children) m.visible = !!show;
+    if (!sheet.tabs) sheet.tabsMesh.visible = false;
     dirty = true;
     if (sheet.obj.children[0].castShadow) shadowsDirty = true;
     floatShadow.visible = false;
@@ -3307,6 +3328,8 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const glow = easeInOut(clamp01((q - 0.55) / 0.45));
     sheet.front.color.setScalar(1 - glow);
     sheet.front.emissiveIntensity = glow + 0.16 * float.glow * fk * (1 - glow);
+    sheet.tabsMat.color.copy(sheet.front.color);
+    sheet.tabsMat.emissiveIntensity = sheet.front.emissiveIntensity;
   }
 
   /** Moves the float on by dt, in small steps so it runs the same at any frame rate */
@@ -3998,13 +4021,30 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     takeTimeEvents() {
       return timeEvents.splice(0);
     },
-    /** The intro's picture, for the sheet on the table; aspect is width over height */
-    setSheet(picture, aspect) {
+    /**
+     * The intro's picture, for the sheet on the table; aspect is width over
+     * height. tabs, when given, is the bookmarks' picture and where they sit
+     * on the sheet's top edge ({ picture, x, y, w, h } in sheet heights from
+     * its middle, y up).
+     */
+    setSheet(picture, aspect, tabs = null) {
+      if (tabs) {
+        const tex = new THREE.CanvasTexture(tabs.picture);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = anisotropy;
+        sheet.tabsMat.map?.dispose();
+        sheet.tabsMat.map = tex;
+        sheet.tabsMat.emissiveMap = tex;
+        sheet.tabsMat.needsUpdate = true;
+      }
+      sheet.tabs = tabs;
+      sheet.shape = null;
       // The same canvas, drawn on again: the texture only needs to be re-read
       if (sheet.picture === picture && sheet.front.map) {
         sheet.front.map.needsUpdate = true;
         sheet.aspect = aspect;
         dirty = true;
+        poseSheet();
         return;
       }
       sheet.picture = picture;
