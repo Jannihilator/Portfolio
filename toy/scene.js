@@ -1087,11 +1087,10 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
     const ring = geo("chipRing", () => new THREE.CylinderGeometry(r * 0.74, r * 0.74, h + 0.003, 36));
     const field = geo("chipField", () => new THREE.CylinderGeometry(r * 0.69, r * 0.69, h + 0.005, 36));
     const inlay = geo("chipInlay", () => new THREE.CylinderGeometry(r * 0.4, r * 0.4, h + 0.007, 28));
-    const g = new THREE.Group();
+    // Every chip is its own body, so each can be knocked off the stack freely
+    const chips = [];
     colors.forEach((color, i) => {
       const chip = new THREE.Group();
-      chip.position.set(Math.sin(i * 2.3) * 0.012, h / 2 + i * h, Math.cos(i * 1.7) * 0.012);
-      chip.rotation.y = i * 0.7;
       chip.add(new THREE.Mesh(body, mat(color)));
       for (let k = 0; k < 6; k++) {
         const a = (k * Math.PI) / 3;
@@ -1101,10 +1100,22 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
         chip.add(m);
       }
       chip.add(new THREE.Mesh(ring, mat(white)), new THREE.Mesh(field, mat(color)), new THREE.Mesh(inlay, mat(white)));
-      g.add(chip);
+      // Each chip sits a little out of true, centred on its own body
+      const wobble = new THREE.Vector3(Math.sin(i * 2.3) * 0.012, i * h + 0.002 * i, Math.cos(i * 1.7) * 0.012);
+      wobble.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+      const body3 = new THREE.Group();
+      chip.position.y = h / 2;
+      body3.add(chip);
+      chips.push(
+        addProp(
+          body3,
+          [RAPIER.ColliderDesc.cylinder(h / 2, r).setTranslation(0, h / 2, 0).setDensity(1.2)],
+          new THREE.Vector3(x + wobble.x, wobble.y, z + wobble.z),
+          rotY + i * 0.7,
+        ),
+      );
     });
-    const H = colors.length * h;
-    return addProp(g, [RAPIER.ColliderDesc.cylinder(H / 2, r).setTranslation(0, H / 2, 0).setDensity(1.2)], new THREE.Vector3(x, 0, z), rotY);
+    return chips;
   }
 
   /**
