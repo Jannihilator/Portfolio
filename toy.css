@@ -436,40 +436,134 @@ html.no-splash .splash {
    the résumé is showing. */
 /* As wide as the project board below it. Lying on the table, the sheet is
    capped in scene.js so it still clears the props beside it. */
+/* Its pages lie on top of each other: the page showing is in front, and a
+   newly picked page fades in over it (data-side, set in main.js). A page that
+   is not showing or fading is put away. On About the card is as tall as the
+   About page. Experience and the résumé share one size, a screen tall, and
+   scroll inside, so the card only grows or shrinks on the way to or from
+   About (main.js eases it). */
 .intro-flip {
+  --tab-room: 56px;
+  position: relative;
+  /* Its own layer, so the bookmarks tuck in behind its pages */
+  isolation: isolate;
   width: var(--col);
-  margin: 28px auto 30px;
-  scroll-margin-top: 28px;
+  margin: calc(var(--tab-room) - 4px) auto 30px;
+  scroll-margin-top: var(--tab-room);
   display: grid;
-  perspective: 2400px;
-  min-height: 0;
-  transition: min-height 0.6s ease;
+  align-items: start;
+  transition: height 0.4s ease;
+}
+
+.intro-flip.is-flipped {
+  height: calc(100vh - var(--tab-room) - 24px);
 }
 
 .intro-flip > .panel {
   grid-area: 1 / 1;
-  backface-visibility: hidden;
-  transition: transform 0.75s cubic-bezier(0.45, 0.05, 0.2, 1);
+  transition: opacity 0.25s ease;
+}
+
+.intro-flip > .panel[data-side="away"] {
+  opacity: 0;
+}
+
+.intro-flip > .panel[data-side="front"] {
+  z-index: 1;
+}
+
+.intro-flip > .panel.is-away {
+  visibility: hidden;
+}
+
+.intro-flip > .panel.no-turn {
+  transition: none;
 }
 
 .intro-back {
-  transform: rotateY(180deg);
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 24px 28px 28px;
 }
 
-.intro-flip.is-flipped {
-  min-height: calc(100vh - 56px);
+/* The card's pages are bookmarks on its top edge, as on the project board */
+.intro-tabs {
+  --tuck: 16px;
+  position: absolute;
+  z-index: -1;
+  bottom: calc(100% - var(--tuck));
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
 }
 
-.intro-flip.is-flipped > .intro {
-  transform: rotateY(-180deg);
+/* ------------------------------------------------------ experience */
+
+.intro-exp {
+  padding: 0;
 }
 
-.intro-flip.is-flipped > .intro-back {
-  transform: rotateY(0deg);
+.exp-scroll {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px 36px 34px;
+  border-radius: inherit;
+  scrollbar-color: #cdb894 transparent;
+}
+
+.exp-scroll:focus {
+  outline: none;
+}
+
+.exp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 40px;
+}
+
+.exp-group h3 {
+  font-size: 1.15rem;
+  color: var(--accent);
+}
+
+.exp-group ul {
+  margin: 0.4em 0 0;
+  padding-left: 1.15rem;
+}
+
+.exp-group li {
+  margin: 0.3em 0;
+}
+
+.exp-group li::marker {
+  color: var(--ink-faint);
+}
+
+@media (max-width: 1000px) {
+  .exp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .exp-scroll {
+    padding: 22px 20px 26px;
+  }
+
+  .intro-tabs {
+    left: -6px;
+    right: -6px;
+    align-items: stretch;
+  }
 }
 
 .intro-back-bar {
@@ -542,12 +636,6 @@ html.no-splash .splash {
   font-size: 1.1rem;
 }
 
-.intro-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
 
 /* -------------------------------------------------------------- board */
 

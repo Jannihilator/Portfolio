@@ -48,15 +48,10 @@ function sectionTop(id) {
   return el.getBoundingClientRect().top + window.scrollY - (id === "about" ? introRest() : 16);
 }
 
-/** Takes the viewer to a section; the résumé is the back of the intro card */
+/** Takes the viewer to a section; Experience and the résumé are pages of the intro card */
 function goTo(id) {
-  const card = $("intro-flip");
-  if (id === "resume") {
-    if (!card.classList.contains("is-flipped")) $("flip-resume").click();
-    else glideTo(card.getBoundingClientRect().top + window.scrollY);
-    return;
-  }
-  if (card.classList.contains("is-flipped") && id === "about") $("flip-back").click();
+  if (id === "resume" || id === "experience") return showFace(id === "resume" ? "resume-side" : id);
+  if (id === "about" && $("intro-flip").classList.contains("is-flipped")) return showFace("about");
   if (id === "about") return glideTo(sectionTop("about"));
   glideTo(sectionTop(id));
 }
@@ -116,13 +111,13 @@ $("about").tabIndex = -1;
 /** The toy table, once it is up and has the intro's picture */
 let sheetTable = null;
 
-/** The intro's height face up; the résumé side never moves where the sheet lands */
-let frontHeight = 0;
+/** Room over the intro card for the bookmarks on its top edge */
+const TAB_ROOM = 56;
 
-/** Where the intro rests on the screen once the sheet has landed */
+/** Where the intro rests on the screen once the sheet has landed: by the
+ * About page's own height, so the other pages never move where the sheet lands */
 function introRest() {
-  if (!intro.classList.contains("is-flipped") || !frontHeight) frontHeight = intro.offsetHeight;
-  return Math.max(28, (window.innerHeight - frontHeight) / 2);
+  return Math.max(TAB_ROOM, (window.innerHeight - $("about").offsetHeight) / 2);
 }
 
 /** How far down the page the sheet has landed: the intro is then at its rest */
@@ -147,7 +142,7 @@ let holdOff = false;
 
 /** The intro holds at its rest only while it fits on the screen whole */
 function placeRest() {
-  const hold = !!sheetTable && !holdOff && introRest() > 28;
+  const hold = !!sheetTable && !holdOff && introRest() > TAB_ROOM;
   document.documentElement.classList.toggle("has-hold", hold);
   stage.style.setProperty("--intro-rest", `${Math.round(introRest())}px`);
 }
@@ -412,28 +407,68 @@ async function startSheet(table) {
   }
 }
 
-// The Résumé button turns the intro card over to the résumé on its back;
-// the PDF only loads the first time it is asked for
+// The intro card's pages are About, Experience and the résumé. A bookmark
+// (or the résumé's Back button) brings one to the front: it fades in over
+// the page that was showing, which is then put away. The PDF only loads the
+// first time it is asked for.
+let showFace = () => {};
 {
   const card = $("intro-flip");
-  const front = $("about");
-  const back = $("resume-side");
-  const open = $("flip-resume");
-  const frame = back.querySelector(".resume-frame");
-  const turn = (toBack) => {
-    if (toBack && !frame.src) frame.src = frame.dataset.src;
-    card.classList.toggle("is-flipped", toBack);
-    front.inert = toBack;
-    back.inert = !toBack;
-    open.setAttribute("aria-expanded", String(toBack));
-    (toBack ? $("flip-back") : open).focus({ preventScroll: true });
-    // A card that is turning and changing height no longer holds still
+  const faces = [$("about"), $("experience"), $("resume-side")];
+  const marks = [...$("intro-tabs").querySelectorAll("[data-face]")];
+  const frame = $("resume-side").querySelector(".resume-frame");
+  let at = 0;
+  let putAway = 0;
+  let resizeEnd = 0;
+  showFace = (id, focus) => {
+    const to = faces.findIndex((face) => face.id === id);
+    if (to < 0) return;
+    const top = () => card.getBoundingClientRect().top + window.scrollY - TAB_ROOM;
+    if (to === at) return glideTo(top());
+    const from = at;
+    const coming = faces[to];
+    const going = faces[from];
+    if (coming.id === "resume-side" && !frame.src) frame.src = frame.dataset.src;
+    clearTimeout(putAway);
+    faces.forEach((face, i) => {
+      if (i !== from && i !== to) {
+        face.classList.add("is-away");
+        face.dataset.side = "away";
+      }
+      face.inert = i !== to;
+    });
+    // The page coming starts clear, then fades in on top of the page going
+    coming.classList.add("no-turn");
+    coming.dataset.side = "away";
+    coming.classList.remove("is-away");
+    void coming.offsetWidth;
+    coming.classList.remove("no-turn");
+    coming.dataset.side = "front";
+    going.dataset.side = "behind";
+    putAway = setTimeout(() => {
+      going.dataset.side = "away";
+      going.classList.add("is-away");
+    }, reducedMotion ? 0 : 300);
+    at = to;
+    // About is as tall as its page, the other pages a screen tall: the card
+    // eases between the two, from and to fixed heights, then lets go again
+    if ((from === 0) !== (to === 0)) {
+      clearTimeout(resizeEnd);
+      card.style.height = `${card.offsetHeight}px`;
+      void card.offsetHeight;
+      card.classList.toggle("is-flipped", to !== 0);
+      card.style.height = to === 0 ? `${faces[0].offsetHeight}px` : "calc(100vh - var(--tab-room) - 24px)";
+      resizeEnd = setTimeout(() => (card.style.height = ""), reducedMotion ? 0 : 450);
+    }
+    marks.forEach((mark) => mark.setAttribute("aria-current", String(mark.dataset.face === id)));
+    focus?.focus({ preventScroll: true });
+    // A card that is changing pages and height no longer holds still
     holdOff = true;
     placeRest();
-    glideTo(card.getBoundingClientRect().top + window.scrollY);
+    glideTo(top());
   };
-  open.addEventListener("click", () => turn(true));
-  $("flip-back").addEventListener("click", () => turn(false));
+  marks.forEach((mark) => mark.addEventListener("click", () => showFace(mark.dataset.face)));
+  $("flip-back").addEventListener("click", () => showFace("about", marks[0]));
 }
 
 async function startTable() {

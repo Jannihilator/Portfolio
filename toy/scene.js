@@ -97,12 +97,16 @@ const css = (hex) => `#${hex.toString(16).padStart(6, "0")}`;
  *           corners rounded by round (0 for square)
  *   shade   y where the underside shading starts
  *   labelY  where the label sits
+ * The spec is in a 320-wide frame, but the canvas is drawn CLOUD_RES times
+ * as fine, so the label stays crisp on the screen like the sticky note's.
  */
+const CLOUD_RES = 4;
 function cloudCanvas(spec, label = "") {
   const c = document.createElement("canvas");
-  c.width = 320;
-  c.height = spec.tall ? 240 : 180;
+  c.width = 320 * CLOUD_RES;
+  c.height = (spec.tall ? 240 : 180) * CLOUD_RES;
   const ctx = c.getContext("2d");
+  ctx.scale(CLOUD_RES, CLOUD_RES);
   const shape = () => {
     ctx.beginPath();
     for (const [x, y, r] of spec.lumps) {
@@ -141,6 +145,9 @@ function cloudCanvas(spec, label = "") {
     if (width > spec.room) ctx.font = font(Math.floor((44 * spec.room) / width));
     ctx.fillText(label, spec.labelX ?? 160, spec.labelY);
   }
+  // Back to plain pixels, so a repaint that copies a fresh cloud over this
+  // one lands at full size instead of scaled up again
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   return c;
 }
 
@@ -2386,6 +2393,7 @@ export async function createTable(canvas, { skills = [], reducedMotion = false }
   function hanging(canvasEl, w, h, pos, nav = "", repaint = null) {
     const tex = new THREE.CanvasTexture(canvasEl);
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = anisotropy;
     const pivot = new THREE.Group();
     pivot.position.set(pos.x, pos.y + h / 2 + STRING, pos.z);
     const mesh = new THREE.Mesh(

@@ -148,9 +148,15 @@
 
     <!-- The intro's stage: where it holds still for a while once the sheet has landed -->
     <div class="intro-stage" id="intro-stage">
-      <!-- The intro is a card: the Résumé button turns it over to the résumé on its back -->
+      <!-- The intro is a card of three pages: About, Experience and the résumé. The bookmarks on
+           its top edge bring one to the front. -->
       <div class="intro-flip" id="intro-flip">
-        <header id="about" class="panel intro" data-panel data-outline>
+        <div class="intro-tabs" id="intro-tabs" role="group" aria-label="Choose a page">
+          <button type="button" class="bookmark" data-face="about" aria-current="true">About</button>
+          <button type="button" class="bookmark" data-face="experience">Experience</button>
+          <button type="button" class="bookmark" data-face="resume-side">Résumé</button>
+        </div>
+        <header id="about" class="panel intro" data-panel data-outline data-side="front">
           <figure class="intro-portrait">
             <img src="./assets/profile-2026-web.jpg" alt="Yen Chun (James) Huang" width="600" height="796" decoding="async" />
             <ul class="skill-tags" aria-label="Skills">
@@ -187,11 +193,6 @@
               <li>Networking</li><li>Shader</li><li>VFX Graph</li><li>Particles</li>
               <li>Git</li><li>Perforce</li>
             </ul>
-            <div class="intro-actions">
-              <button type="button" class="block-btn" data-goto="featured">Projects</button>
-              <button type="button" class="block-btn block-btn--blue" data-goto="other">More work</button>
-              <button type="button" class="block-btn block-btn--link" id="flip-resume" aria-controls="resume-side" aria-expanded="false">Résumé</button>
-            </div>
             <ul class="contact-links" aria-label="Contact">
               <li><a href="mailto:yenchun.huang11@gmail.com"><i aria-hidden="true" class="fa-solid fa-envelope"></i><span>Email</span></a></li>
               <li><a href="https://yenchun.itch.io/" target="_blank" rel="noreferrer"><i aria-hidden="true" class="fa-brands fa-itch-io"></i><span>itch.io</span></a></li>
@@ -201,7 +202,78 @@
             </ul>
           </div>
         </header>
-        <section id="resume-side" class="panel intro-back" data-panel data-outline aria-label="Résumé" inert>
+        <section id="experience" class="panel intro-back intro-exp is-away" data-panel data-outline data-side="away" aria-labelledby="experience-title" inert>
+          <div class="exp-scroll" data-scroll tabindex="0" aria-label="Experience, scrolls">
+          <div class="intro-back-bar">
+            <h2 id="experience-title">Experience</h2>
+          </div>
+          <div class="exp-grid">
+            <section class="exp-group">
+              <h3>Shipping on a live game</h3>
+              <ul>
+                <li>Shipped UI screens and a slot-machine minigame on a monthly release cycle for <strong>God Convenience Store</strong>, a live iOS and Android title at iCan Entertainment.</li>
+                <li>Prototyped 5 experimental game modes, and 2 of them went into the live game.</li>
+                <li>Refactored gameplay systems with UniRx, UniTask and Zenject to decouple events from async flow.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>Multiplayer and networking</h3>
+              <ul>
+                <li>Built host-client networking over custom UDP/TCP sockets for <strong>Borderless</strong>, a 4-phone co-op game.</li>
+                <li>The phones' clocks disagreed, so the same animation started about 8 seconds apart on average. Clock-offset sync and starts scheduled on the host clock brought that under 20 ms.</li>
+                <li>Streamed live sensor data over WebSockets to the game and a therapist web app at once in <strong>Camp Movewell</strong>.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>Game systems</h3>
+              <ul>
+                <li>Designed the modular message system for <strong>Camp Movewell</strong>. Each minigame registers its own handler, so new games plug in without rebuilding the rest.</li>
+                <li>Built a ScriptableObject skill-tree upgrade system for <strong>Star Fishing</strong> and wandering animal AI for <strong>Wool You Mask It</strong>.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>New kinds of input</h3>
+              <ul>
+                <li>Turned breathing into VR controls for <strong>XHaler</strong> with sensor smoothing, slope detection, hysteresis and per-player calibration.</li>
+                <li>Mapped NuShu smart-shoe movement over Bluetooth into Unity, filtering outlier samples so a bad reading never jumps the game.</li>
+                <li>Built a cross-phone pinch gesture, MediaPipe hand gestures and 3D Rudder foot controls.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>Shaders, VFX and tech art</h3>
+              <ul>
+                <li>Wrote a liquid-glass ripple shader that runs along the seam where two phones join in <strong>Borderless</strong>.</li>
+                <li>Built water from a ping-pong render-texture wave simulation in <strong>Serainity</strong>, and with reflection probes and fog in <strong>Star Fishing</strong>.</li>
+                <li>Made spell effects with shaders and VFX Graph, plus particles and real-time material changes.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>Performance and debugging</h3>
+              <ul>
+                <li>Traced the <strong>Borderless</strong> desync to device clocks by logging per-phone timestamps through Android logcat, then measured the fix the same way.</li>
+                <li>Ran every short-lived effect in <strong>Serainity</strong> through object pools to keep allocations low.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>AI in games</h3>
+              <ul>
+                <li>Built an NPC conversation system on the OpenAI API in <strong>Voice in the Void</strong>, where progress depends on what the player says.</li>
+                <li>Let players shout spells in <strong>GPT Battle</strong>, with speech recognition and prompts tied to game state.</li>
+                <li>Trained a reinforcement learning bot to play slither.io in a custom Gym environment.</li>
+              </ul>
+            </section>
+            <section class="exp-group">
+              <h3>Prototyping and playtesting</h3>
+              <ul>
+                <li>Ran about 30 playtests each on <strong>Borderless</strong> and <strong>XHaler</strong>. On XHaler, I fixed 3 immersion blockers until players finished without guidance.</li>
+                <li>Showed builds at a GDC booth, the ETC showcase and a physical therapy clinic with patients.</li>
+                <li>Made six game jam games, and won a Global Game Jam Pittsburgh award with <strong>Mento-Issue</strong>.</li>
+              </ul>
+            </section>
+          </div>
+          </div>
+        </section>
+        <section id="resume-side" class="panel intro-back is-away" data-panel data-outline data-side="away" aria-label="Résumé" inert>
           <div class="intro-back-bar">
             <h2>Résumé</h2>
             <div class="intro-back-actions">
