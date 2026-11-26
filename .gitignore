@@ -1,1 +1,14 @@
 .cursor/
+
+# Raw media originals stay local; only the web transcodes in web/ are committed
+assets/Camp_Movewell_Medias/*
+!assets/Camp_Movewell_Medias/web/
+!assets/Camp_Movewell_Medias/extra-zoom-some-James2.jpeg
+assets/Xhaler_Media/*
+!assets/Xhaler_Media/web/
+
+# Per-machine Claude settings
+.claude/settings.local.json
+
+# Local sound sampler (dev tool, not part of the site)
+sounds.html

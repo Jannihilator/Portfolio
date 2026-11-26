@@ -6,11 +6,11 @@ let ctx = null;
 let master = null;
 let noise = null;
 
-/** The first press on the page is what lets audio start */
+/** The first press on the page is what lets audio start. Resolves once audio can play (or never will). */
 export function wakeAudio() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
+    if (!AC) return Promise.resolve();
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = 0.42;
@@ -21,7 +21,8 @@ export function wakeAudio() {
     const data = noise.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
   }
-  if (ctx.state === "suspended") ctx.resume();
+  // Not only "suspended": iOS Safari reports "interrupted" after a call
+  return ctx.state !== "running" ? ctx.resume().catch(() => {}) : Promise.resolve();
 }
 
 function ready() {
@@ -69,6 +70,7 @@ const pick = (set) => Object.values(set)[Math.floor(Math.random() * Object.keys(
 
 /** A whistle: two slightly detuned voices with a flutter and a breath of steam */
 function toot(freq, len, peak = 0.16, bend = 1) {
+  if (!ready()) return;
   const t = ctx.currentTime;
   for (const detune of [1, 1.012]) {
     const osc = ctx.createOscillator();
@@ -101,6 +103,7 @@ function toot(freq, len, peak = 0.16, bend = 1) {
  * with a fast croaky flutter in the volume.
  */
 function frogWah({ pitch, drop = 0.7, len = 0.4, croak = 26, sweep = [500, 1300], peak = 1.2 }) {
+  if (!ready()) return;
   const t = ctx.currentTime;
   const osc = ctx.createOscillator();
   osc.type = "sawtooth";
